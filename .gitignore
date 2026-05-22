@@ -1,0 +1,41 @@
+# ─── Dependencias y compilados Maven ───
+target/
+*.class
+*.war
+*.ear
+*.jar
+
+# ─── Credenciales — NUNCA subir ───
+db.properties
+*.properties.local
+
+# ─── NetBeans ───
+nbproject/private/
+build/
+dist/
+nbdist/
+.nb-gradle/
+nb-configuration.xml
+
+# ─── VS Code ───
+.vscode/
+
+# ─── Metals (Scala LSP que VS Code activa en proyectos Java) ───
+.metals/
+.bloop/
+.bsp/
+
+# ─── IntelliJ IDEA (por si acaso) ───
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ─── Sistema operativo ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ───
+*.log
+logs/
