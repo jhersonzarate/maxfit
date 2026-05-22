@@ -10,11 +10,19 @@ import java.util.logging.Logger;
  *
  * Como implementa ServletContextListener, Tomcat la llama automáticamente
  * cuando arranca la aplicación (contextInitialized) y cuando se apaga
- * (contextDestroyed). Es el lugar ideal para verificar la BD al inicio
- * y para liberar recursos al cerrar.
+ * (contextDestroyed).
  *
- * Las constantes aquí centralizadas evitan strings sueltos en los DAOs
- * y controllers (IDs de catálogos, roles, estados, etc.).
+ * IMPORTANTE — Las constantes de estado solo se definen para las entidades
+ * que SÍ tienen esa columna en la BD (gimnasio_db):
+ *
+ *   ✓ Usuarios       → estado ('activo','inactivo')
+ *   ✓ Contratos      → estado ('activo','vencido','cancelado')
+ *   ✓ Asistencia     → estado ('asistio','falto','pendiente')
+ *   ✓ Clases         → estado ('vigente','suspendida')
+ *   ✓ Horarios       → estado ('programado','cancelado')
+ *   ✓ MetodosPago    → estado ('activo','inactivo')
+ *   ✗ Empleados      → NO tiene columna estado en la BD
+ *   ✗ Membresias     → NO tiene columna estado en la BD
  *
  * @author MaxFit
  */
@@ -32,19 +40,19 @@ public class AppConfig implements ServletContextListener {
     public static final String ROL_INSTRUCTOR = "ROL-TRAINER";
 
     // -----------------------------------------------------------------------
-    // Estados comunes reutilizados en múltiples tablas
+    // Estados de Usuarios y MetodosPago  (columna estado: 'activo','inactivo')
     // -----------------------------------------------------------------------
     public static final String ESTADO_ACTIVO   = "activo";
     public static final String ESTADO_INACTIVO = "inactivo";
 
-    // Estados específicos de Contratos
+    // Estados de Contratos
     public static final String CONTRATO_ACTIVO    = "activo";
     public static final String CONTRATO_VENCIDO   = "vencido";
     public static final String CONTRATO_CANCELADO = "cancelado";
 
     // Estados de Asistencia
-    public static final String ASISTENCIA_ASISTIO  = "asistio";
-    public static final String ASISTENCIA_FALTO    = "falto";
+    public static final String ASISTENCIA_ASISTIO   = "asistio";
+    public static final String ASISTENCIA_FALTO     = "falto";
     public static final String ASISTENCIA_PENDIENTE = "pendiente";
 
     // Estados de Clases
@@ -86,19 +94,18 @@ public class AppConfig implements ServletContextListener {
     // -----------------------------------------------------------------------
     // Prefijos para generación de IDs transaccionales
     // Formato: PREFIJO-AÑO-CORRELATIVO → ej: CLI-2026-0001
-    // La generación real ocurre en cada DAO con un método generateId()
     // -----------------------------------------------------------------------
-    public static final String PREFIX_CLIENTE    = "CLI";
-    public static final String PREFIX_EMPLEADO   = "EMP";
-    public static final String PREFIX_CONTRATO   = "CON";
-    public static final String PREFIX_ASISTENCIA = "ASI";
-    public static final String PREFIX_CLASE      = "CLA";
-    public static final String PREFIX_HORARIO    = "HOR";
-    public static final String PREFIX_INSCRIPCION= "INS";
-    public static final String PREFIX_USUARIO    = "USR";
+    public static final String PREFIX_CLIENTE     = "CLI";
+    public static final String PREFIX_EMPLEADO    = "EMP";
+    public static final String PREFIX_CONTRATO    = "CON";
+    public static final String PREFIX_ASISTENCIA  = "ASI";
+    public static final String PREFIX_CLASE       = "CLA";
+    public static final String PREFIX_HORARIO     = "HOR";
+    public static final String PREFIX_INSCRIPCION = "INS";
+    public static final String PREFIX_USUARIO     = "USR";
 
     // -----------------------------------------------------------------------
-    // Clave de sesión HTTP (para no usar strings sueltos en los controllers)
+    // Claves de sesión HTTP
     // -----------------------------------------------------------------------
     public static final String SESSION_USER_ID    = "userId";
     public static final String SESSION_USER_NAME  = "userName";
@@ -108,34 +115,27 @@ public class AppConfig implements ServletContextListener {
     // -----------------------------------------------------------------------
     // Parámetros de seguridad
     // -----------------------------------------------------------------------
-
-    // Tiempo de sesión inactiva antes de expirar (en segundos, 30 min)
-    public static final int SESSION_TIMEOUT_SECONDS = 1800;
-
-    // Factor de coste para BCrypt (12-13 es lo recomendado en 2026)
-    public static final int BCRYPT_COST = 12;
+    public static final int SESSION_TIMEOUT_SECONDS = 1800; // 30 minutos
+    public static final int BCRYPT_COST             = 12;   // recomendado 2026
 
     // -----------------------------------------------------------------------
-    // Parámetros de paginación
+    // Paginación
     // -----------------------------------------------------------------------
     public static final int PAGE_SIZE_DEFAULT = 20;
 
     // -----------------------------------------------------------------------
-    // Listener de Tomcat: se ejecuta cuando arranca la aplicación
+    // Listener de Tomcat
     // -----------------------------------------------------------------------
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         LOGGER.info("=== MaxFit iniciando ===");
 
-        // Verificar que la BD responde antes de recibir requests
         if (DatabaseConnection.isConfigured()) {
             boolean ok = DatabaseConnection.testConnection();
             if (ok) {
                 LOGGER.info("Conexión a gimnasio_db: OK");
             } else {
-                // No lanzamos excepción: la app arranca igual pero los DAOs
-                // fallarán con mensajes claros cuando se intente una operación.
                 LOGGER.severe("Conexión a gimnasio_db: FALLÓ. "
                         + "Verifica SQL Server y las credenciales en db.properties");
             }
@@ -150,7 +150,6 @@ public class AppConfig implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        // Cerrar la conexión del hilo principal al apagar Tomcat
         DatabaseConnection.closeConnection();
         LOGGER.info("=== MaxFit detenido ===");
     }
