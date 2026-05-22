@@ -18,10 +18,7 @@
 
     <dependencies>
 
-        <!-- ═══════════════════════════════════════════
-             APIs provistas por el servidor (Tomcat)
-             NO se empaquetan en el WAR
-        ════════════════════════════════════════════ -->
+        <!-- APIs provistas por el servidor (Tomcat) — NO se empaquetan en el WAR -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -35,31 +32,31 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- ═══════════════════════════════════════════
-             JSTL — etiquetas <c:forEach>, <c:if>, <fmt:>
-             en los JSP
-        ════════════════════════════════════════════ -->
+        <!-- JSTL — etiquetas <c:forEach>, <c:if>, <fmt:> en los JSP -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>1.2</version>
         </dependency>
 
-        <!-- ═══════════════════════════════════════════
-             Driver JDBC para SQL Server (gimnasio_db)
-             jre21 = versión compilada para JDK 21
-        ════════════════════════════════════════════ -->
+        <!--
+             Driver JDBC para SQL Server (gimnasio_db).
+             NOTA: el clasificador es jre11, que es el correcto para JDK 11+.
+             No existe clasificador jre21; jre11 es compatible con Java 21
+             por compatibilidad hacia arriba. No cambiar a jre8.
+        -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
             <version>12.6.1.jre11</version>
         </dependency>
 
-        <!-- ═══════════════════════════════════════════
-             jBCrypt — hashear y verificar contraseñas
-             BCrypt.hashpw() y BCrypt.checkpw()
-             Nunca guardar contraseñas en texto plano
-        ════════════════════════════════════════════ -->
+        <!--
+             jBCrypt — hashing de contraseñas con BCrypt.
+             Uso: BCrypt.hashpw(plain, BCrypt.gensalt(AppConfig.BCRYPT_COST))
+                  BCrypt.checkpw(plain, hash)
+             NUNCA almacenar contraseñas en texto plano.
+        -->
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
@@ -72,9 +69,7 @@
         <finalName>Herramientas</finalName>
         <plugins>
 
-            <!-- ═══════════════════════════════════════════
-                 Compilador Java 21
-            ════════════════════════════════════════════ -->
+            <!-- Compilador Java 21 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -85,9 +80,7 @@
                 </configuration>
             </plugin>
 
-            <!-- ═══════════════════════════════════════════
-                 WAR plugin — empaqueta el proyecto
-            ════════════════════════════════════════════ -->
+            <!-- WAR plugin — empaqueta el proyecto -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -97,11 +90,11 @@
                 </configuration>
             </plugin>
 
-            <!-- ═══════════════════════════════════════════
-                 Tomcat embebido (Cargo)
+            <!--
+                 Tomcat embebido (Cargo).
                  Desde NetBeans: clic derecho → Run with Maven
-                 o desde terminal: mvn package cargo:run
-            ════════════════════════════════════════════ -->
+                 Desde terminal: mvn package cargo:run
+            -->
             <plugin>
                 <groupId>org.codehaus.cargo</groupId>
                 <artifactId>cargo-maven3-plugin</artifactId>
