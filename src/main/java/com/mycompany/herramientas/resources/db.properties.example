@@ -1,0 +1,46 @@
+# ============================================================
+#  db.properties.example  —  PLANTILLA PÚBLICA (sí va al repo)
+#  Ubicación: src/main/resources/db.properties.example
+#
+#  Instrucciones:
+#    1. Copia este archivo: cp db.properties.example db.properties
+#    2. Completa jdbc.url, jdbc.user y jdbc.password con tus datos reales
+#    3. db.properties está en .gitignore → nunca se sube al repositorio
+# ============================================================
+
+# Formato de la URL de SQL Server
+# Opciones comunes para localhost:
+#   - Instancia por defecto:   localhost:1433
+#   - Instancia con nombre:    localhost\SQLEXPRESS:1433
+#   - SQL Server en Docker:    localhost:1433
+#
+# encrypt=true                 cifra el tráfico Java ↔ SQL Server
+# trustServerCertificate=true  acepta certificados locales/autofirmados
+# loginTimeout=10              segundos máximos para conectar
+jdbc.url=jdbc:sqlserver://localhost:1433;databaseName=gimnasio_db;encrypt=true;trustServerCertificate=true;loginTimeout=10
+
+# Usuario de SQL Server
+jdbc.user=sa
+
+# Contraseña (no dejes esto en blanco en producción)
+jdbc.password=
+
+# ============================================================
+#  NOTAS PARA EL EQUIPO
+#
+#  Si usas SQL Server Authentication:
+#    jdbc.url=jdbc:sqlserver://localhost:1433;databaseName=gimnasio_db;
+#             encrypt=true;trustServerCertificate=true;loginTimeout=10
+#    jdbc.user=sa
+#    jdbc.password=tu_password
+#
+#  Si usas Windows Authentication (solo en Windows):
+#    jdbc.url=jdbc:sqlserver://localhost:1433;databaseName=gimnasio_db;
+#             integratedSecurity=true;encrypt=true;trustServerCertificate=true
+#    jdbc.user=   (dejar vacío)
+#    jdbc.password= (dejar vacío)
+#
+#  Si tienes SQL Server con nombre de instancia (ej: SQLEXPRESS):
+#    jdbc.url=jdbc:sqlserver://localhost\SQLEXPRESS:1433;databaseName=gimnasio_db;
+#             encrypt=true;trustServerCertificate=true;loginTimeout=10
+# ============================================================

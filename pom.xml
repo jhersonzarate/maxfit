@@ -9,8 +9,8 @@
     <name>Herramientas-1.0-SNAPSHOT</name>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -46,8 +46,8 @@
         </dependency>
 
         <!-- ═══════════════════════════════════════════
-             Driver JDBC para SQL Server
-             (tu BD gimnasio_db)
+             Driver JDBC para SQL Server (gimnasio_db)
+             jre21 = versión compilada para JDK 21
         ════════════════════════════════════════════ -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
@@ -58,7 +58,7 @@
         <!-- ═══════════════════════════════════════════
              jBCrypt — hashear y verificar contraseñas
              BCrypt.hashpw() y BCrypt.checkpw()
-             Reemplaza el .equals("12345") del MockDatabase
+             Nunca guardar contraseñas en texto plano
         ════════════════════════════════════════════ -->
         <dependency>
             <groupId>org.mindrot</groupId>
@@ -73,16 +73,15 @@
         <plugins>
 
             <!-- ═══════════════════════════════════════════
-                 Compilador Java 11
-                 (necesario para mssql-jdbc 12.x)
+                 Compilador Java 21
             ════════════════════════════════════════════ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
 
