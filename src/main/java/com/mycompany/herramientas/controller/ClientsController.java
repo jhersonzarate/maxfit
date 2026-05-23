@@ -1,6 +1,5 @@
 package com.mycompany.herramientas.controller;
 
-import com.mycompany.herramientas.config.AppConfig;
 import com.mycompany.herramientas.dao.CatalogoDAO;
 import com.mycompany.herramientas.dao.ClienteDAO;
 import com.mycompany.herramientas.dao.ContratoDAO;

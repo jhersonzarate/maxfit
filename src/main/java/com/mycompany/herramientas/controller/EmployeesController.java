@@ -25,10 +25,10 @@ import java.util.logging.Logger;
  * Rutas y acciones:
  *   GET  /employees              → lista de empleados
  *   GET  /employees?action=new   → formulario de registro
- *   GET  /employees?action=edit&id=EMP-XXX → formulario de edición
- *   GET  /employees?action=view&id=EMP-XXX → detalle del empleado
+ *   GET  /employees?action=edit&id={id} → formulario de edición
+ *   GET  /employees?action=view&id={id} → detalle del empleado
  *   POST /employees?action=save  → crear o actualizar empleado
- *   POST /employees?action=delete&id=EMP-XXX → eliminar empleado
+ *   POST /employees?action=delete&id={id} → eliminar empleado
  *
  * Acceso: ROL-ADMIN únicamente (RoleFilter → /employees).
  *

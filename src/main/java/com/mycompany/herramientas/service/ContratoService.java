@@ -2,7 +2,6 @@ package com.mycompany.herramientas.service;
 
 import com.mycompany.herramientas.config.AppConfig;
 import com.mycompany.herramientas.config.DatabaseConnection;
-import com.mycompany.herramientas.dao.AsistenciaDAO;
 import com.mycompany.herramientas.dao.ContratoDAO;
 import com.mycompany.herramientas.model.Contrato;
 import com.mycompany.herramientas.model.Membresia;
@@ -36,16 +35,13 @@ public class ContratoService {
     private static final Logger LOGGER = Logger.getLogger(ContratoService.class.getName());
 
     private final ContratoDAO  contratoDAO;
-    private final AsistenciaDAO asistenciaDAO;
 
     public ContratoService() {
         this.contratoDAO   = new ContratoDAO();
-        this.asistenciaDAO = new AsistenciaDAO();
     }
 
-    public ContratoService(ContratoDAO contratoDAO, AsistenciaDAO asistenciaDAO) {
+    public ContratoService(ContratoDAO contratoDAO) {
         this.contratoDAO   = contratoDAO;
-        this.asistenciaDAO = asistenciaDAO;
     }
 
     // ── Resultado de operación ───────────────────────────────────────────────

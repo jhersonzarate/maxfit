@@ -5,7 +5,6 @@ import com.mycompany.herramientas.model.*;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -81,9 +80,6 @@ public class AsistenciaDAO {
     private static final String SQL_INSERT =
         "INSERT INTO Asistencia (id, id_contrato, fecha, estado, hora_ingreso) " +
         "VALUES (?, ?, ?, ?, ?)";
-
-    private static final String SQL_UPDATE_ESTADO =
-        "UPDATE Asistencia SET estado = ?, hora_ingreso = ? WHERE id = ?";
 
     private static final String SQL_NEXT_ID =
         "SELECT ISNULL(MAX(CAST(SUBSTRING(id, CHARINDEX('-', id, 5)+1, 10) AS INT)), 0) + 1 " +

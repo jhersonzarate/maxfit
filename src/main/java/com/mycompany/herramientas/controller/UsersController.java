@@ -22,10 +22,10 @@ import java.util.logging.Logger;
  * Rutas y acciones:
  *   GET  /users                    → lista de usuarios
  *   GET  /users?action=new         → formulario de creación
- *   GET  /users?action=edit&id=USR-XXX → formulario de edición
+ *   GET  /users?action=edit&id={id} → formulario de edición
  *   POST /users?action=save        → crear o actualizar usuario
- *   POST /users?action=toggleEstado&id=USR-XXX → activar/inactivar cuenta
- *   POST /users?action=resetPassword&id=USR-XXX → resetear contraseña
+ *   POST /users?action=toggleEstado&id={id} → activar/inactivar cuenta
+ *   POST /users?action=resetPassword&id={id} → resetear contraseña
  *
  * Acceso: ROL-ADMIN únicamente (RoleFilter → /users).
  *

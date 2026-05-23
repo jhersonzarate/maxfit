@@ -4,6 +4,7 @@ import com.mycompany.herramientas.config.AppConfig;
 import com.mycompany.herramientas.dao.*;
 import com.mycompany.herramientas.model.*;
 import com.mycompany.herramientas.service.InscripcionService;
+import com.mycompany.herramientas.service.ContratoService;
 import com.mycompany.herramientas.view.ViewRoutes;
 
 import javax.servlet.ServletException;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;

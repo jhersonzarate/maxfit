@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  *
  * Rutas y acciones:
  *   GET /instructor              → mis clases + clases de hoy + alumnos
- *   GET /instructor?action=clase&id=CLA-XXX → detalle de una clase (inscritos)
+ *   GET /instructor?action=clase&id={id} → detalle de una clase (inscritos)
  *
  * Widgets que muestra:
  *   - KPI: Total de clases que dicta

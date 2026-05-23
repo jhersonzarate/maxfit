@@ -22,9 +22,9 @@ import java.util.logging.Logger;
  * Rutas y acciones:
  *   GET  /memberships              → lista de planes
  *   GET  /memberships?action=new   → formulario de nuevo plan
- *   GET  /memberships?action=edit&id=MEM-XXX → formulario de edición
+ *   GET  /memberships?action=edit&id={id} → formulario de edición
  *   POST /memberships?action=save  → crear o actualizar plan
- *   POST /memberships?action=delete&id=MEM-XXX → eliminar plan (solo Admin)
+ *   POST /memberships?action=delete&id={id} → eliminar plan (solo Admin)
  *
  * Acceso:
  *   ROL-ADMIN  → CRUD completo (crear, editar, eliminar, ver)
