@@ -1,0 +1,516 @@
+/* =====================================================
+   MaxFit — Login Page Stylesheet
+   Stack: Bootstrap 5 + Custom CSS
+   Aesthetic: Dark luxury fitness / pro gym
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+
+/* ── Root Variables ───────────────────────────────── */
+:root {
+    --mf-black:        #0a0a0a;
+    --mf-dark:         #111318;
+    --mf-card:         #16191f;
+    --mf-border:       #22262e;
+    --mf-orange:       #f97316;
+    --mf-orange-dark:  #c2550e;
+    --mf-orange-glow:  rgba(249, 115, 22, 0.18);
+    --mf-text:         #e8eaf0;
+    --mf-muted:        #7a8090;
+    --mf-input-bg:     #1c2028;
+    --mf-input-border: #2c3140;
+    --mf-success:      #22c55e;
+    --mf-danger:       #ef4444;
+    --mf-radius:       12px;
+    --mf-radius-sm:    8px;
+}
+
+/* ── Base Reset ───────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Barlow', sans-serif;
+    background-color: var(--mf-black);
+    color: var(--mf-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout: dos columnas ─────────────────────────── */
+.login-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 480px;
+    min-height: 100vh;
+}
+
+/* ── Panel izquierdo — imagen/branding ───────────── */
+.login-brand {
+    position: relative;
+    overflow: hidden;
+    background: var(--mf-black);
+}
+
+.login-brand__bg {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(135deg,
+            rgba(10,10,10,0.92) 0%,
+            rgba(249,115,22,0.10) 50%,
+            rgba(10,10,10,0.97) 100%),
+        url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80&fit=crop') center/cover no-repeat;
+    transform: scale(1.02);
+    transition: transform 12s ease;
+}
+
+.login-brand:hover .login-brand__bg {
+    transform: scale(1.06);
+}
+
+.login-brand__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to right,
+        transparent 60%,
+        var(--mf-dark) 100%
+    );
+}
+
+.login-brand__content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem;
+}
+
+/* Logo en esquina superior */
+.login-brand__logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.login-brand__logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--mf-orange);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 0 24px var(--mf-orange-glow);
+}
+
+.login-brand__logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #fff;
+    line-height: 1;
+}
+
+.login-brand__logo-text span {
+    color: var(--mf-orange);
+}
+
+/* Tagline y estadísticas */
+.login-brand__tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.05;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    margin-bottom: 1.5rem;
+}
+
+.login-brand__tagline em {
+    color: var(--mf-orange);
+    font-style: normal;
+}
+
+.login-brand__sub {
+    font-size: 1rem;
+    color: var(--mf-muted);
+    font-weight: 400;
+    max-width: 360px;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+}
+
+/* Pill de stats */
+.login-brand__stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.stat-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--mf-border);
+    border-radius: 50px;
+    padding: 0.55rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(8px);
+}
+
+.stat-pill__icon { color: var(--mf-orange); font-size: 1rem; }
+
+.stat-pill__val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.stat-pill__label {
+    font-size: 0.78rem;
+    color: var(--mf-muted);
+}
+
+/* Línea de separación naranja */
+.orange-line {
+    width: 52px;
+    height: 4px;
+    background: var(--mf-orange);
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+}
+
+/* ── Panel derecho — formulario ──────────────────── */
+.login-form-panel {
+    background: var(--mf-dark);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    padding: 3rem 2.5rem;
+    border-left: 1px solid var(--mf-border);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Glow decorativo */
+.login-form-panel::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -80px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, var(--mf-orange-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.login-form-panel > * { position: relative; z-index: 1; }
+
+/* Encabezado del form */
+.login-form__header { margin-bottom: 2.2rem; }
+
+.login-form__eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mf-orange);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.login-form__title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.05;
+    margin: 0 0 0.5rem;
+}
+
+.login-form__desc {
+    font-size: 0.9rem;
+    color: var(--mf-muted);
+    margin: 0;
+}
+
+/* ── Form Labels ──────────────────────────────────── */
+.form-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mf-muted);
+    margin-bottom: 0.4rem;
+}
+
+/* ── Inputs ───────────────────────────────────────── */
+.input-icon-wrap {
+    position: relative;
+}
+
+.input-icon-wrap .input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--mf-muted);
+    font-size: 0.95rem;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.input-icon-wrap .form-control {
+    padding-left: 2.6rem;
+}
+
+/* Toggle password */
+.btn-eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--mf-muted);
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+    z-index: 5;
+}
+
+.btn-eye:hover { color: var(--mf-orange); }
+
+.form-control {
+    background-color: var(--mf-input-bg) !important;
+    border: 1.5px solid var(--mf-input-border) !important;
+    border-radius: var(--mf-radius-sm) !important;
+    color: var(--mf-text) !important;
+    font-size: 0.95rem !important;
+    padding: 0.72rem 1rem !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.form-control::placeholder { color: #4a5060 !important; }
+
+.form-control:focus {
+    border-color: var(--mf-orange) !important;
+    box-shadow: 0 0 0 3px var(--mf-orange-glow) !important;
+    outline: none !important;
+    background-color: var(--mf-input-bg) !important;
+    color: var(--mf-text) !important;
+}
+
+.input-icon-wrap:focus-within .input-icon {
+    color: var(--mf-orange);
+}
+
+/* ── Alertas ──────────────────────────────────────── */
+.alert-maxfit {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: var(--mf-radius-sm);
+    color: #fca5a5;
+    font-size: 0.88rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alert-maxfit i { color: var(--mf-danger); flex-shrink: 0; }
+
+/* ── Botón principal ──────────────────────────────── */
+.btn-maxfit {
+    background: var(--mf-orange);
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: var(--mf-radius-sm);
+    padding: 0.8rem 1.5rem;
+    width: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.12s;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-maxfit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.btn-maxfit:hover {
+    background: #ea6a0a;
+    box-shadow: 0 6px 24px rgba(249,115,22,0.35);
+    transform: translateY(-1px);
+}
+
+.btn-maxfit:hover::after { opacity: 1; }
+
+.btn-maxfit:active { transform: translateY(0); }
+
+/* ── Divider ──────────────────────────────────────── */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--mf-muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--mf-border);
+}
+
+/* ── Roles chips ──────────────────────────────────── */
+.roles-info {
+    background: var(--mf-input-bg);
+    border: 1px solid var(--mf-border);
+    border-radius: var(--mf-radius-sm);
+    padding: 0.9rem 1rem;
+}
+
+.roles-info__title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mf-muted);
+    margin-bottom: 0.6rem;
+}
+
+.role-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--mf-border);
+    border-radius: 20px;
+    padding: 3px 10px 3px 6px;
+    font-size: 0.78rem;
+    color: var(--mf-text);
+    margin: 2px;
+}
+
+.role-chip .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot-admin  { background: var(--mf-orange); }
+.dot-recep  { background: #3b82f6; }
+.dot-instr  { background: var(--mf-success); }
+
+/* ── Footer del form ──────────────────────────────── */
+.login-form__footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--mf-muted);
+}
+
+.login-form__footer a {
+    color: var(--mf-orange);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.login-form__footer a:hover {
+    color: #ea6a0a;
+    text-decoration: underline;
+}
+
+/* ── Check "recuérdame" ───────────────────────────── */
+.form-check-input {
+    background-color: var(--mf-input-bg) !important;
+    border-color: var(--mf-input-border) !important;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--mf-orange) !important;
+    border-color: var(--mf-orange) !important;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px var(--mf-orange-glow) !important;
+}
+
+.form-check-label {
+    font-size: 0.85rem;
+    color: var(--mf-muted);
+    cursor: pointer;
+}
+
+/* ── Spinner ──────────────────────────────────────── */
+.spinner-border-sm { width: 1rem; height: 1rem; }
+
+/* ── Version badge ────────────────────────────────── */
+.version-badge {
+    position: absolute;
+    bottom: 1.2rem;
+    right: 1.5rem;
+    font-size: 0.72rem;
+    color: var(--mf-border);
+    letter-spacing: 0.06em;
+}
+
+/* ── Mobile responsive ────────────────────────────── */
+@media (max-width: 900px) {
+    .login-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .login-brand {
+        display: none;
+    }
+
+    .login-form-panel {
+        border-left: none;
+        padding: 2.5rem 1.5rem;
+        min-height: 100vh;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-form-panel {
+        padding: 2rem 1.2rem;
+    }
+
+    .login-form__title { font-size: 2rem; }
+}
