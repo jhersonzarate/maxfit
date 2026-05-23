@@ -9,6 +9,7 @@ import com.mycompany.herramientas.model.Cliente;
 import com.mycompany.herramientas.model.InscripcionClase;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,36 +83,29 @@ public class InscripcionService {
             return new Resultado(TipoResultado.OK, "Inscripción registrada correctamente.", ic);
         }
         static Resultado clienteNoExiste(String id) {
-            return new Resultado(TipoResultado.CLIENTE_NO_EXISTE, null,
+            return new Resultado(TipoResultado.CLIENTE_NO_EXISTE,
                     "No se encontró el cliente con ID: " + id, null);
         }
         static Resultado claseNoExiste(String id) {
-            return new Resultado(TipoResultado.CLASE_NO_EXISTE, null,
+            return new Resultado(TipoResultado.CLASE_NO_EXISTE,
                     "No se encontró la clase con ID: " + id, null);
         }
         static Resultado claseSuspendida(Clase c) {
-            return new Resultado(TipoResultado.CLASE_SUSPENDIDA, null,
+            return new Resultado(TipoResultado.CLASE_SUSPENDIDA,
                     "La clase \"" + c.getNombreClase() + "\" está suspendida y no acepta inscripciones.", null);
         }
         static Resultado yaInscrito(Cliente cli, Clase c) {
-            return new Resultado(TipoResultado.YA_INSCRITO, null,
+            return new Resultado(TipoResultado.YA_INSCRITO,
                     cli.getNombreCompleto() + " ya está inscrito/a en \"" + c.getNombreClase() + "\".", null);
         }
         static Resultado sinCupo(Clase c) {
-            return new Resultado(TipoResultado.SIN_CUPO, null,
+            return new Resultado(TipoResultado.SIN_CUPO,
                     "La clase \"" + c.getNombreClase() + "\" no tiene cupos disponibles (capacidad máxima: "
                     + c.getCapacidadMaxima() + ").", null);
         }
         static Resultado errorBd() {
-            return new Resultado(TipoResultado.ERROR_BD, null,
+            return new Resultado(TipoResultado.ERROR_BD,
                     "Error interno. Intenta nuevamente.", null);
-        }
-
-        // Constructor unificado para los helpers
-        private Resultado(TipoResultado tipo, Object ignored, String mensaje, InscripcionClase ic) {
-            this.tipo        = tipo;
-            this.mensaje     = mensaje;
-            this.inscripcion = ic;
         }
     }
 
@@ -208,26 +202,33 @@ public class InscripcionService {
     /**
      * Todas las inscripciones de un cliente.
      * Para el perfil del cliente: "Clases en las que está inscrito".
+     *
+     * CORRECCIÓN: se reemplazó List.of() por Collections.emptyList()
+     * para garantizar compatibilidad con Java 8+. List.of() existe
+     * desde Java 9 pero el compilador del IDE lo resolvía como versión anterior.
      */
     public List<InscripcionClase> listarPorCliente(String clienteId) {
         try {
             return inscripcionDAO.findByClienteId(clienteId);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al listar inscripciones del cliente: " + clienteId, e);
-            return List.of();
+            return Collections.emptyList(); // ← FIX: antes era List.of()
         }
     }
 
     /**
      * Todos los inscritos en una clase.
      * Para la vista de detalle de clase (lista de participantes).
+     *
+     * CORRECCIÓN: se reemplazó List.of() por Collections.emptyList()
+     * para garantizar compatibilidad con Java 8+.
      */
     public List<InscripcionClase> listarPorClase(String claseId) {
         try {
             return inscripcionDAO.findByClaseId(claseId);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al listar inscripciones de clase: " + claseId, e);
-            return List.of();
+            return Collections.emptyList(); // ← FIX: antes era List.of()
         }
     }
 
