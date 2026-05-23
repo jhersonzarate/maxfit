@@ -7,11 +7,13 @@ import com.mycompany.herramientas.dao.ContratoDAO;
 import com.mycompany.herramientas.dao.EmpleadoDAO;
 import com.mycompany.herramientas.dao.IdGenerator;
 import com.mycompany.herramientas.dao.MembresiaDAO;
+import com.mycompany.herramientas.dao.UsuarioDAO;
 import com.mycompany.herramientas.model.Cliente;
 import com.mycompany.herramientas.model.Contrato;
 import com.mycompany.herramientas.model.Empleado;
 import com.mycompany.herramientas.model.Membresia;
 import com.mycompany.herramientas.model.MetodoPago;
+import com.mycompany.herramientas.model.Usuario;
 import com.mycompany.herramientas.service.ContratoService;
 import com.mycompany.herramientas.view.ViewRoutes;
 
@@ -48,6 +50,12 @@ import java.util.logging.Logger;
  *   - fecha_fin = fecha_inicio + duracion_meses de la membresía.
  *   - Solo el Admin puede cancelar contratos.
  *
+ * CORRECCIÓN (observación anterior):
+ *   UsuarioDAO declarado como campo de instancia en lugar de instanciarse
+ *   dentro del método getEmpleadoIdDeSesion() en cada llamada.
+ *   Esto sigue el mismo patrón que todos los demás DAOs del controller,
+ *   mejora la consistencia y evita crear objetos innecesarios por request.
+ *
  * @author MaxFit
  */
 @WebServlet("/contracts")
@@ -56,12 +64,20 @@ public class ContractsController extends AbstractController {
     private static final Logger LOGGER =
             Logger.getLogger(ContractsController.class.getName());
 
+    // ─── DAOs — todos como campos de instancia (patrón consistente) ───────────
     private final ContratoService contratoService = new ContratoService();
     private final ContratoDAO     contratoDAO     = new ContratoDAO();
     private final ClienteDAO      clienteDAO      = new ClienteDAO();
     private final MembresiaDAO    membresiaDAO    = new MembresiaDAO();
     private final EmpleadoDAO     empleadoDAO     = new EmpleadoDAO();
     private final CatalogoDAO     catalogoDAO     = new CatalogoDAO();
+
+    /**
+     * CORRECCIÓN: antes se instanciaba UsuarioDAO inline dentro de
+     * getEmpleadoIdDeSesion() en cada llamada al método. Ahora es un
+     * campo de instancia como el resto de los DAOs del controlador.
+     */
+    private final UsuarioDAO      usuarioDAO      = new UsuarioDAO();
 
     // ─── GET ──────────────────────────────────────────────────────────────────
 
@@ -113,23 +129,21 @@ public class ContractsController extends AbstractController {
     private void mostrarLista(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // Filtro opcional por cliente
         String clienteId = param(req, "clienteId");
 
         try {
             List<Contrato> contratos;
             if (clienteId != null) {
                 contratos = contratoDAO.findByClienteId(clienteId);
-                // Pasar el cliente para mostrar su nombre en el título
                 Cliente cliente = clienteDAO.findById(clienteId);
                 req.setAttribute("clienteFiltro", cliente);
             } else {
                 contratos = contratoDAO.findAll();
             }
 
-            req.setAttribute("contratos",    contratos);
+            req.setAttribute("contratos",      contratos);
             req.setAttribute("totalContratos", contratos.size());
-            req.setAttribute("countActivos", contratoDAO.countActivos());
+            req.setAttribute("countActivos",   contratoDAO.countActivos());
 
             irA(ViewRoutes.CONTRACTS_INDEX, req, resp);
 
@@ -145,7 +159,6 @@ public class ContractsController extends AbstractController {
     private void mostrarFormularioNuevo(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // Si viene con clienteId → pre-cargar el cliente
         String clienteId = param(req, "clienteId");
 
         try {
@@ -200,21 +213,18 @@ public class ContractsController extends AbstractController {
     private void guardarContrato(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // Leer parámetros
-        String clienteId     = param(req, "clienteId");
-        String membresiaId   = param(req, "membresiaId");
-        String metodoPagoId  = param(req, "metodoPagoId");
+        String clienteId      = param(req, "clienteId");
+        String membresiaId    = param(req, "membresiaId");
+        String metodoPagoId   = param(req, "metodoPagoId");
         String fechaInicioStr = param(req, "fechaInicio");
-        String montoStr      = param(req, "montoPagado");
+        String montoStr       = param(req, "montoPagado");
 
-        // ── Validaciones de campos obligatorios ──────────────────────────────
         if (clienteId == null || membresiaId == null
                 || metodoPagoId == null || fechaInicioStr == null || montoStr == null) {
             volverAlFormularioConError(req, resp, "Todos los campos son obligatorios.");
             return;
         }
 
-        // ── Parsear fecha inicio ─────────────────────────────────────────────
         LocalDate fechaInicio;
         try {
             fechaInicio = LocalDate.parse(fechaInicioStr);
@@ -224,7 +234,6 @@ public class ContractsController extends AbstractController {
             return;
         }
 
-        // ── Parsear monto ────────────────────────────────────────────────────
         BigDecimal montoPagado;
         try {
             montoPagado = new BigDecimal(montoStr.trim().replace(",", "."));
@@ -234,13 +243,11 @@ public class ContractsController extends AbstractController {
                 return;
             }
         } catch (NumberFormatException e) {
-            volverAlFormularioConError(req, resp,
-                    "El monto ingresado no es válido.");
+            volverAlFormularioConError(req, resp, "El monto ingresado no es válido.");
             return;
         }
 
         try {
-            // ── Cargar entidades relacionadas ─────────────────────────────────
             Cliente cliente = clienteDAO.findById(clienteId);
             if (cliente == null) {
                 volverAlFormularioConError(req, resp, "El cliente seleccionado no existe.");
@@ -266,15 +273,14 @@ public class ContractsController extends AbstractController {
             }
 
             // El empleado responsable es el usuario en sesión
-            Empleado empleado = empleadoDAO.findById(
-                    getEmpleadoIdDeSesion(req));
+            Empleado empleado = empleadoDAO.findById(getEmpleadoIdDeSesion(req));
             if (empleado == null) {
                 volverAlFormularioConError(req, resp,
-                        "No se pudo identificar al empleado responsable.");
+                        "No se pudo identificar al empleado responsable. "
+                        + "Verifica que tu usuario tenga un empleado vinculado.");
                 return;
             }
 
-            // ── Construir contrato ────────────────────────────────────────────
             Contrato contrato = new Contrato();
             contrato.setId(IdGenerator.parContrato());
             contrato.setCliente(cliente);
@@ -282,11 +288,10 @@ public class ContractsController extends AbstractController {
             contrato.setEmpleado(empleado);
             contrato.setMetodoPago(metodoPago);
             contrato.setFechaInicio(fechaInicio);
-            // fecha_fin la calcula ContratoService
+            // fecha_fin la calcula ContratoService según duracion_meses de la membresía
             contrato.setMontoPagado(montoPagado);
             contrato.setEstado(AppConfig.CONTRATO_ACTIVO);
 
-            // ── Delegar al servicio (verifica contrato activo existente) ───────
             ContratoService.Resultado resultado =
                     contratoService.crearContrato(contrato);
 
@@ -311,7 +316,6 @@ public class ContractsController extends AbstractController {
     private void cancelarContrato(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
-        // Solo Admin puede cancelar contratos (RF-03)
         if (!esAdmin(req)) {
             forbidden(resp);
             return;
@@ -339,14 +343,12 @@ public class ContractsController extends AbstractController {
 
     /**
      * Carga los datos necesarios para el formulario de nuevo contrato.
-     * Centralizado para usarse tanto en mostrarFormularioNuevo como en
-     * volverAlFormularioConError.
      */
     private void cargarDatosFormulario(HttpServletRequest req) throws SQLException {
-        req.setAttribute("clientes",       clienteDAO.findAll());
-        req.setAttribute("membresias",     membresiaDAO.findAll());
-        req.setAttribute("metodosPago",    catalogoDAO.findMetodosPagoActivos());
-        req.setAttribute("fechaHoy",       LocalDate.now().toString());
+        req.setAttribute("clientes",    clienteDAO.findAll());
+        req.setAttribute("membresias",  membresiaDAO.findAll());
+        req.setAttribute("metodosPago", catalogoDAO.findMetodosPagoActivos());
+        req.setAttribute("fechaHoy",    LocalDate.now().toString());
     }
 
     /**
@@ -368,22 +370,17 @@ public class ContractsController extends AbstractController {
     /**
      * Obtiene el ID del empleado vinculado al usuario en sesión.
      * Se usa para asignar el empleado responsable del contrato.
+     *
+     * CORRECCIÓN: antes instanciaba UsuarioDAO aquí con new UsuarioDAO()
+     * en cada llamada. Ahora usa el campo de instancia usuarioDAO
+     * que se inicializa una sola vez al arrancar el Servlet, siendo
+     * consistente con el patrón de todos los demás DAOs del controller.
      */
     private String getEmpleadoIdDeSesion(HttpServletRequest req) {
-        // El userId de sesión es el ID del Usuario (USR-XXXX).
-        // Necesitamos el id del Empleado vinculado.
-        // Como no lo guardamos directamente en sesión, lo obtenemos del userId.
-        // Esta consulta es O(1) — solo si el usuario tiene empleado vinculado.
-        // Si no tiene empleado (caso extremo), devuelve null y el controlador
-        // mostrará un error amigable.
         try {
             String userId = getSessionUserId(req);
             if (userId == null) return null;
-            // Obtener el empleado_id a través del UsuarioDAO
-            com.mycompany.herramientas.dao.UsuarioDAO usuarioDAO =
-                    new com.mycompany.herramientas.dao.UsuarioDAO();
-            com.mycompany.herramientas.model.Usuario usuario =
-                    usuarioDAO.findById(userId);
+            Usuario usuario = usuarioDAO.findById(userId);
             if (usuario != null && usuario.getEmpleado() != null) {
                 return usuario.getEmpleado().getId();
             }

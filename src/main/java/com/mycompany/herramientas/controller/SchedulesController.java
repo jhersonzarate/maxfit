@@ -31,17 +31,22 @@ import java.util.logging.Logger;
  *   POST /schedules?action=saveClase      → crear o actualizar clase (Admin)
  *   POST /schedules?action=toggleEstado&id=CLA-X → vigente ↔ suspendida (Admin)
  *   POST /schedules?action=saveHorario    → agregar horario a una clase (Admin)
- *   POST /schedules?action=deleteHorario&id=HOR-X → eliminar horario (Admin)
+ *   POST /schedules?action=deleteHorario&id=HOR-X → eliminar UN horario (Admin)
  *   POST /schedules?action=inscribir      → inscribir cliente en clase (Admin/Recep)
  *   POST /schedules?action=cancelarInscripcion&id=INS-X → cancelar inscripción
  *
- * Rutas para /calendar (mismo servlet, acción distinta):
+ * Rutas para /calendar:
  *   GET  /calendar → vista de calendario semanal con todos los horarios
  *
  * Acceso:
  *   Admin   → CRUD completo (clases, horarios, inscripciones)
  *   Recep   → ver + gestionar inscripciones
- *   Trainer → solo lectura (ver sus clases en /instructor, no aquí)
+ *   Trainer → solo lectura (ver sus clases en /instructor)
+ *
+ * CORRECCIÓN (bug anterior):
+ *   eliminarHorario() llamaba a horarioDAO.deleteByClaseId(claseId)
+ *   que borraba TODOS los horarios de la clase. Ahora usa
+ *   horarioDAO.deleteById(horarioId) para borrar solo el horario indicado.
  *
  * @author MaxFit
  */
@@ -135,8 +140,8 @@ public class SchedulesController extends AbstractController {
             throws ServletException, IOException {
         try {
             List<Clase> clases = claseDAO.findAll();
-            req.setAttribute("clases",       clases);
-            req.setAttribute("totalClases",  clases.size());
+            req.setAttribute("clases",      clases);
+            req.setAttribute("totalClases", clases.size());
             irA(ViewRoutes.SCHEDULES_INDEX, req, resp);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al listar clases", e);
@@ -157,10 +162,9 @@ public class SchedulesController extends AbstractController {
         }
 
         try {
-            // Catálogos para los selects del formulario
             // Solo entrenadores (CARGO-TRAINER) pueden dictar clases
-            req.setAttribute("entrenadores",  empleadoDAO.findByCargo(AppConfig.CARGO_TRAINER));
-            req.setAttribute("tiposClase",    catalogoDAO.findAllTipoClases());
+            req.setAttribute("entrenadores", empleadoDAO.findByCargo(AppConfig.CARGO_TRAINER));
+            req.setAttribute("tiposClase",   catalogoDAO.findAllTipoClases());
 
             if (claseId != null) {
                 Clase clase = claseDAO.findById(claseId);
@@ -241,16 +245,14 @@ public class SchedulesController extends AbstractController {
             }
 
             List<InscripcionClase> inscritos = inscripcionDAO.findByClaseId(claseId);
-            // info de cupos: [inscritos, capacidadMaxima]
             int[] cupos = inscripcionService.cuposInfo(claseId);
 
-            req.setAttribute("clase",           clase);
-            req.setAttribute("inscritos",       inscritos);
-            req.setAttribute("cuposOcupados",   cupos[0]);
-            req.setAttribute("cuposTotal",      cupos[1]);
-            req.setAttribute("cuposLibres",     cupos[1] - cupos[0]);
-            // Lista de clientes para el select de inscripción
-            req.setAttribute("clientes",        clienteDAO.findAll());
+            req.setAttribute("clase",         clase);
+            req.setAttribute("inscritos",      inscritos);
+            req.setAttribute("cuposOcupados",  cupos[0]);
+            req.setAttribute("cuposTotal",     cupos[1]);
+            req.setAttribute("cuposLibres",    cupos[1] - cupos[0]);
+            req.setAttribute("clientes",       clienteDAO.findAll());
 
             irA(ViewRoutes.SCHEDULES_INDEX + "?inscritos=true", req, resp);
 
@@ -285,18 +287,18 @@ public class SchedulesController extends AbstractController {
 
         if (!esAdmin(req)) { forbidden(resp); return; }
 
-        String id              = param(req, "id");
-        String nombreClase     = param(req, "nombreClase");
-        String idEmpleado      = param(req, "idEmpleado");
-        String idTipoClase     = param(req, "idTipoClase");
-        String capacidadStr    = param(req, "capacidadMaxima");
-        String descripcion     = param(req, "descripcion");
+        String id           = param(req, "id");
+        String nombreClase  = param(req, "nombreClase");
+        String idEmpleado   = param(req, "idEmpleado");
+        String idTipoClase  = param(req, "idTipoClase");
+        String capacidadStr = param(req, "capacidadMaxima");
+        String descripcion  = param(req, "descripcion");
 
         boolean esNuevo = (id == null || id.isBlank());
 
-        // ── Validaciones ─────────────────────────────────────────────────────
         if (nombreClase == null) {
-            volverAlFormularioClase(req, resp, esNuevo, id, "El nombre de la clase es obligatorio.");
+            volverAlFormularioClase(req, resp, esNuevo, id,
+                    "El nombre de la clase es obligatorio.");
             return;
         }
         if (idEmpleado == null || idTipoClase == null) {
@@ -336,17 +338,20 @@ public class SchedulesController extends AbstractController {
             clase.setTipoClase(tipoClase);
             clase.setCapacidadMaxima(capacidad);
             clase.setDescripcion(descripcion);
-            clase.setEstado(AppConfig.CLASE_VIGENTE); // siempre vigente al crear/editar
+            clase.setEstado(AppConfig.CLASE_VIGENTE);
 
             claseDAO.save(clase);
             String accion = esNuevo ? "registrada" : "actualizada";
-            LOGGER.info("Clase " + accion + ": " + clase.getId() + " | " + clase.getNombreClase());
-            mensajeExito(req, "Clase \"" + clase.getNombreClase() + "\" " + accion + " correctamente.");
+            LOGGER.info("Clase " + accion + ": " + clase.getId()
+                    + " | " + clase.getNombreClase());
+            mensajeExito(req, "Clase \"" + clase.getNombreClase()
+                    + "\" " + accion + " correctamente.");
             redirigirA("/schedules", req, resp);
 
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al guardar clase", e);
-            volverAlFormularioClase(req, resp, esNuevo, id, "Error al guardar la clase. Intenta nuevamente.");
+            volverAlFormularioClase(req, resp, esNuevo, id,
+                    "Error al guardar la clase. Intenta nuevamente.");
         }
     }
 
@@ -371,7 +376,6 @@ public class SchedulesController extends AbstractController {
                 return;
             }
 
-            // Invertir estado
             String nuevoEstado = clase.isVigente()
                     ? AppConfig.CLASE_SUSPENDIDA
                     : AppConfig.CLASE_VIGENTE;
@@ -380,7 +384,7 @@ public class SchedulesController extends AbstractController {
 
             LOGGER.info("Estado de clase cambiado: " + id + " → " + nuevoEstado);
             mensajeExito(req, "Clase \"" + clase.getNombreClase() + "\" "
-                    + (nuevoEstado.equals(AppConfig.CLASE_VIGENTE) ? "activada" : "suspendida")
+                    + (AppConfig.CLASE_VIGENTE.equals(nuevoEstado) ? "activada" : "suspendida")
                     + " correctamente.");
 
         } catch (SQLException e) {
@@ -393,7 +397,7 @@ public class SchedulesController extends AbstractController {
 
     /**
      * Agrega un horario a una clase (RF-09). Solo Admin.
-     * dia_semana: TINYINT 1-7 (1=Lunes … 7=Domingo).
+     * dia_semana: TINYINT 1-7 (1=Lunes … 7=Domingo) según el CHECK de la BD.
      * hora_inicio y hora_fin: formato HH:mm del input type="time".
      */
     private void guardarHorario(HttpServletRequest req, HttpServletResponse resp)
@@ -417,10 +421,10 @@ public class SchedulesController extends AbstractController {
         try {
             diaSemana = Integer.parseInt(diaSemanaStr.trim());
             if (diaSemana < 1 || diaSemana > 7) {
-                throw new NumberFormatException();
+                throw new NumberFormatException("Fuera de rango 1-7");
             }
         } catch (NumberFormatException e) {
-            mensajeError(req, "El día de la semana debe ser un número entre 1 y 7.");
+            mensajeError(req, "El día de la semana debe ser un número entre 1 (Lunes) y 7 (Domingo).");
             redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
             return;
         }
@@ -459,7 +463,9 @@ public class SchedulesController extends AbstractController {
 
             horarioDAO.save(horario);
             LOGGER.info("Horario agregado: " + horario.getId()
-                    + " | clase: " + claseId + " | " + horario.getRangoHorario());
+                    + " | clase: " + claseId
+                    + " | " + horario.getNombreDia()
+                    + " " + horario.getRangoHorario());
             mensajeExito(req, "Horario del " + horario.getNombreDia()
                     + " " + horario.getRangoHorario() + " agregado correctamente.");
 
@@ -471,7 +477,20 @@ public class SchedulesController extends AbstractController {
         redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
     }
 
-    /** Elimina un horario de una clase (RF-09). Solo Admin. */
+    /**
+     * Elimina UN horario específico de una clase (RF-09). Solo Admin.
+     *
+     * CORRECCIÓN del bug anterior:
+     *   Antes llamaba a horarioDAO.deleteByClaseId(claseId) que borraba
+     *   TODOS los horarios de la clase — comportamiento incorrecto.
+     *   Ahora usa horarioDAO.deleteById(horarioId) que borra solo
+     *   el horario indicado por su PK. HorarioDAO fue actualizado
+     *   para exponer este método.
+     *
+     * Parámetros esperados del formulario:
+     *   id      → ID del horario a eliminar (ej: HOR-2026-0001)
+     *   claseId → ID de la clase (para redirigir a su página de horarios)
+     */
     private void eliminarHorario(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -487,17 +506,18 @@ public class SchedulesController extends AbstractController {
         }
 
         try {
-            int eliminados = horarioDAO.deleteByClaseId(claseId);
-            // Nota: deleteByClaseId elimina todos los de la clase.
-            // Para eliminar uno específico se puede agregar deleteById al DAO.
-            // Aquí se hace la acción completa por ID directamente en SQL.
-            // Como el DAO actual no tiene deleteById, se delega al deleteByClaseId
-            // pasando el horarioId. Ajustar si se agrega deleteById al HorarioDAO.
-            LOGGER.info("Horario eliminado: " + horarioId);
-            mensajeExito(req, "Horario eliminado correctamente.");
+            // deleteById borra solo ese horario — no afecta a los demás
+            boolean eliminado = horarioDAO.deleteById(horarioId);
+            if (eliminado) {
+                LOGGER.info("Horario eliminado: " + horarioId
+                        + " | clase: " + (claseId != null ? claseId : "N/A"));
+                mensajeExito(req, "Horario eliminado correctamente.");
+            } else {
+                mensajeError(req, "No se encontró el horario con ID: " + horarioId);
+            }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al eliminar horario: " + horarioId, e);
-            mensajeError(req, "Error al eliminar el horario.");
+            mensajeError(req, "Error al eliminar el horario. Intenta nuevamente.");
         }
 
         redirigirA("/schedules?action=horarios&id=" + (claseId != null ? claseId : ""),
@@ -545,7 +565,7 @@ public class SchedulesController extends AbstractController {
             return;
         }
 
-        com.mycompany.herramientas.service.ContratoService.Resultado resultado =
+        ContratoService.Resultado resultado =
                 inscripcionService.cancelar(inscripcionId);
 
         if (resultado.isExitoso()) {

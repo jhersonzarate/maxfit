@@ -25,6 +25,11 @@ import java.util.logging.Logger;
  *             → Membresias
  *             → Empleados → TipoDocumentos + Cargos
  *             → MetodosPago
+ *
+ * ACTUALIZACIÓN:
+ *   Se añadió countByEstado(String estado) para el ReportsController.
+ *   Permite contar contratos activos, vencidos y cancelados con una sola
+ *   consulta parametrizada en lugar de cargar todos los contratos en memoria.
  */
 public class ContratoDAO {
 
@@ -84,6 +89,15 @@ public class ContratoDAO {
 
     private static final String SQL_COUNT_ACTIVOS =
         "SELECT COUNT(*) FROM Contratos WHERE estado = 'activo'";
+
+    /**
+     * Cuenta contratos filtrando por un estado específico.
+     * Usado por ReportsController para el resumen de contratos:
+     *   activos, vencidos y cancelados por separado.
+     * Un único query parametrizado evita cargar todos los contratos en memoria.
+     */
+    private static final String SQL_COUNT_BY_ESTADO =
+        "SELECT COUNT(*) FROM Contratos WHERE estado = ?";
 
     private static final String SQL_INGRESOS_MES =
         "SELECT ISNULL(SUM(monto_pagado), 0) FROM Contratos " +
@@ -178,6 +192,26 @@ public class ContratoDAO {
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_ACTIVOS);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
+        }
+        return 0;
+    }
+
+    /**
+     * Cuenta contratos por estado (activo, vencido o cancelado).
+     * Usado por ReportsController para mostrar el desglose por estado
+     * sin cargar todos los contratos en memoria.
+     *
+     * @param estado uno de: 'activo', 'vencido', 'cancelado'
+     *               (usar constantes de AppConfig.CONTRATO_*)
+     * @return número de contratos en ese estado
+     */
+    public int countByEstado(String estado) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_COUNT_BY_ESTADO)) {
+            ps.setString(1, estado);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
         }
         return 0;
     }
