@@ -170,6 +170,11 @@ public class InscripcionDAO {
      * fecha_inscripcion la genera la BD con DEFAULT GETDATE().
      */
     public void save(InscripcionClase ins) throws SQLException {
+        
+        if (ins.getId() == null || ins.getId().trim().isEmpty()) {
+            ins.setId(IdGenerator.parInscripcion());
+        }
+        
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, ins.getId());
