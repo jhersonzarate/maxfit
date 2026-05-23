@@ -1,6 +1,5 @@
 package com.mycompany.herramientas.dao;
 
-import com.mycompany.herramientas.config.AppConfig;
 import com.mycompany.herramientas.config.DatabaseConnection;
 import com.mycompany.herramientas.model.*;
 
@@ -19,15 +18,13 @@ import java.util.logging.Logger;
  *   NUNCA usar double para dinero (errores de punto flotante).
  *
  *   fecha_pago → DATETIME DEFAULT GETDATE() → se deja que la BD
- *   la genere automáticamente; no se envía desde Java en el INSERT.
+ *   la genere automáticamente con DEFAULT, no se envía desde Java.
  *
  * Tablas involucradas (JOINs):
  *   Contratos → Clientes → TipoDocumentos
  *             → Membresias
  *             → Empleados → TipoDocumentos + Cargos
  *             → MetodosPago
- *
- * Formato de ID: CON-AÑO-CORRELATIVO (ej: CON-2026-0001)
  */
 public class ContratoDAO {
 
@@ -85,9 +82,6 @@ public class ContratoDAO {
         "AND DATEADD(day, ?, CAST(GETDATE() AS DATE)) " +
         "ORDER BY con.fecha_fin ASC";
 
-    private static final String SQL_EXISTS =
-        "SELECT COUNT(*) FROM Contratos WHERE id = ?";
-
     private static final String SQL_COUNT_ACTIVOS =
         "SELECT COUNT(*) FROM Contratos WHERE estado = 'activo'";
 
@@ -96,32 +90,19 @@ public class ContratoDAO {
         "WHERE MONTH(fecha_inicio) = MONTH(GETDATE()) " +
         "AND   YEAR(fecha_inicio)  = YEAR(GETDATE())";
 
-    /**
-     * INSERT de nuevo contrato.
-     * fecha_pago NO se incluye → la BD usa DEFAULT GETDATE().
-     * Posiciones: 1=id, 2=id_cliente, 3=id_membresia, 4=id_empleado,
-     *             5=id_metodo_pago, 6=fecha_inicio, 7=fecha_fin,
-     *             8=monto_pagado, 9=estado
-     */
     private static final String SQL_INSERT =
         "INSERT INTO Contratos " +
         "(id, id_cliente, id_membresia, id_empleado, id_metodo_pago, " +
         " fecha_inicio, fecha_fin, monto_pagado, estado) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // fecha_pago no se incluye → la BD usa DEFAULT GETDATE()
 
-    /** UPDATE de estado únicamente (cancelar/vencer manualmente). */
     private static final String SQL_UPDATE_ESTADO =
         "UPDATE Contratos SET estado = ? WHERE id = ?";
 
-    /** UPDATE masivo: marca como 'vencido' contratos con fecha_fin ya pasada. */
     private static final String SQL_MARCAR_VENCIDOS =
         "UPDATE Contratos SET estado = ? " +
         "WHERE estado = ? AND fecha_fin < ?";
-
-    /** Correlativo para IDs con formato CON-AÑO-CORRELATIVO */
-    private static final String SQL_NEXT_ID =
-        "SELECT ISNULL(MAX(CAST(SUBSTRING(id, CHARINDEX('-', id, 5)+1, 10) AS INT)), 0) + 1 " +
-        "FROM Contratos WHERE id LIKE 'CON-%'";
 
     // ─── Métodos públicos ─────────────────────────────────────────────────────
 
@@ -140,12 +121,13 @@ public class ContratoDAO {
              PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
             ps.setString(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? mapRow(rs) : null;
+                if (rs.next()) return mapRow(rs);
             }
         }
+        return null;
     }
 
-    /** Todos los contratos de un cliente, ordenados por fecha descendente. */
+    /** Todos los contratos de un cliente, ordenados por fecha desc. */
     public List<Contrato> findByClienteId(String clienteId) throws SQLException {
         List<Contrato> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -159,7 +141,7 @@ public class ContratoDAO {
     }
 
     /**
-     * Busca el contrato activo y vigente de un cliente.
+     * Busca el contrato activo vigente de un cliente.
      * Devuelve null si no tiene ninguno.
      * Usado en el check-in (RF-04) y en ContratoService.
      */
@@ -168,14 +150,15 @@ public class ContratoDAO {
              PreparedStatement ps = con.prepareStatement(SQL_FIND_ACTIVE_BY_CLIENTE)) {
             ps.setString(1, clienteId);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? mapRow(rs) : null;
+                if (rs.next()) return mapRow(rs);
             }
         }
+        return null;
     }
 
     /**
      * Contratos activos que vencen en los próximos N días.
-     * Usado en el widget "Próximos Vencimientos" del dashboard.
+     * Usado en el widget de "Próximos Vencimientos" del dashboard.
      */
     public List<Contrato> findProximosAVencer(int diasHastaVencer) throws SQLException {
         List<Contrato> lista = new ArrayList<>();
@@ -194,8 +177,9 @@ public class ContratoDAO {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_ACTIVOS);
              ResultSet rs = ps.executeQuery()) {
-            return rs.next() ? rs.getInt(1) : 0;
+            if (rs.next()) return rs.getInt(1);
         }
+        return 0;
     }
 
     /** Suma de monto_pagado de contratos del mes en curso (para Reportes). */
@@ -213,15 +197,10 @@ public class ContratoDAO {
 
     /**
      * Guarda un contrato nuevo.
-     * Si el id está vacío/null, se genera automáticamente con formato CON-AÑO-CORRELATIVO.
+     * El ID debe venir generado por IdGenerator.
      * fecha_pago la pone la BD con DEFAULT GETDATE().
-     *
-     * @param contrato objeto con todos los campos requeridos
      */
     public void save(Contrato contrato) throws SQLException {
-        if (contrato.getId() == null || contrato.getId().trim().isEmpty()) {
-            contrato.setId(generarId());
-        }
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, contrato.getId());
@@ -234,37 +213,29 @@ public class ContratoDAO {
             ps.setBigDecimal(8, contrato.getMontoPagado());
             ps.setString(9, contrato.getEstado());
             ps.executeUpdate();
-            LOGGER.info("Contrato insertado: " + contrato.getId()
-                    + " | cliente: " + contrato.getCliente().getId());
+            LOGGER.info("Contrato insertado: " + contrato.getId());
         }
     }
 
     /**
      * Cambia el estado de un contrato (cancelar, vencer manualmente).
-     *
-     * @param id          ID del contrato
-     * @param nuevoEstado nuevo estado ('cancelado', 'vencido')
      * @return true si se actualizó al menos una fila
      */
-    public boolean updateEstado(String id, String nuevoEstado) throws SQLException {
+    public boolean cancelar(String id, String nuevoEstado) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_UPDATE_ESTADO)) {
             ps.setString(1, nuevoEstado);
             ps.setString(2, id);
-            int filas = ps.executeUpdate();
-            if (filas > 0) {
-                LOGGER.info("Contrato " + id + " → estado=" + nuevoEstado);
-            }
-            return filas > 0;
+            return ps.executeUpdate() > 0;
         }
     }
 
     /**
-     * UPDATE masivo: marca como 'vencido' todos los contratos cuya fecha_fin
-     * ya pasó y aún tienen estado 'activo'.
+     * UPDATE masivo: marca como 'vencido' todos los contratos
+     * cuya fecha_fin ya pasó y aún tienen estado 'activo'.
      * Llamado desde ContratoService.actualizarVencidos().
      *
-     * @param hoy          fecha actual
+     * @param hoy          fecha actual (LocalDate.now())
      * @param estadoActual estado que tienen ahora ('activo')
      * @param estadoNuevo  estado nuevo ('vencido')
      * @return número de filas actualizadas
@@ -276,30 +247,11 @@ public class ContratoDAO {
             ps.setString(1, estadoNuevo);
             ps.setString(2, estadoActual);
             ps.setDate(3, Date.valueOf(hoy));
-            int filas = ps.executeUpdate();
-            if (filas > 0) {
-                LOGGER.info("Contratos marcados como vencidos: " + filas);
-            }
-            return filas;
+            return ps.executeUpdate();
         }
     }
 
     // ─── Privados ─────────────────────────────────────────────────────────────
-
-    /**
-     * Genera el ID con formato CON-AÑO-CORRELATIVO.
-     * El correlativo se obtiene de la BD para ser thread-safe en Tomcat.
-     * Ejemplo: CON-2026-0001
-     */
-    private String generarId() throws SQLException {
-        int anio = LocalDate.now().getYear();
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_NEXT_ID);
-             ResultSet rs = ps.executeQuery()) {
-            int siguiente = rs.next() ? rs.getInt(1) : 1;
-            return String.format("%s-%d-%04d", AppConfig.PREFIX_CONTRATO, anio, siguiente);
-        }
-    }
 
     private Contrato mapRow(ResultSet rs) throws SQLException {
         // TipoDocumento del cliente

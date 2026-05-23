@@ -1,30 +1,30 @@
 package com.mycompany.herramientas.dao;
 
 import com.mycompany.herramientas.config.DatabaseConnection;
-import com.mycompany.herramientas.model.*;
+import com.mycompany.herramientas.model.Clase;
+import com.mycompany.herramientas.model.Horario;
 
 import java.sql.*;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * DAO para la tabla Horarios (RF-09).
  *
- * Tablas involucradas:
- *   Horarios → Clases → Empleados + TipoClases
+ * Separado de ClaseDAO porque son entidades distintas:
+ *   Una Clase puede tener múltiples Horarios.
+ *   Una Clase puede modificarse sin tocar sus Horarios y viceversa.
  *
- * La columna dia_semana es TINYINT (1=Lunes … 7=Domingo).
- * El modelo Horario.java tiene getNombreDia() para convertirlo a español en la vista.
+ * Tipos de datos críticos según el SQL:
+ *   dia_semana  → TINYINT CHECK (dia_semana BETWEEN 1 AND 7)
+ *                 1=Lunes, 2=Martes, …, 7=Domingo
+ *                 En Java es int. El modelo Horario tiene getNombreDia().
+ *   hora_inicio → TIME en BD → java.sql.Time → LocalTime en Java
+ *   hora_fin    → TIME en BD → java.sql.Time → LocalTime en Java
  *
- * Estados válidos (columna estado):
- *   'programado' → horario activo
- *   'cancelado'  → suspendido temporalmente
- *
- * findByDiaSemana() es útil para el dashboard:
- *   muestra cuántas clases hay hoy (RF dashboard).
+ * Estados válidos según BD:
+ *   CHECK (estado IN ('programado','cancelado')) DEFAULT 'programado'
  */
 public class HorarioDAO {
 
@@ -32,66 +32,66 @@ public class HorarioDAO {
 
     // ─── SQL ─────────────────────────────────────────────────────────────────
 
-    /**
-     * SELECT que une Horarios con Clases y su entrenador.
-     * Se reutilizan alias de ClaseDAO donde coinciden.
-     */
     private static final String SQL_SELECT_BASE =
         "SELECT h.id, h.dia_semana, h.hora_inicio, h.hora_fin, h.estado, " +
-        // Clase
-        "       cl.id AS cl_id, cl.nombre_clase, cl.capacidad_maxima, " +
-        "       cl.descripcion AS cl_desc, cl.estado AS cl_estado, " +
-        // Empleado (entrenador de la clase)
-        "       emp.id AS emp_id, emp.nombre AS emp_nombre, emp.apellido AS emp_apellido, " +
-        "       emp.email AS emp_email, emp.telefono AS emp_tel, emp.numeroDocumento AS emp_doc, " +
-        "       tde.id AS tde_id, tde.nombre_documento AS tde_nd, tde.abreviado AS tde_abrev, " +
-        "       tde.tamañoMax AS tde_max, tde.tamañoMin AS tde_min, tde.esAlfanumerico AS tde_alfa, " +
-        "       car.id AS car_id, car.nombre AS car_nombre, " +
-        // TipoClase
-        "       tc.id AS tc_id, tc.nombre AS tc_nombre " +
+        "       cl.id AS cl_id, cl.nombre_clase, cl.estado AS cl_estado " +
         "FROM Horarios h " +
-        "INNER JOIN Clases cl           ON h.id_clase      = cl.id " +
-        "INNER JOIN Empleados emp        ON cl.id_empleado  = emp.id " +
-        "INNER JOIN TipoDocumentos tde   ON emp.id_TipoDocumento = tde.id " +
-        "INNER JOIN Cargos car           ON emp.id_Cargo    = car.id " +
-        "INNER JOIN TipoClases tc        ON cl.id_tipoClase = tc.id ";
+        "INNER JOIN Clases cl ON h.id_clase = cl.id ";
 
+    /** Todos los horarios, ordenados por día y hora de inicio. */
     private static final String SQL_FIND_ALL =
-        SQL_SELECT_BASE + "ORDER BY h.dia_semana, h.hora_inicio";
+        SQL_SELECT_BASE +
+        "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
+
+    /** Horarios de una clase específica. */
+    private static final String SQL_FIND_BY_CLASE =
+        SQL_SELECT_BASE +
+        "WHERE h.id_clase = ? " +
+        "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
+
+    /** Solo horarios activos (estado='programado') de una clase. */
+    private static final String SQL_FIND_PROGRAMADOS_BY_CLASE =
+        SQL_SELECT_BASE +
+        "WHERE h.id_clase = ? AND h.estado = 'programado' " +
+        "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
+
+    /**
+     * Horarios del día de hoy para el widget "Clases del Día" del dashboard.
+     * dia_semana: DATEPART(weekday, GETDATE()) en SQL Server devuelve
+     * 1=Domingo, 2=Lunes, …, 7=Sábado por defecto.
+     * Pero nuestro CHECK es 1=Lunes … 7=Domingo (ISO).
+     * Se usa DATEPART(ISO_WEEK…) no — mejor DATEPART(dw,…) con SET DATEFIRST 1.
+     * Alternativa más portable: pasar el día desde Java (LocalDate.now().getDayOfWeek()).
+     */
+    private static final String SQL_FIND_HOY =
+        SQL_SELECT_BASE +
+        "WHERE h.dia_semana = ? AND h.estado = 'programado' " +
+        "ORDER BY h.hora_inicio ASC";
 
     private static final String SQL_FIND_BY_ID =
         SQL_SELECT_BASE + "WHERE h.id = ?";
-
-    private static final String SQL_FIND_BY_CLASE =
-        SQL_SELECT_BASE + "WHERE h.id_clase = ? ORDER BY h.dia_semana, h.hora_inicio";
-
-    /** Horarios del día (TINYINT: 1=Lun, 2=Mar … 7=Dom) */
-    private static final String SQL_FIND_BY_DIA =
-        SQL_SELECT_BASE +
-        "WHERE h.dia_semana = ? AND h.estado = 'programado' " +
-        "ORDER BY h.hora_inicio";
 
     private static final String SQL_INSERT =
         "INSERT INTO Horarios (id, id_clase, dia_semana, hora_inicio, hora_fin, estado) " +
         "VALUES (?, ?, ?, ?, ?, ?)";
 
     private static final String SQL_UPDATE =
-        "UPDATE Horarios SET id_clase = ?, dia_semana = ?, hora_inicio = ?, " +
-        "hora_fin = ?, estado = ? WHERE id = ?";
+        "UPDATE Horarios " +
+        "SET dia_semana = ?, hora_inicio = ?, hora_fin = ?, estado = ? " +
+        "WHERE id = ?";
 
-    private static final String SQL_DELETE =
-        "DELETE FROM Horarios WHERE id = ?";
+    private static final String SQL_DELETE_BY_CLASE =
+        "DELETE FROM Horarios WHERE id_clase = ?";
 
     private static final String SQL_COUNT_HOY =
-        "SELECT COUNT(*) FROM Horarios h " +
-        "INNER JOIN Clases cl ON h.id_clase = cl.id " +
-        "WHERE h.dia_semana = ? " +
-        "  AND h.estado = 'programado' " +
-        "  AND cl.estado = 'vigente'";
+        "SELECT COUNT(*) FROM Horarios WHERE dia_semana = ? AND estado = 'programado'";
 
     // ─── Métodos públicos ─────────────────────────────────────────────────────
 
-    /** Todos los horarios ordenados por día y hora. */
+    /**
+     * Devuelve todos los horarios del sistema.
+     * Usado en la vista de Calendario (calendar.jsp).
+     */
     public List<Horario> findAll() throws SQLException {
         List<Horario> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -102,21 +102,9 @@ public class HorarioDAO {
         return lista;
     }
 
-    /** Busca un horario por ID. Devuelve null si no existe. */
-    public Horario findById(String id) throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
-            ps.setString(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
-            }
-        }
-        return null;
-    }
-
     /**
-     * Todos los horarios de una clase específica.
-     * Una clase puede tener múltiples horarios (RF-09).
+     * Devuelve todos los horarios de una clase (programados y cancelados).
+     * Para la vista de edición de una clase.
      */
     public List<Horario> findByClaseId(String claseId) throws SQLException {
         List<Horario> lista = new ArrayList<>();
@@ -131,16 +119,14 @@ public class HorarioDAO {
     }
 
     /**
-     * Horarios programados para un día específico de la semana.
-     * Usado en el dashboard para mostrar "Clases del día".
-     *
-     * @param diaSemana valor TINYINT (1=Lunes … 7=Domingo)
+     * Solo los horarios programados de una clase.
+     * Para el widget de la tarjeta de clase en schedules.jsp.
      */
-    public List<Horario> findByDiaSemana(int diaSemana) throws SQLException {
+    public List<Horario> findProgramadosByClaseId(String claseId) throws SQLException {
         List<Horario> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_DIA)) {
-            ps.setInt(1, diaSemana);
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_PROGRAMADOS_BY_CLASE)) {
+            ps.setString(1, claseId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }
@@ -149,40 +135,69 @@ public class HorarioDAO {
     }
 
     /**
-     * INSERT si es nuevo, UPDATE si ya existe.
-     * El ID debe venir generado por IdGenerator (prefijo HOR) antes de llamar.
+     * Horarios programados para el día indicado.
+     * El parámetro diaSemana sigue el convenio ISO: 1=Lunes … 7=Domingo.
+     * Se obtiene con: LocalDate.now().getDayOfWeek().getValue()
+     * Usado en el dashboard para el widget "Clases del Día".
      */
-    public void save(Horario horario) throws SQLException {
-        boolean existe = horario.getId() != null && findById(horario.getId()) != null;
+    public List<Horario> findByDia(int diaSemana) throws SQLException {
+        List<Horario> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_HOY)) {
+            ps.setInt(1, diaSemana);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
+    /** Busca un horario por su ID. Devuelve null si no existe. */
+    public Horario findById(String id) throws SQLException {
+        if (id == null || id.trim().isEmpty()) return null;
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
+            ps.setString(1, id.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Guarda (INSERT si es nuevo, UPDATE si ya existe).
+     * El ID debe venir generado por IdGenerator.parHorario().
+     */
+    public void save(Horario h) throws SQLException {
+        boolean esNuevo = h.getId() == null || h.getId().trim().isEmpty()
+                || findById(h.getId()) == null;
         try (Connection con = DatabaseConnection.getConnection()) {
-            if (!existe) {
-                insert(con, horario);
+            if (esNuevo) {
+                insert(con, h);
             } else {
-                update(con, horario);
+                update(con, h);
             }
         }
     }
 
     /**
-     * Elimina un horario por ID.
-     *
-     * @return true si se eliminó, false si no existía
+     * Elimina todos los horarios de una clase.
+     * Llamado antes de borrar una clase para respetar la FK.
      */
-    public boolean delete(String id) throws SQLException {
+    public int deleteByClaseId(String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
-            ps.setString(1, id);
-            return ps.executeUpdate() > 0;
+             PreparedStatement ps = con.prepareStatement(SQL_DELETE_BY_CLASE)) {
+            ps.setString(1, claseId);
+            return ps.executeUpdate();
         }
     }
 
     /**
-     * Cuenta los horarios programados para el día de la semana dado.
-     * Solo cuenta clases vigentes + horarios programados.
-     *
-     * @param diaSemana valor TINYINT (1=Lunes … 7=Domingo)
+     * Cuenta los horarios programados para un día de la semana.
+     * Para el widget "Clases del Día" en el dashboard (número rápido).
      */
-    public int countPorDia(int diaSemana) throws SQLException {
+    public int countByDia(int diaSemana) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_HOY)) {
             ps.setInt(1, diaSemana);
@@ -199,8 +214,8 @@ public class HorarioDAO {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, h.getId());
             ps.setString(2, h.getClase().getId());
-            ps.setInt(3, h.getDiaSemana());
-            ps.setTime(4, Time.valueOf(h.getHoraInicio()));
+            ps.setInt(3, h.getDiaSemana());                   // TINYINT en BD
+            ps.setTime(4, Time.valueOf(h.getHoraInicio()));   // TIME en BD
             ps.setTime(5, Time.valueOf(h.getHoraFin()));
             ps.setString(6, h.getEstado());
             ps.executeUpdate();
@@ -212,63 +227,37 @@ public class HorarioDAO {
 
     private void update(Connection con, Horario h) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(SQL_UPDATE)) {
-            ps.setString(1, h.getClase().getId());
-            ps.setInt(2, h.getDiaSemana());
-            ps.setTime(3, Time.valueOf(h.getHoraInicio()));
-            ps.setTime(4, Time.valueOf(h.getHoraFin()));
-            ps.setString(5, h.getEstado());
-            ps.setString(6, h.getId());
+            ps.setInt(1, h.getDiaSemana());
+            ps.setTime(2, Time.valueOf(h.getHoraInicio()));
+            ps.setTime(3, Time.valueOf(h.getHoraFin()));
+            ps.setString(4, h.getEstado());
+            ps.setString(5, h.getId());
             ps.executeUpdate();
             LOGGER.info("Horario actualizado: " + h.getId());
         }
     }
 
+    /**
+     * Mapea una fila del ResultSet a un objeto Horario.
+     * Solo hidrata los datos de Clase necesarios (id + nombre_clase),
+     * no hace JOIN completo con Empleado/TipoClase para mantener el query liviano.
+     * Si se necesita el objeto Clase completo, usar ClaseDAO.findById().
+     */
     private Horario mapRow(ResultSet rs) throws SQLException {
-        TipoDocumento tdEmp = new TipoDocumento();
-        tdEmp.setId(rs.getString("tde_id"));
-        tdEmp.setNombreDocumento(rs.getString("tde_nd"));
-        tdEmp.setAbreviado(rs.getString("tde_abrev"));
-        tdEmp.setTamañoMax(rs.getInt("tde_max"));
-        tdEmp.setTamañoMin(rs.getInt("tde_min"));
-        tdEmp.setEsAlfanumerico(rs.getBoolean("tde_alfa"));
+        // Clase (parcial — solo id y nombre para mostrar en las vistas de horario)
+        Clase cl = new Clase();
+        cl.setId(rs.getString("cl_id"));
+        cl.setNombreClase(rs.getString("nombre_clase"));
+        cl.setEstado(rs.getString("cl_estado"));
 
-        Cargo cargo = new Cargo();
-        cargo.setId(rs.getString("car_id"));
-        cargo.setNombre(rs.getString("car_nombre"));
-
-        Empleado empleado = new Empleado();
-        empleado.setId(rs.getString("emp_id"));
-        empleado.setNombre(rs.getString("emp_nombre"));
-        empleado.setApellido(rs.getString("emp_apellido"));
-        empleado.setEmail(rs.getString("emp_email"));
-        empleado.setNumeroDocumento(rs.getString("emp_doc"));
-        String empTel = rs.getString("emp_tel");
-        empleado.setTelefono(rs.wasNull() ? null : empTel);
-        empleado.setTipoDocumento(tdEmp);
-        empleado.setCargo(cargo);
-
-        TipoClase tipoClase = new TipoClase();
-        tipoClase.setId(rs.getString("tc_id"));
-        tipoClase.setNombre(rs.getString("tc_nombre"));
-
-        Clase clase = new Clase();
-        clase.setId(rs.getString("cl_id"));
-        clase.setNombreClase(rs.getString("nombre_clase"));
-        clase.setEmpleado(empleado);
-        clase.setTipoClase(tipoClase);
-        clase.setCapacidadMaxima(rs.getInt("capacidad_maxima"));
-        String clDesc = rs.getString("cl_desc");
-        clase.setDescripcion(rs.wasNull() ? null : clDesc);
-        clase.setEstado(rs.getString("cl_estado"));
-
-        Horario horario = new Horario();
-        horario.setId(rs.getString("id"));
-        horario.setClase(clase);
-        horario.setDiaSemana(rs.getInt("dia_semana"));
-        horario.setHoraInicio(rs.getTime("hora_inicio").toLocalTime());
-        horario.setHoraFin(rs.getTime("hora_fin").toLocalTime());
-        horario.setEstado(rs.getString("estado"));
-
-        return horario;
+        // Horario
+        Horario h = new Horario();
+        h.setId(rs.getString("id"));
+        h.setClase(cl);
+        h.setDiaSemana(rs.getInt("dia_semana"));        // TINYINT → int
+        h.setHoraInicio(rs.getTime("hora_inicio").toLocalTime()); // Time → LocalTime
+        h.setHoraFin(rs.getTime("hora_fin").toLocalTime());
+        h.setEstado(rs.getString("estado"));
+        return h;
     }
 }

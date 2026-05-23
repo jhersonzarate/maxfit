@@ -7,20 +7,26 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * DAO para la tabla Membresias (RF-02).
  *
- * NOTA: La tabla Membresias NO tiene columna "estado" en la BD.
- * Todos los planes registrados están disponibles para asignar a contratos.
- * AppConfig.java lo documenta explícitamente.
- * Si en el futuro se requiere activar/desactivar planes, se debe agregar
- * la columna estado a la BD primero.
+ * NOTA CRÍTICA sobre el SQL del proyecto:
+ *   La tabla Membresias NO tiene columna "estado".
+ *   El SQL original es:
+ *     CREATE TABLE Membresias (
+ *       id VARCHAR(20) NOT NULL PRIMARY KEY,
+ *       nombre_membresia VARCHAR(100) NOT NULL,
+ *       precio DECIMAL(10,2) NOT NULL,
+ *       duracion_meses INT NOT NULL,
+ *       descripcion VARCHAR(200)
+ *     );
+ *   Por eso este DAO NO filtra por estado — todos los planes
+ *   registrados están disponibles para asignar a contratos.
  *
- * Se usa BigDecimal para el campo precio porque double genera
- * errores de redondeo en operaciones monetarias (RNF-07).
+ * Se usa BigDecimal para precio — NUNCA double para dinero.
+ * La columna descripcion es NULL-able.
  */
 public class MembresiaDAO {
 
@@ -31,7 +37,7 @@ public class MembresiaDAO {
     private static final String SQL_FIND_ALL =
         "SELECT id, nombre_membresia, precio, duracion_meses, descripcion " +
         "FROM Membresias " +
-        "ORDER BY duracion_meses, nombre_membresia";
+        "ORDER BY duracion_meses ASC, precio ASC";
 
     private static final String SQL_FIND_BY_ID =
         "SELECT id, nombre_membresia, precio, duracion_meses, descripcion " +
@@ -42,8 +48,8 @@ public class MembresiaDAO {
         "VALUES (?, ?, ?, ?, ?)";
 
     private static final String SQL_UPDATE =
-        "UPDATE Membresias SET nombre_membresia = ?, precio = ?, " +
-        "duracion_meses = ?, descripcion = ? " +
+        "UPDATE Membresias " +
+        "SET nombre_membresia = ?, precio = ?, duracion_meses = ?, descripcion = ? " +
         "WHERE id = ?";
 
     private static final String SQL_DELETE =
@@ -55,24 +61,30 @@ public class MembresiaDAO {
     // ─── Métodos públicos ─────────────────────────────────────────────────────
 
     /**
-     * Todos los planes ordenados por duración y nombre.
-     * Como la tabla no tiene estado, se devuelven todos.
+     * Devuelve todos los planes ordenados por duración y precio.
+     * El recepcionista y el admin los ven en el formulario de nuevo contrato.
      */
     public List<Membresia> findAll() throws SQLException {
         List<Membresia> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
         }
         return lista;
     }
 
-    /** Busca una membresía por su ID. Devuelve null si no existe. */
+    /**
+     * Busca una membresía por su ID.
+     * Devuelve null si no existe.
+     */
     public Membresia findById(String id) throws SQLException {
+        if (id == null || id.trim().isEmpty()) return null;
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
-            ps.setString(1, id);
+            ps.setString(1, id.trim());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return mapRow(rs);
             }
@@ -81,28 +93,29 @@ public class MembresiaDAO {
     }
 
     /**
-     * INSERT si es nueva, UPDATE si ya existe.
-     * El ID debe venir generado antes de llamar save().
-     * IDs de membresías siguen el patrón MEM-XXXX (ej: MEM-STD, MEM-TRIM).
-     * Para membresías creadas dinámicamente usar IdGenerator con prefijo "MEM".
+     * Guarda (INSERT o UPDATE) una membresía.
+     * Si el id es null o no existe en BD → INSERT.
+     * Si ya existe → UPDATE.
+     * El ID debe venir generado por IdGenerator.parMembresia() antes de llamar.
+     *
+     * @throws SQLException si hay error de BD (ej: nombre duplicado)
      */
-    public void save(Membresia membresia) throws SQLException {
-        boolean existe = membresia.getId() != null
-                && findById(membresia.getId()) != null;
-
+    public void save(Membresia m) throws SQLException {
+        boolean existe = m.getId() != null && findById(m.getId()) != null;
         try (Connection con = DatabaseConnection.getConnection()) {
             if (!existe) {
-                insert(con, membresia);
+                insert(con, m);
             } else {
-                update(con, membresia);
+                update(con, m);
             }
         }
     }
 
     /**
      * Elimina una membresía por ID.
-     * PRECAUCIÓN: la BD tiene FK desde Contratos hacia Membresias.
-     * Si la membresía tiene contratos asociados, la BD lanzará error.
+     * Precaución: si hay contratos que referencian esta membresía,
+     * la BD lanzará un error de integridad referencial.
+     * El controlador debe capturarlo y mostrar mensaje amigable.
      *
      * @return true si se eliminó, false si no existía
      */
@@ -114,7 +127,7 @@ public class MembresiaDAO {
         }
     }
 
-    /** Total de membresías registradas. */
+    /** Total de membresías registradas (para estadísticas del dashboard). */
     public int count() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT);
@@ -130,11 +143,12 @@ public class MembresiaDAO {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, m.getId());
             ps.setString(2, m.getNombreMembresia().trim());
-            ps.setBigDecimal(3, m.getPrecio());
+            ps.setBigDecimal(3, m.getPrecio());          // DECIMAL(10,2) — nunca double
             ps.setInt(4, m.getDuracionMeses());
-            setNullableString(ps, 5, m.getDescripcion());
+            setNullableString(ps, 5, m.getDescripcion()); // descripcion es NULL-able
             ps.executeUpdate();
-            LOGGER.info("Membresía insertada: " + m.getNombreMembresia());
+            LOGGER.info("Membresía insertada: " + m.getId()
+                    + " | " + m.getNombreMembresia());
         }
     }
 
@@ -146,31 +160,32 @@ public class MembresiaDAO {
             setNullableString(ps, 4, m.getDescripcion());
             ps.setString(5, m.getId());
             ps.executeUpdate();
-            LOGGER.info("Membresía actualizada: " + m.getNombreMembresia());
+            LOGGER.info("Membresía actualizada: " + m.getId());
         }
     }
 
+    /**
+     * Mapea una fila del ResultSet a un objeto Membresia.
+     * rs.wasNull() para descripcion que puede ser NULL en BD.
+     */
     private Membresia mapRow(ResultSet rs) throws SQLException {
         Membresia m = new Membresia();
         m.setId(rs.getString("id"));
         m.setNombreMembresia(rs.getString("nombre_membresia"));
-        // getBigDecimal es la forma correcta para DECIMAL(10,2) — nunca getDouble
         m.setPrecio(rs.getBigDecimal("precio"));
         m.setDuracionMeses(rs.getInt("duracion_meses"));
-
-        // descripcion es NULL-able
         String desc = rs.getString("descripcion");
         m.setDescripcion(rs.wasNull() ? null : desc);
-
         return m;
     }
 
-    private void setNullableString(PreparedStatement ps, int i, String val)
+    /** Establece un String o NULL en el PreparedStatement. */
+    private void setNullableString(PreparedStatement ps, int idx, String val)
             throws SQLException {
         if (val != null && !val.trim().isEmpty()) {
-            ps.setString(i, val.trim());
+            ps.setString(idx, val.trim());
         } else {
-            ps.setNull(i, Types.VARCHAR);
+            ps.setNull(idx, Types.VARCHAR);
         }
     }
 }

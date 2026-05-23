@@ -1,6 +1,5 @@
 package com.mycompany.herramientas.dao;
 
-import com.mycompany.herramientas.config.AppConfig;
 import com.mycompany.herramientas.config.DatabaseConnection;
 import com.mycompany.herramientas.model.*;
 
@@ -12,21 +11,19 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * DAO para la tabla Asistencia (RF-04, RF-05).
+ * DAO para la tabla Asistencia (RF-05).
  *
  * Restricción clave de la BD:
  *   CONSTRAINT UQ_Asistencia_Dia UNIQUE (id_contrato, fecha)
  *   → Solo puede existir UN registro de asistencia por contrato por día.
  *   → existeHoy() verifica esto ANTES de hacer el INSERT.
  *
- * La tabla Asistencia solo tiene FK a Contratos (id_contrato).
- * El cliente se obtiene navegando: asistencia → contrato → cliente.
+ * Nota sobre el modelo:
+ *   La tabla Asistencia solo tiene FK a Contratos (id_contrato).
+ *   El cliente se obtiene navegando: asistencia → contrato → cliente.
+ *   No hay FK directa a Clientes en esta tabla.
  *
- * Estados válidos (columna estado): 'asistio', 'falto', 'pendiente'
- * hora_ingreso: TIME NULL — se rellena al hacer check-in.
- *
- * Formato de ID: ASI-AÑO-CORRELATIVO (ej: ASI-2026-0001)
- * El correlativo se calcula directamente en BD para ser thread-safe.
+ * Estados válidos (según BD): 'asistio', 'falto', 'pendiente'
  */
 public class AsistenciaDAO {
 
@@ -36,6 +33,7 @@ public class AsistenciaDAO {
 
     private static final String SQL_SELECT_BASE =
         "SELECT a.id, a.fecha, a.estado, a.hora_ingreso, " +
+        // Contrato completo (para obtener el cliente y membresía)
         "  con.id AS con_id, con.fecha_inicio, con.fecha_fin, " +
         "  con.monto_pagado, con.estado AS con_estado, " +
         "  cli.id AS cli_id, cli.nombre AS cli_nom, cli.apellido AS cli_ap, " +
@@ -57,9 +55,8 @@ public class AsistenciaDAO {
         "WHERE con.id_cliente = ? ORDER BY a.fecha DESC, a.hora_ingreso DESC";
 
     /**
-     * Filtro combinado (RF-05): por cliente y/o rango de fechas.
+     * Filtro combinado para RF-05: historial por cliente y/o rango de fechas.
      * Los parámetros opcionales se pasan como NULL → la BD ignora ese filtro.
-     * Cada filtro ocupa dos posiciones porque aparece dos veces en el WHERE.
      */
     private static final String SQL_FILTER =
         SQL_SELECT_BASE +
@@ -73,41 +70,27 @@ public class AsistenciaDAO {
         "ORDER BY a.fecha DESC, a.hora_ingreso DESC " +
         "OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY";
 
-    /** Verifica existencia del par (id_contrato, fecha) — respeta el UNIQUE */
+    /** Verifica si ya existe un registro para (id_contrato, fecha) — respeta el UNIQUE */
     private static final String SQL_EXISTE_HOY =
         "SELECT COUNT(*) FROM Asistencia WHERE id_contrato = ? AND fecha = ?";
 
-    /** Total de check-ins con estado 'asistio' para el día de hoy */
     private static final String SQL_COUNT_HOY =
         "SELECT COUNT(*) FROM Asistencia " +
         "WHERE fecha = CAST(GETDATE() AS DATE) AND estado = 'asistio'";
 
-    /**
-     * INSERT de una nueva asistencia.
-     * Posiciones: 1=id, 2=id_contrato, 3=fecha, 4=estado, 5=hora_ingreso
-     */
     private static final String SQL_INSERT =
         "INSERT INTO Asistencia (id, id_contrato, fecha, estado, hora_ingreso) " +
         "VALUES (?, ?, ?, ?, ?)";
 
-    /**
-     * UPDATE del estado y hora de ingreso de una asistencia existente.
-     * Posiciones: 1=estado, 2=hora_ingreso, 3=id
-     */
     private static final String SQL_UPDATE_ESTADO =
         "UPDATE Asistencia SET estado = ?, hora_ingreso = ? WHERE id = ?";
 
-    /**
-     * Calcula el siguiente correlativo para el formato ASI-AÑO-CORRELATIVO.
-     * Extrae el número después del último '-' en IDs que empiecen con 'ASI-'.
-     */
     private static final String SQL_NEXT_ID =
         "SELECT ISNULL(MAX(CAST(SUBSTRING(id, CHARINDEX('-', id, 5)+1, 10) AS INT)), 0) + 1 " +
         "FROM Asistencia WHERE id LIKE 'ASI-%'";
 
     // ─── Métodos públicos ─────────────────────────────────────────────────────
 
-    /** Devuelve todas las asistencias ordenadas por fecha y hora descendente. */
     public List<Asistencia> findAll() throws SQLException {
         List<Asistencia> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -118,7 +101,6 @@ public class AsistenciaDAO {
         return lista;
     }
 
-    /** Historial de asistencias de un contrato específico. */
     public List<Asistencia> findByContratoId(String contratoId) throws SQLException {
         List<Asistencia> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -148,9 +130,9 @@ public class AsistenciaDAO {
      * Filtro combinado para RF-05.
      * Cualquier parámetro puede ser null para ignorarlo.
      *
-     * @param clienteId  ID del cliente  (null = todos los clientes)
-     * @param desde      Fecha de inicio del rango (null = sin límite inferior)
-     * @param hasta      Fecha de fin del rango    (null = sin límite superior)
+     * @param clienteId  ID del cliente (null = todos los clientes)
+     * @param desde      fecha de inicio del rango (null = sin límite inferior)
+     * @param hasta      fecha de fin del rango    (null = sin límite superior)
      */
     public List<Asistencia> filter(String clienteId,
                                     LocalDate desde,
@@ -159,7 +141,7 @@ public class AsistenciaDAO {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FILTER)) {
 
-            // Parámetros 1-2: clienteId (aparece dos veces en el WHERE)
+            // clienteId (doble porque aparece dos veces en WHERE)
             if (clienteId != null) {
                 ps.setString(1, clienteId);
                 ps.setString(2, clienteId);
@@ -167,7 +149,7 @@ public class AsistenciaDAO {
                 ps.setNull(1, Types.VARCHAR);
                 ps.setNull(2, Types.VARCHAR);
             }
-            // Parámetros 3-4: desde
+            // desde
             if (desde != null) {
                 ps.setDate(3, Date.valueOf(desde));
                 ps.setDate(4, Date.valueOf(desde));
@@ -175,7 +157,7 @@ public class AsistenciaDAO {
                 ps.setNull(3, Types.DATE);
                 ps.setNull(4, Types.DATE);
             }
-            // Parámetros 5-6: hasta
+            // hasta
             if (hasta != null) {
                 ps.setDate(5, Date.valueOf(hasta));
                 ps.setDate(6, Date.valueOf(hasta));
@@ -192,9 +174,8 @@ public class AsistenciaDAO {
     }
 
     /**
-     * Últimas N asistencias — para el widget "Actividad Reciente" del dashboard.
-     *
-     * @param limite número máximo de filas (ej: 5 o 10)
+     * Últimos N check-ins, para el widget de "Actividad Reciente" del dashboard.
+     * @param limite número máximo de filas a devolver (ej: 5 o 10)
      */
     public List<Asistencia> findRecientes(int limite) throws SQLException {
         List<Asistencia> lista = new ArrayList<>();
@@ -209,8 +190,8 @@ public class AsistenciaDAO {
     }
 
     /**
-     * Verifica si ya existe un registro para el par (id_contrato, fecha).
-     * Respeta el UNIQUE (id_contrato, fecha) de la BD.
+     * Verifica si ya existe un registro de asistencia para el par
+     * (id_contrato, fecha). Respeta el UNIQUE (id_contrato, fecha) de la BD.
      * AsistenciaService llama esto ANTES de hacer el INSERT.
      */
     public boolean existeHoy(String contratoId, LocalDate fecha) throws SQLException {
@@ -219,37 +200,32 @@ public class AsistenciaDAO {
             ps.setString(1, contratoId);
             ps.setDate(2, Date.valueOf(fecha));
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
+                if (rs.next()) return rs.getInt(1) > 0;
             }
         }
+        return false;
     }
 
     /**
      * Total de check-ins ('asistio') del día de hoy.
-     * Para el widget "Atendidos Hoy" del dashboard del Recepcionista.
+     * Para el widget "Atendidos Hoy" del dashboard de Recepcionista.
      */
     public int countHoy() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_HOY);
              ResultSet rs = ps.executeQuery()) {
-            return rs.next() ? rs.getInt(1) : 0;
+            if (rs.next()) return rs.getInt(1);
         }
+        return 0;
     }
 
     /**
-     * Guarda una nueva asistencia en la BD.
-     * El ID se genera aquí usando el correlativo calculado en la BD.
-     *
-     * Posiciones del INSERT:
-     *   1 = id
-     *   2 = id_contrato
-     *   3 = fecha
-     *   4 = estado
-     *   5 = hora_ingreso (puede ser NULL)
-     *
-     * @param asistencia objeto con todos los campos excepto el id (se genera aquí)
+     * Guarda una nueva asistencia.
+     * El ID se genera aquí usando el correlativo de la BD.
+     * La hora_ingreso puede ser null si el estado es 'pendiente' o 'falto'.
      */
     public void save(Asistencia asistencia) throws SQLException {
+        // Generar ID si no tiene uno
         if (asistencia.getId() == null || asistencia.getId().trim().isEmpty()) {
             asistencia.setId(generarId());
         }
@@ -260,48 +236,15 @@ public class AsistenciaDAO {
             ps.setString(2, asistencia.getContrato().getId());
             ps.setDate(3, Date.valueOf(asistencia.getFecha()));
             ps.setString(4, asistencia.getEstado());
-
-            // hora_ingreso es NULL-able — null si estado es 'falto' o 'pendiente'
+            // hora_ingreso NULL-able (null si es 'falto' o 'pendiente')
             if (asistencia.getHoraIngreso() != null) {
-                ps.setTime(5, Time.valueOf(asistencia.getHoraIngreso()));
+                ps.setTime(4 + 1, Time.valueOf(asistencia.getHoraIngreso()));
             } else {
-                ps.setNull(5, Types.TIME);
+                ps.setNull(4 + 1, Types.TIME);
             }
-
             ps.executeUpdate();
             LOGGER.info("Asistencia registrada: " + asistencia.getId()
-                    + " | contrato: " + asistencia.getContrato().getId()
-                    + " | estado: " + asistencia.getEstado());
-        }
-    }
-
-    /**
-     * Actualiza el estado y la hora_ingreso de una asistencia existente.
-     * Útil para pasar de 'pendiente' a 'asistio' o 'falto'.
-     *
-     * Posiciones del UPDATE:
-     *   1 = estado
-     *   2 = hora_ingreso (puede ser NULL si estado es 'falto')
-     *   3 = id
-     *
-     * @return true si se actualizó al menos una fila
-     */
-    public boolean updateEstado(String id, String nuevoEstado, LocalTime horaIngreso)
-            throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_UPDATE_ESTADO)) {
-            ps.setString(1, nuevoEstado);
-            if (horaIngreso != null) {
-                ps.setTime(2, Time.valueOf(horaIngreso));
-            } else {
-                ps.setNull(2, Types.TIME);
-            }
-            ps.setString(3, id);
-            int filas = ps.executeUpdate();
-            if (filas > 0) {
-                LOGGER.info("Asistencia actualizada: id=" + id + " → estado=" + nuevoEstado);
-            }
-            return filas > 0;
+                    + " | contrato: " + asistencia.getContrato().getId());
         }
     }
 
@@ -310,41 +253,35 @@ public class AsistenciaDAO {
     /**
      * Genera el ID de la asistencia con formato ASI-AÑO-CORRELATIVO.
      * El correlativo se obtiene de la BD para ser thread-safe en Tomcat.
-     * Ejemplo: ASI-2026-0001
      */
     private String generarId() throws SQLException {
-        int anio = LocalDate.now().getYear();
+        int año = LocalDate.now().getYear();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_NEXT_ID);
              ResultSet rs = ps.executeQuery()) {
             int siguiente = rs.next() ? rs.getInt(1) : 1;
-            return String.format("%s-%d-%04d", AppConfig.PREFIX_ASISTENCIA, anio, siguiente);
+            return String.format("ASI-%d-%04d", año, siguiente);
         }
     }
 
-    /**
-     * Mapea una fila del ResultSet a un objeto Asistencia completo.
-     * Construye el árbol: Asistencia → Contrato → Cliente + Membresia.
-     */
     private Asistencia mapRow(ResultSet rs) throws SQLException {
-        // Membresía (parcial — solo el nombre para mostrar en widgets)
+        // Membresía (mínima, solo nombre para mostrar en el widget)
         Membresia mem = new Membresia();
         mem.setId(rs.getString("mem_id"));
         mem.setNombreMembresia(rs.getString("nombre_membresia"));
 
-        // Cliente (parcial — solo datos necesarios para mostrar en tablas)
+        // Cliente (mínimo para mostrar en la tabla de asistencias)
         Cliente cli = new Cliente();
         cli.setId(rs.getString("cli_id"));
         cli.setNombre(rs.getString("cli_nom"));
         cli.setApellido(rs.getString("cli_ap"));
         cli.setNumeroDocumento(rs.getString("cli_doc"));
 
-        // Contrato (parcial — sin empleado ni método de pago, no necesarios aquí)
+        // Contrato (parcial — solo datos necesarios para Asistencia)
         Contrato contrato = new Contrato();
         contrato.setId(rs.getString("con_id"));
         contrato.setFechaInicio(rs.getDate("fecha_inicio").toLocalDate());
         contrato.setFechaFin(rs.getDate("fecha_fin").toLocalDate());
-        contrato.setMontoPagado(rs.getBigDecimal("monto_pagado"));
         contrato.setEstado(rs.getString("con_estado"));
         contrato.setCliente(cli);
         contrato.setMembresia(mem);
@@ -356,7 +293,7 @@ public class AsistenciaDAO {
         a.setFecha(rs.getDate("fecha").toLocalDate());
         a.setEstado(rs.getString("estado"));
 
-        // hora_ingreso es NULL-able — usar wasNull() tras getTime()
+        // hora_ingreso NULL-able
         Time hora = rs.getTime("hora_ingreso");
         a.setHoraIngreso(rs.wasNull() ? null : hora.toLocalTime());
 
