@@ -26,10 +26,13 @@ import java.util.logging.Logger;
  *             → Empleados → TipoDocumentos + Cargos
  *             → MetodosPago
  *
- * ACTUALIZACIÓN:
- *   Se añadió countByEstado(String estado) para el ReportsController.
- *   Permite contar contratos activos, vencidos y cancelados con una sola
- *   consulta parametrizada en lugar de cargar todos los contratos en memoria.
+ * ← CORRECCIÓN menor (Corrección 4 del análisis):
+ *   Se añadió findAllActivos() para que ReportsController pueda obtener
+ *   todos los contratos activos de forma limpia, sin el hack de
+ *   findProximosAVencer(36500) que era confuso y dependía de un detalle
+ *   de implementación interna del SQL.
+ *
+ * @author MaxFit
  */
 public class ContratoDAO {
 
@@ -87,15 +90,19 @@ public class ContratoDAO {
         "AND DATEADD(day, ?, CAST(GETDATE() AS DATE)) " +
         "ORDER BY con.fecha_fin ASC";
 
+    /**
+     * ← CORRECCIÓN 4: Devuelve todos los contratos activos ordenados por fecha_fin.
+     * Reemplaza el hack de findProximosAVencer(36500) que se usaba en
+     * ReportsController para obtener "todos los activos".
+     * Este query es semánticamente correcto y legible.
+     */
+    private static final String SQL_FIND_ALL_ACTIVOS =
+        SQL_SELECT_BASE +
+        "WHERE con.estado = 'activo' ORDER BY con.fecha_fin ASC";
+
     private static final String SQL_COUNT_ACTIVOS =
         "SELECT COUNT(*) FROM Contratos WHERE estado = 'activo'";
 
-    /**
-     * Cuenta contratos filtrando por un estado específico.
-     * Usado por ReportsController para el resumen de contratos:
-     *   activos, vencidos y cancelados por separado.
-     * Un único query parametrizado evita cargar todos los contratos en memoria.
-     */
     private static final String SQL_COUNT_BY_ESTADO =
         "SELECT COUNT(*) FROM Contratos WHERE estado = ?";
 
@@ -173,6 +180,10 @@ public class ContratoDAO {
     /**
      * Contratos activos que vencen en los próximos N días.
      * Usado en el widget de "Próximos Vencimientos" del dashboard.
+     *
+     * NOTA: este método es para alertas de vencimiento próximo.
+     * Para obtener TODOS los contratos activos sin límite de días,
+     * usar findAllActivos() — no pasar un número absurdo como 36500.
      */
     public List<Contrato> findProximosAVencer(int diasHastaVencer) throws SQLException {
         List<Contrato> lista = new ArrayList<>();
@@ -182,6 +193,26 @@ public class ContratoDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }
+        }
+        return lista;
+    }
+
+    /**
+     * ← CORRECCIÓN 4: Todos los contratos con estado 'activo', sin límite de fecha.
+     * Ordenados por fecha_fin ascendente (los que vencen antes, primero).
+     *
+     * Usar este método cuando se necesiten todos los contratos activos,
+     * por ejemplo en el reporte de membresías de ReportsController.
+     * Es la alternativa limpia al antiguo hack de findProximosAVencer(36500).
+     *
+     * @return lista de contratos activos, nunca null (puede ser vacía)
+     */
+    public List<Contrato> findAllActivos() throws SQLException {
+        List<Contrato> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL_ACTIVOS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) lista.add(mapRow(rs));
         }
         return lista;
     }
@@ -237,6 +268,31 @@ public class ContratoDAO {
     public void save(Contrato contrato) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
+            ps.setString(1, contrato.getId());
+            ps.setString(2, contrato.getCliente().getId());
+            ps.setString(3, contrato.getMembresia().getId());
+            ps.setString(4, contrato.getEmpleado().getId());
+            ps.setString(5, contrato.getMetodoPago().getId());
+            ps.setDate(6, Date.valueOf(contrato.getFechaInicio()));
+            ps.setDate(7, Date.valueOf(contrato.getFechaFin()));
+            ps.setBigDecimal(8, contrato.getMontoPagado());
+            ps.setString(9, contrato.getEstado());
+            ps.executeUpdate();
+            LOGGER.info("Contrato insertado: " + contrato.getId());
+        }
+    }
+
+    /**
+     * Guarda un contrato nuevo DENTRO de una transacción activa.
+     *
+     * ← CORRECCIÓN transacciones: overload que recibe la Connection
+     *   para no cerrarla — el Service hace commit() después.
+     *
+     * @param con      Connection con transacción ya iniciada
+     * @param contrato objeto a persistir
+     */
+    public void save(Connection con, Contrato contrato) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, contrato.getId());
             ps.setString(2, contrato.getCliente().getId());
             ps.setString(3, contrato.getMembresia().getId());

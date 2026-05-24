@@ -8,6 +8,7 @@ import com.mycompany.herramientas.model.Clase;
 import com.mycompany.herramientas.model.Cliente;
 import com.mycompany.herramientas.model.InscripcionClase;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -24,10 +25,22 @@ import java.util.logging.Logger;
  *   4. Verificar que la clase tenga cupo disponible (inscritos < capacidad_maxima).
  *   5. Registrar la inscripción dentro de una transacción.
  *
- * El paso 4 se hace dentro de la misma transacción para evitar que
- * dos hilos simultáneos lean "hay cupo" e inscriban a ambos superando el límite.
+ * ← CORRECCIÓN CRÍTICA — Transacciones:
+ *   El patrón anterior abría una transacción pero el DAO cerraba la Connection
+ *   con try-with-resources antes del commit(), rompiendo la atomicidad.
  *
- * Resultado tipado con enum para que el controlador sepa exactamente qué pasó.
+ *   Ahora:
+ *     1. beginTransaction() pone autoCommit=false en la Connection del ThreadLocal.
+ *     2. getConnection() devuelve esa misma Connection.
+ *     3. Los métodos del DAO que participan en la transacción reciben la
+ *        Connection como parámetro (overloads) y NO la cierran.
+ *     4. commit() / rollback() operan sobre la misma Connection.
+ *     5. closeConnection() cierra en finally.
+ *
+ *   Esto garantiza que el countInscritos() y el save() de la inscripción
+ *   ocurran en la misma transacción, evitando race conditions de cupo.
+ *
+ * @author MaxFit
  */
 public class InscripcionService {
 
@@ -43,7 +56,6 @@ public class InscripcionService {
         this.inscripcionDAO = new InscripcionDAO();
     }
 
-    // Constructor para tests con inyección de DAOs
     public InscripcionService(ClienteDAO clienteDAO, ClaseDAO claseDAO,
                                InscripcionDAO inscripcionDAO) {
         this.clienteDAO     = clienteDAO;
@@ -54,19 +66,19 @@ public class InscripcionService {
     // ── Resultado tipado ─────────────────────────────────────────────────────
 
     public enum TipoResultado {
-        OK,                   // Inscripción registrada
-        CLIENTE_NO_EXISTE,    // El ID de cliente no existe en BD
-        CLASE_NO_EXISTE,      // El ID de clase no existe en BD
-        CLASE_SUSPENDIDA,     // La clase está suspendida, no acepta inscripciones
-        YA_INSCRITO,          // El cliente ya está inscrito en esa clase
-        SIN_CUPO,             // La clase llegó a capacidad_maxima
-        ERROR_BD              // Error interno
+        OK,
+        CLIENTE_NO_EXISTE,
+        CLASE_NO_EXISTE,
+        CLASE_SUSPENDIDA,
+        YA_INSCRITO,
+        SIN_CUPO,
+        ERROR_BD
     }
 
     public static final class Resultado {
-        private final TipoResultado   tipo;
-        private final String          mensaje;
-        private final InscripcionClase inscripcion; // solo cuando tipo == OK
+        private final TipoResultado    tipo;
+        private final String           mensaje;
+        private final InscripcionClase inscripcion;
 
         private Resultado(TipoResultado tipo, String mensaje, InscripcionClase inscripcion) {
             this.tipo        = tipo;
@@ -92,15 +104,18 @@ public class InscripcionService {
         }
         static Resultado claseSuspendida(Clase c) {
             return new Resultado(TipoResultado.CLASE_SUSPENDIDA,
-                    "La clase \"" + c.getNombreClase() + "\" está suspendida y no acepta inscripciones.", null);
+                    "La clase \"" + c.getNombreClase()
+                    + "\" está suspendida y no acepta inscripciones.", null);
         }
         static Resultado yaInscrito(Cliente cli, Clase c) {
             return new Resultado(TipoResultado.YA_INSCRITO,
-                    cli.getNombreCompleto() + " ya está inscrito/a en \"" + c.getNombreClase() + "\".", null);
+                    cli.getNombreCompleto() + " ya está inscrito/a en \""
+                    + c.getNombreClase() + "\".", null);
         }
         static Resultado sinCupo(Clase c) {
             return new Resultado(TipoResultado.SIN_CUPO,
-                    "La clase \"" + c.getNombreClase() + "\" no tiene cupos disponibles (capacidad máxima: "
+                    "La clase \"" + c.getNombreClase()
+                    + "\" no tiene cupos disponibles (capacidad máxima: "
                     + c.getCapacidadMaxima() + ").", null);
         }
         static Resultado errorBd() {
@@ -132,15 +147,24 @@ public class InscripcionService {
             // 3. Verificar que la clase esté vigente
             if (!clase.isVigente()) return Resultado.claseSuspendida(clase);
 
-            // 4. Verificar que no esté ya inscrito
+            // 4. Verificar que no esté ya inscrito (fuera de transacción — solo lectura)
             if (inscripcionDAO.existeInscripcion(clienteId, claseId)) {
                 return Resultado.yaInscrito(cliente, clase);
             }
 
-            // 5. Verificar cupo disponible (dentro de transacción para evitar race condition)
+            /*
+             * ← CORRECCIÓN CRÍTICA:
+             * El countInscritos() y el save() deben ocurrir dentro de la
+             * misma transacción para evitar que dos requests simultáneos lean
+             * "hay cupo" e inscriban ambos superando capacidad_maxima.
+             *
+             * beginTransaction() → misma Connection para count y save.
+             */
             DatabaseConnection.beginTransaction();
+            Connection txCon = DatabaseConnection.getConnection();
 
-            int inscritos       = inscripcionDAO.countInscritos(claseId);
+            // 5. Verificar cupo dentro de la transacción (evita race condition)
+            int inscritos       = inscripcionDAO.countInscritos(txCon, claseId);
             int capacidadMaxima = clase.getCapacidadMaxima();
 
             if (inscritos >= capacidadMaxima) {
@@ -148,11 +172,11 @@ public class InscripcionService {
                 return Resultado.sinCupo(clase);
             }
 
-            // 6. Registrar inscripción
+            // 6. Registrar inscripción dentro de la misma transacción
             InscripcionClase inscripcion = new InscripcionClase();
             inscripcion.setCliente(cliente);
             inscripcion.setClase(clase);
-            inscripcionDAO.save(inscripcion);
+            inscripcionDAO.save(txCon, inscripcion);
 
             DatabaseConnection.commit();
 
@@ -165,7 +189,8 @@ public class InscripcionService {
         } catch (SQLException e) {
             DatabaseConnection.rollback();
             LOGGER.log(Level.SEVERE,
-                    "Error de BD al inscribir cliente=" + clienteId + " clase=" + claseId, e);
+                    "Error de BD al inscribir cliente=" + clienteId
+                    + " clase=" + claseId, e);
             return Resultado.errorBd();
         } finally {
             DatabaseConnection.closeConnection();
@@ -199,49 +224,34 @@ public class InscripcionService {
 
     // ── Consultas ────────────────────────────────────────────────────────────
 
-    /**
-     * Todas las inscripciones de un cliente.
-     * Para el perfil del cliente: "Clases en las que está inscrito".
-     *
-     * CORRECCIÓN: se reemplazó List.of() por Collections.emptyList()
-     * para garantizar compatibilidad con Java 8+. List.of() existe
-     * desde Java 9 pero el compilador del IDE lo resolvía como versión anterior.
-     */
     public List<InscripcionClase> listarPorCliente(String clienteId) {
         try {
             return inscripcionDAO.findByClienteId(clienteId);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al listar inscripciones del cliente: " + clienteId, e);
-            return Collections.emptyList(); // ← FIX: antes era List.of()
+            LOGGER.log(Level.SEVERE,
+                    "Error al listar inscripciones del cliente: " + clienteId, e);
+            return Collections.emptyList();
         }
     }
 
-    /**
-     * Todos los inscritos en una clase.
-     * Para la vista de detalle de clase (lista de participantes).
-     *
-     * CORRECCIÓN: se reemplazó List.of() por Collections.emptyList()
-     * para garantizar compatibilidad con Java 8+.
-     */
     public List<InscripcionClase> listarPorClase(String claseId) {
         try {
             return inscripcionDAO.findByClaseId(claseId);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al listar inscripciones de clase: " + claseId, e);
-            return Collections.emptyList(); // ← FIX: antes era List.of()
+            LOGGER.log(Level.SEVERE,
+                    "Error al listar inscripciones de clase: " + claseId, e);
+            return Collections.emptyList();
         }
     }
 
     /**
      * Cupos disponibles en una clase.
-     * Útil para mostrar "X / Y cupos" en la interfaz.
-     *
-     * @return arreglo int[]{inscritos, capacidadMaxima}, o int[]{0,0} si error
+     * @return int[]{inscritos, capacidadMaxima}, o int[]{0,0} si error
      */
     public int[] cuposInfo(String claseId) {
         try {
-            int inscritos  = inscripcionDAO.countInscritos(claseId);
-            int capacidad  = inscripcionDAO.getCapacidadMaxima(claseId);
+            int inscritos = inscripcionDAO.countInscritos(claseId);
+            int capacidad = inscripcionDAO.getCapacidadMaxima(claseId);
             return new int[]{ inscritos, capacidad };
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al obtener cupos de clase: " + claseId, e);

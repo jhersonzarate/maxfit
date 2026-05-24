@@ -37,22 +37,18 @@ import java.util.logging.Logger;
  * Acceso: ROL-ADMIN únicamente (RoleFilter → /reports).
  *
  * Diseño de carga (degradado parcial):
- *   Cada bloque de datos es independiente. Si un DAO falla (ej: timeout),
- *   se registra el WARNING y se continúa con el resto de los widgets.
- *   Esto evita que un único error tire toda la página de reportes.
- *   El mismo patrón que usa InicioController (Admin dashboard).
+ *   Cada bloque de datos es independiente. Si un DAO falla, se registra
+ *   el WARNING y se continúa con el resto de los widgets.
  *
- * Nota sobre ingresos:
- *   Los ingresos se calculan sobre monto_pagado de contratos del mes actual.
- *   BigDecimal en todo momento — NUNCA double para dinero.
- *   ContratoDAO.getIngresosMesActual() usa ISNULL(SUM(...), 0) en SQL Server
- *   para retornar 0 en lugar de NULL si no hay contratos el mes actual.
- *
- * Nota sobre countByEstado:
- *   ContratoDAO.countByEstado(String estado) fue añadido en esta iteración.
- *   Usa un único query parametrizado (SELECT COUNT(*) WHERE estado = ?)
- *   para cada estado, evitando cargar todos los contratos en memoria
- *   solo para contar.
+ * ← CORRECCIÓN 4 (Corrección menor del análisis):
+ *   En reporteMembresias(), se reemplazó el hack de:
+ *     contratoDAO.findProximosAVencer(36500)
+ *   por la llamada correcta y semánticamente clara:
+ *     contratoDAO.findAllActivos()
+ *   El "truco" de los 36500 días (~100 años) era confuso y dependía de
+ *   un detalle de implementación interna del SQL de findProximosAVencer.
+ *   findAllActivos() hace exactamente lo que su nombre indica, con un
+ *   query dedicado limpio en ContratoDAO.
  *
  * @author MaxFit
  */
@@ -62,7 +58,6 @@ public class ReportsController extends AbstractController {
     private static final Logger LOGGER =
             Logger.getLogger(ReportsController.class.getName());
 
-    // Número máximo de filas en el historial de asistencia del reporte
     private static final int MAX_ASISTENCIAS_REPORTE = 50;
 
     private final ContratoDAO   contratoDAO   = new ContratoDAO();
@@ -80,8 +75,6 @@ public class ReportsController extends AbstractController {
 
         transferirFlashMessages(req);
 
-        // Actualizar contratos vencidos silenciosamente antes de mostrar estadísticas.
-        // Sin job scheduler, se hace en cada carga (igual que InicioController).
         actualizarVencidosSilencioso();
 
         String action = getAction(req);
@@ -101,26 +94,13 @@ public class ReportsController extends AbstractController {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // Vistas de reporte
-    // ═══════════════════════════════════════════════════════════════════════
-
     // ─── Reporte de resumen general (default) ─────────────────────────────────
 
-    /**
-     * Vista principal de reportes.
-     * Muestra los 6 KPIs globales del sistema más las alertas de
-     * contratos próximos a vencer y el historial de asistencias recientes.
-     * Misma filosofía que InicioController pero orientada a análisis,
-     * no a operación del día a día.
-     */
     private void reporteResumen(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // ── KPIs globales (degradado parcial — si uno falla, los demás siguen) ─
         cargarKpisGlobales(req);
 
-        // ── Próximos a vencer (7 días) como alerta de gestión ─────────────────
         try {
             List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
             req.setAttribute("proximosVencer",      proximos);
@@ -131,7 +111,6 @@ public class ReportsController extends AbstractController {
             req.setAttribute("countProximosVencer", 0);
         }
 
-        // ── Asistencias recientes para actividad del día ───────────────────────
         try {
             List<Asistencia> recientes = asistenciaDAO.findRecientes(10);
             req.setAttribute("asistenciasRecientes", recientes);
@@ -147,16 +126,9 @@ public class ReportsController extends AbstractController {
 
     // ─── Reporte de contratos ─────────────────────────────────────────────────
 
-    /**
-     * Desglose completo de contratos por estado (activo / vencido / cancelado).
-     * Usa ContratoDAO.countByEstado() para obtener conteos individuales
-     * con queries directas a BD (no carga la lista completa para contar).
-     * También muestra la lista de todos los contratos para análisis detallado.
-     */
     private void reporteContratos(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // ── Conteo por estado ─────────────────────────────────────────────────
         int activos    = 0;
         int vencidos   = 0;
         int cancelados = 0;
@@ -176,8 +148,6 @@ public class ReportsController extends AbstractController {
         req.setAttribute("contratosCancelados", cancelados);
         req.setAttribute("contratosTotal",      total);
 
-        // ── Porcentajes para barras de progreso en el JSP ─────────────────────
-        // Se pasan como enteros (0-100) para usar directamente en style="width:X%"
         req.setAttribute("pctActivos",
                 total > 0 ? (activos    * 100 / total) : 0);
         req.setAttribute("pctVencidos",
@@ -185,7 +155,6 @@ public class ReportsController extends AbstractController {
         req.setAttribute("pctCancelados",
                 total > 0 ? (cancelados * 100 / total) : 0);
 
-        // ── Ingresos del mes (BigDecimal — nunca double para dinero) ──────────
         try {
             BigDecimal ingresos = contratoDAO.getIngresosMesActual();
             req.setAttribute("ingresosMes", ingresos);
@@ -194,7 +163,6 @@ public class ReportsController extends AbstractController {
             req.setAttribute("ingresosMes", BigDecimal.ZERO);
         }
 
-        // ── Próximos a vencer para sección de alertas ─────────────────────────
         try {
             List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
             req.setAttribute("proximosVencer",      proximos);
@@ -212,18 +180,9 @@ public class ReportsController extends AbstractController {
 
     // ─── Reporte de asistencia ────────────────────────────────────────────────
 
-    /**
-     * Historial de asistencia para análisis del administrador.
-     * Muestra los últimos MAX_ASISTENCIAS_REPORTE registros con toda la
-     * información del cliente y membresía (navegando por el contrato).
-     *
-     * Para filtrar por cliente o rango de fechas el admin puede usar
-     * directamente /attendance?action=hist que tiene esa funcionalidad.
-     */
     private void reporteAsistencia(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // ── Contador del día (KPI principal del reporte de asistencia) ─────────
         try {
             req.setAttribute("atendidosHoy", asistenciaDAO.countHoy());
         } catch (SQLException e) {
@@ -231,7 +190,6 @@ public class ReportsController extends AbstractController {
             req.setAttribute("atendidosHoy", 0);
         }
 
-        // ── Historial reciente (últimas N asistencias) ────────────────────────
         try {
             List<Asistencia> historial =
                     asistenciaDAO.findRecientes(MAX_ASISTENCIAS_REPORTE);
@@ -243,9 +201,9 @@ public class ReportsController extends AbstractController {
             req.setAttribute("totalHistorial",      0);
         }
 
-        req.setAttribute("vistaActiva",          "asistencia");
-        req.setAttribute("maxAsistencias",       MAX_ASISTENCIAS_REPORTE);
-        req.setAttribute("fechaReporte",         LocalDate.now().toString());
+        req.setAttribute("vistaActiva",    "asistencia");
+        req.setAttribute("maxAsistencias", MAX_ASISTENCIAS_REPORTE);
+        req.setAttribute("fechaReporte",   LocalDate.now().toString());
         irA(ViewRoutes.REPORTS_INDEX, req, resp);
     }
 
@@ -253,17 +211,21 @@ public class ReportsController extends AbstractController {
 
     /**
      * Catálogo de planes de membresía con métricas.
-     * Muestra todos los planes disponibles y su precio/duración.
-     * Para ver cuántos contratos tiene cada plan, el JSP puede
-     * cruzar la lista de contratos con membresía (groupBy en Java/JSTL).
      *
-     * La lista de todos los contratos activos se pasa al JSP para que
-     * pueda calcular popularidad de cada membresía sin queries adicionales.
+     * ← CORRECCIÓN 4:
+     *   Antes: contratoDAO.findProximosAVencer(36500)
+     *     → hack que abusaba del filtro de vencimiento para obtener "todos los activos"
+     *     → confuso, dependía de un detalle interno del SQL de findProximosAVencer
+     *     → semánticamente incorrecto (findProximosAVencer es para alertas, no para reportes)
+     *
+     *   Ahora: contratoDAO.findAllActivos()
+     *     → query dedicado, limpio y correctamente nombrado en ContratoDAO
+     *     → SELECT ... WHERE estado = 'activo' ORDER BY fecha_fin ASC
+     *     → sin trucos ni números mágicos
      */
     private void reporteMembresias(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // ── Todos los planes de membresía ─────────────────────────────────────
         try {
             List<Membresia> membresias = membresiaDAO.findAll();
             req.setAttribute("membresias",  membresias);
@@ -274,18 +236,11 @@ public class ReportsController extends AbstractController {
             req.setAttribute("totalPlanes", 0);
         }
 
-        // ── Contratos activos para cruzar con membresías (JSP agrupa) ─────────
-        // Se pasan solo los activos para que el JSP calcule qué membresía
-        // tiene más contratos vigentes en este momento.
+        // ← CORRECCIÓN 4: findAllActivos() en lugar del hack de 36500 días
         try {
-            List<Contrato> contratosActivos = contratoDAO.findProximosAVencer(36500);
-            // Truco: findProximosAVencer con 36500 días (~100 años) equivale
-            // a todos los contratos activos, porque solo filtra activos con
-            // fecha_fin entre HOY y HOY+N días. Usar findAll y filtrar en Java
-            // sería igual de válido pero cargaría también vencidos y cancelados.
-            // Alternativa más limpia: añadir findAllActivos() al DAO si el sistema crece.
-            req.setAttribute("contratosActivos",          contratosActivos);
-            req.setAttribute("totalContratosActivos",     contratosActivos.size());
+            List<Contrato> contratosActivos = contratoDAO.findAllActivos();
+            req.setAttribute("contratosActivos",      contratosActivos);
+            req.setAttribute("totalContratosActivos", contratosActivos.size());
         } catch (SQLException e) {
             LOGGER.log(Level.WARNING, "Error al cargar contratos activos", e);
             req.setAttribute("contratosActivos",      Collections.emptyList());
@@ -297,17 +252,8 @@ public class ReportsController extends AbstractController {
         irA(ViewRoutes.REPORTS_INDEX, req, resp);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // Helpers privados
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─── Helpers privados ─────────────────────────────────────────────────────
 
-    /**
-     * Carga los 6 KPIs globales del sistema.
-     * Patrón de degradado parcial: cada KPI en su propio try-catch.
-     * Si uno falla, los otros siguen cargando normalmente.
-     * Se muestra "-" en lugar de un número cuando hay error (no "0",
-     * que podría confundirse con un valor real).
-     */
     private void cargarKpisGlobales(HttpServletRequest req) {
 
         try {
@@ -346,7 +292,6 @@ public class ReportsController extends AbstractController {
         }
 
         try {
-            // BigDecimal obligatorio — NUNCA double para dinero
             BigDecimal ingresos = contratoDAO.getIngresosMesActual();
             req.setAttribute("ingresosMes", ingresos);
         } catch (SQLException e) {
@@ -355,11 +300,6 @@ public class ReportsController extends AbstractController {
         }
     }
 
-    /**
-     * Marca contratos vencidos sin lanzar excepción al controlador.
-     * Se llama al inicio de cada GET para mantener el estado de la BD
-     * consistente con la fecha actual, sin necesidad de un scheduler.
-     */
     private void actualizarVencidosSilencioso() {
         try {
             int n = contratoDAO.marcarVencidos(

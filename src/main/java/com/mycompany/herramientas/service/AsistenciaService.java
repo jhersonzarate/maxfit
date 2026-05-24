@@ -9,6 +9,7 @@ import com.mycompany.herramientas.model.Asistencia;
 import com.mycompany.herramientas.model.Cliente;
 import com.mycompany.herramientas.model.Contrato;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,6 +28,23 @@ import java.util.logging.Logger;
  *
  * Resultado tipado (ResultadoCheckIn) para que el controlador sepa exactamente
  * qué pasó sin comparar strings mágicos.
+ *
+ * ← CORRECCIÓN CRÍTICA — Transacciones:
+ *   El patrón anterior hacía:
+ *     DatabaseConnection.beginTransaction();   // autoCommit = false
+ *     asistenciaDAO.save(asistencia);          // el DAO abría y cerraba su
+ *                                              // propia Connection con TW-R,
+ *                                              // rompiendo la transacción
+ *     DatabaseConnection.commit();             // nueva conexión, sin efecto
+ *
+ *   Ahora el Service:
+ *     1. Obtiene la Connection con beginTransaction().
+ *     2. Pasa esa misma Connection al overload save(Connection, Asistencia)
+ *        del DAO, que NO la cierra (solo cierra el PreparedStatement).
+ *     3. Hace commit() sobre la misma Connection.
+ *     4. Cierra en finally con closeConnection().
+ *
+ * @author MaxFit
  */
 public class AsistenciaService {
 
@@ -53,11 +71,11 @@ public class AsistenciaService {
     // ── Tipos de resultado ───────────────────────────────────────────────────
 
     public enum TipoResultado {
-        OK,                   // Ingreso autorizado y registrado
-        CLIENTE_NO_ENCONTRADO,// El documento no corresponde a ningún cliente
-        SIN_CONTRATO_ACTIVO,  // El cliente existe pero no tiene contrato vigente
-        YA_REGISTRADO_HOY,    // Ya hizo check-in hoy (UNIQUE de BD)
-        ERROR_BD              // Error interno de base de datos
+        OK,                    // Ingreso autorizado y registrado
+        CLIENTE_NO_ENCONTRADO, // El documento no corresponde a ningún cliente
+        SIN_CONTRATO_ACTIVO,   // El cliente existe pero no tiene contrato vigente
+        YA_REGISTRADO_HOY,     // Ya hizo check-in hoy (UNIQUE de BD)
+        ERROR_BD               // Error interno de base de datos
     }
 
     public static final class ResultadoCheckIn {
@@ -152,8 +170,18 @@ public class AsistenciaService {
             asistencia.setEstado(AppConfig.ASISTENCIA_ASISTIO);
             asistencia.setHoraIngreso(LocalTime.now().withNano(0)); // sin nanosegundos
 
+            /*
+             * ← CORRECCIÓN CRÍTICA — Transacciones:
+             *
+             * beginTransaction() obtiene la Connection del ThreadLocal y pone
+             * autoCommit = false. Esa misma Connection se pasa al DAO para que
+             * el INSERT ocurra dentro de la misma unidad de trabajo.
+             * El DAO solo cierra el PreparedStatement, no la Connection.
+             * El Service hace commit() y en finally closeConnection().
+             */
             DatabaseConnection.beginTransaction();
-            asistenciaDAO.save(asistencia);
+            Connection txCon = DatabaseConnection.getConnection();
+            asistenciaDAO.save(txCon, asistencia);
             DatabaseConnection.commit();
 
             LOGGER.info("Check-in registrado: " + cliente.getNombreCompleto()

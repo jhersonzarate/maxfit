@@ -23,6 +23,21 @@ import java.util.logging.Logger;
  *   No hay FK directa a Clientes en esta tabla.
  *
  * Estados válidos (según BD): 'asistio', 'falto', 'pendiente'
+ *
+ * ← CORRECCIÓN 3 (Corrección 3 del análisis):
+ *   Se eliminó el método privado generarId() y la constante SQL_NEXT_ID
+ *   que duplicaban la lógica de IdGenerator.parAsistencia().
+ *   Ahora save() llama directamente a IdGenerator.parAsistencia(),
+ *   que ya tiene la misma lógica y está correctamente encapsulada
+ *   con la whitelist de tablas.
+ *
+ * ← CORRECCIÓN transacciones:
+ *   Los métodos save() y cualquier método llamado desde un Service con
+ *   transacción activa reciben la Connection como parámetro (overload)
+ *   para no romper la transacción cerrándola con try-with-resources.
+ *   La versión sin Connection es para uso simple (sin transacción del Service).
+ *
+ * @author MaxFit
  */
 public class AsistenciaDAO {
 
@@ -80,10 +95,6 @@ public class AsistenciaDAO {
     private static final String SQL_INSERT =
         "INSERT INTO Asistencia (id, id_contrato, fecha, estado, hora_ingreso) " +
         "VALUES (?, ?, ?, ?, ?)";
-
-    private static final String SQL_NEXT_ID =
-        "SELECT ISNULL(MAX(CAST(SUBSTRING(id, CHARINDEX('-', id, 5)+1, 10) AS INT)), 0) + 1 " +
-        "FROM Asistencia WHERE id LIKE 'ASI-%'";
 
     // ─── Métodos públicos ─────────────────────────────────────────────────────
 
@@ -216,47 +227,67 @@ public class AsistenciaDAO {
     }
 
     /**
-     * Guarda una nueva asistencia.
-     * El ID se genera aquí usando el correlativo de la BD.
-     * La hora_ingreso puede ser null si el estado es 'pendiente' o 'falto'.
+     * Guarda una nueva asistencia (versión sin transacción del Service).
+     * Abre su propia conexión con try-with-resources — NO usar cuando
+     * hay una transacción activa en el Service; usar save(Connection, Asistencia).
+     *
+     * ← CORRECCIÓN 3: El ID se genera con IdGenerator.parAsistencia()
+     *   en lugar del antiguo generarId() privado que duplicaba esa lógica.
      */
     public void save(Asistencia asistencia) throws SQLException {
-        // Generar ID si no tiene uno
         if (asistencia.getId() == null || asistencia.getId().trim().isEmpty()) {
-            asistencia.setId(generarId());
+            asistencia.setId(IdGenerator.parAsistencia());
         }
+        try (Connection con = DatabaseConnection.getConnection()) {
+            doInsert(con, asistencia);
+        }
+    }
 
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
+    /**
+     * Guarda una nueva asistencia DENTRO de una transacción activa.
+     *
+     * ← CORRECCIÓN transacciones: cuando AsistenciaService llama a este DAO
+     *   dentro de un beginTransaction() / commit(), la Connection debe ser
+     *   la misma que ya tiene la transacción abierta. Al recibir la Connection
+     *   como parámetro, este método NO la cierra (no usa try-with-resources
+     *   sobre ella), de modo que el Service puede hacer commit() o rollback()
+     *   después sin perder el contexto transaccional.
+     *
+     * El ID se genera con IdGenerator.parAsistencia() si no trae uno.
+     *
+     * @param con        la Connection con transacción ya iniciada
+     *                   (DatabaseConnection.beginTransaction() ya fue llamado)
+     * @param asistencia objeto a persistir
+     */
+    public void save(Connection con, Asistencia asistencia) throws SQLException {
+        if (asistencia.getId() == null || asistencia.getId().trim().isEmpty()) {
+            asistencia.setId(IdGenerator.parAsistencia());
+        }
+        doInsert(con, asistencia);
+    }
+
+    // ─── Privados ─────────────────────────────────────────────────────────────
+
+    /**
+     * Ejecuta el INSERT sobre la Connection proporcionada.
+     * El PreparedStatement se cierra con try-with-resources;
+     * la Connection NO se cierra aquí (la gestiona el llamador).
+     */
+    private void doInsert(Connection con, Asistencia asistencia) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, asistencia.getId());
             ps.setString(2, asistencia.getContrato().getId());
             ps.setDate(3, Date.valueOf(asistencia.getFecha()));
             ps.setString(4, asistencia.getEstado());
             // hora_ingreso NULL-able (null si es 'falto' o 'pendiente')
             if (asistencia.getHoraIngreso() != null) {
-                ps.setTime(4 + 1, Time.valueOf(asistencia.getHoraIngreso()));
+                ps.setTime(5, Time.valueOf(asistencia.getHoraIngreso()));
             } else {
-                ps.setNull(4 + 1, Types.TIME);
+                ps.setNull(5, Types.TIME);
             }
             ps.executeUpdate();
             LOGGER.info("Asistencia registrada: " + asistencia.getId()
                     + " | contrato: " + asistencia.getContrato().getId());
-        }
-    }
-
-    // ─── Privados ─────────────────────────────────────────────────────────────
-
-    /**
-     * Genera el ID de la asistencia con formato ASI-AÑO-CORRELATIVO.
-     * El correlativo se obtiene de la BD para ser thread-safe en Tomcat.
-     */
-    private String generarId() throws SQLException {
-        int año = LocalDate.now().getYear();
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_NEXT_ID);
-             ResultSet rs = ps.executeQuery()) {
-            int siguiente = rs.next() ? rs.getInt(1) : 1;
-            return String.format("ASI-%d-%04d", año, siguiente);
         }
     }
 

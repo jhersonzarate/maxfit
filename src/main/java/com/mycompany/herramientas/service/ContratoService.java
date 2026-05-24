@@ -6,6 +6,7 @@ import com.mycompany.herramientas.dao.ContratoDAO;
 import com.mycompany.herramientas.model.Contrato;
 import com.mycompany.herramientas.model.Membresia;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.logging.Level;
@@ -20,28 +21,38 @@ import java.util.logging.Logger;
  *   - Cancelar un contrato (solo Administrador según RF-03).
  *
  * Por qué usar BigDecimal para montoPagado:
- *   En el proyecto anterior se usaba double para el dinero. double tiene
- *   errores de punto flotante (0.1 + 0.2 = 0.30000000000000004 en Java).
+ *   double tiene errores de punto flotante (0.1 + 0.2 = 0.30000000000000004 en Java).
  *   BigDecimal es exacto para operaciones monetarias. El modelo Contrato
  *   ya usa BigDecimal — este servicio lo respeta.
  *
- * Transacciones:
- *   El método crearContrato usa DatabaseConnection.beginTransaction()
- *   para garantizar que el INSERT sea atómico. Si algo falla, se hace
- *   rollback y nada queda a medias en la BD.
+ * ← CORRECCIÓN CRÍTICA — Transacciones:
+ *   El patrón anterior era:
+ *     DatabaseConnection.beginTransaction();
+ *     contratoDAO.save(contrato);   // DAO abría/cerraba su Connection → rollback silencioso
+ *     DatabaseConnection.commit();  // nueva conexión, sin transacción real
+ *
+ *   Ahora:
+ *     1. beginTransaction() abre la Connection y pone autoCommit = false.
+ *     2. getConnection() devuelve esa misma Connection del ThreadLocal.
+ *     3. Se pasa esa Connection al overload save(Connection, Contrato) del DAO.
+ *     4. El DAO solo cierra el PreparedStatement, no la Connection.
+ *     5. commit() / rollback() operan sobre la misma Connection.
+ *     6. closeConnection() cierra en finally.
+ *
+ * @author MaxFit
  */
 public class ContratoService {
 
     private static final Logger LOGGER = Logger.getLogger(ContratoService.class.getName());
 
-    private final ContratoDAO  contratoDAO;
+    private final ContratoDAO contratoDAO;
 
     public ContratoService() {
-        this.contratoDAO   = new ContratoDAO();
+        this.contratoDAO = new ContratoDAO();
     }
 
     public ContratoService(ContratoDAO contratoDAO) {
-        this.contratoDAO   = contratoDAO;
+        this.contratoDAO = contratoDAO;
     }
 
     // ── Resultado de operación ───────────────────────────────────────────────
@@ -72,20 +83,20 @@ public class ContratoService {
      * Crea un nuevo contrato aplicando todas las reglas de negocio:
      *   1. Verifica que no haya contrato activo para el cliente.
      *   2. Calcula fecha_fin = fecha_inicio + duracion_meses de la membresía.
-     *   3. Guarda el contrato en la BD dentro de una transacción.
+     *   3. Guarda el contrato en la BD dentro de una transacción real.
      *
      * @param contrato objeto Contrato con todos los campos llenos EXCEPTO
-     *                 fecha_fin (este método la calcula) e id (el DAO lo genera).
+     *                 fecha_fin (este método la calcula).
      * @return Resultado con isExitoso() y getMensaje()
      */
     public Resultado crearContrato(Contrato contrato) {
 
         // ── Validar datos mínimos ────────────────────────────────────────────
-        if (contrato.getCliente()    == null) return Resultado.error("Cliente requerido.");
-        if (contrato.getMembresia()  == null) return Resultado.error("Membresía requerida.");
-        if (contrato.getMetodoPago() == null) return Resultado.error("Método de pago requerido.");
-        if (contrato.getFechaInicio()== null) return Resultado.error("Fecha de inicio requerida.");
-        if (contrato.getMontoPagado()== null) return Resultado.error("Monto pagado requerido.");
+        if (contrato.getCliente()     == null) return Resultado.error("Cliente requerido.");
+        if (contrato.getMembresia()   == null) return Resultado.error("Membresía requerida.");
+        if (contrato.getMetodoPago()  == null) return Resultado.error("Método de pago requerido.");
+        if (contrato.getFechaInicio() == null) return Resultado.error("Fecha de inicio requerida.");
+        if (contrato.getMontoPagado() == null) return Resultado.error("Monto pagado requerido.");
 
         String clienteId = contrato.getCliente().getId();
 
@@ -108,10 +119,17 @@ public class ContratoService {
         LocalDate fechaFin = contrato.getFechaInicio().plusMonths(mem.getDuracionMeses());
         contrato.setFechaFin(fechaFin);
 
-        // ── Guardar en BD (con transacción) ──────────────────────────────────
+        // ── Guardar en BD (con transacción correcta) ─────────────────────────
         try {
+            /*
+             * ← CORRECCIÓN CRÍTICA:
+             * beginTransaction() pone autoCommit=false en la Connection del ThreadLocal.
+             * getConnection() devuelve esa misma Connection.
+             * Se pasa al DAO para que el INSERT use la misma unidad de trabajo.
+             */
             DatabaseConnection.beginTransaction();
-            contratoDAO.save(contrato);
+            Connection txCon = DatabaseConnection.getConnection();
+            contratoDAO.save(txCon, contrato);
             DatabaseConnection.commit();
 
             LOGGER.info("Contrato creado para cliente: " + clienteId
@@ -163,9 +181,6 @@ public class ContratoService {
     /**
      * Actualiza en la BD los contratos cuya fecha_fin ya pasó,
      * cambiando su estado de 'activo' a 'vencido'.
-     *
-     * Este método puede llamarse desde el dashboard al cargar,
-     * o desde un scheduled job si se implementa en el futuro.
      *
      * @return número de contratos actualizados
      */

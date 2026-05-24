@@ -5,6 +5,9 @@ import com.mycompany.herramientas.config.DatabaseConnection;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,18 +30,40 @@ import java.util.logging.Logger;
  * Thread-safety:
  *   El correlativo se calcula con MAX()+1 directamente en la BD.
  *   SQL Server garantiza la consistencia bajo concurrencia.
- *   En un sistema con muchas peticiones simultáneas se usaría
- *   una SEQUENCE de SQL Server, pero para este proyecto es correcto.
  *
- * Uso desde los controladores o servicios:
- *   String id = IdGenerator.parCliente();      // "CLI-2026-0001"
- *   String id = IdGenerator.parContrato();     // "CON-2026-0001"
- *   String id = IdGenerator.parAsistencia();   // "ASI-2026-0001"
- *   // … etc.
+ * ← CORREGIDO (Corrección 2):
+ *   Se añadió TABLAS_VALIDAS (whitelist) para que el nombre de tabla
+ *   nunca pueda ser inyectado con valores externos. Aunque actualmente
+ *   solo se llama con literales del propio código, el patrón de
+ *   concatenación directa ("FROM " + nombreTabla) era potencialmente
+ *   peligroso si en el futuro se pasara un valor externo.
+ *   Ahora se lanza IllegalArgumentException si la tabla no está en la lista.
+ *
+ * @author MaxFit
  */
 public final class IdGenerator {
 
     private static final Logger LOGGER = Logger.getLogger(IdGenerator.class.getName());
+
+    // ← CORREGIDO: whitelist de tablas permitidas.
+    // El nombre de tabla se concatena directamente al SQL (no es posible usar
+    // PreparedStatement para nombres de tabla en JDBC estándar), por eso se
+    // valida contra este conjunto antes de construir el query.
+    private static final Set<String> TABLAS_VALIDAS;
+
+    static {
+        Set<String> tablas = new HashSet<>();
+        tablas.add("Clientes");
+        tablas.add("Empleados");
+        tablas.add("Contratos");
+        tablas.add("Asistencia");
+        tablas.add("Clases");
+        tablas.add("Horarios");
+        tablas.add("Inscripcion_Clases");
+        tablas.add("Usuarios");
+        tablas.add("Membresias");
+        TABLAS_VALIDAS = Collections.unmodifiableSet(tablas);
+    }
 
     // Constructor privado — nadie debe instanciar esta clase utilitaria
     private IdGenerator() {}
@@ -47,23 +72,37 @@ public final class IdGenerator {
      * Genera el próximo ID disponible para una tabla dada.
      *
      * Algoritmo:
-     *   1. Filtra los IDs de la tabla que correspondan al año actual
+     *   1. Valida que nombreTabla pertenezca a TABLAS_VALIDAS (whitelist).
+     *   2. Filtra los IDs de la tabla que correspondan al año actual
      *      usando LIKE 'PREFIJO-AÑO-%'.
-     *   2. Extrae la parte numérica del ID (después del último '-').
-     *   3. Toma el MAX de esos números + 1.
-     *   4. Si no hay IDs todavía, devuelve 1.
-     *   5. Formatea como PREFIJO-AÑO-NNNN (4 dígitos con ceros a la izq.).
+     *   3. Extrae la parte numérica del ID (después del último '-').
+     *   4. Toma el MAX de esos números + 1.
+     *   5. Si no hay IDs todavía, devuelve 1.
+     *   6. Formatea como PREFIJO-AÑO-NNNN (4 dígitos con ceros a la izq.).
      *
      * @param prefijo     constante de AppConfig.PREFIX_* (ej: "CLI")
-     * @param nombreTabla nombre exacto de la tabla en SQL Server (ej: "Clientes")
+     * @param nombreTabla nombre exacto de la tabla en SQL Server — DEBE
+     *                    estar en TABLAS_VALIDAS, de lo contrario se lanza
+     *                    IllegalArgumentException
      * @return ID generado, ej: "CLI-2026-0001"
+     * @throws IllegalArgumentException si nombreTabla no está en la whitelist
      */
     public static String generar(String prefijo, String nombreTabla) {
+
+        // ← CORREGIDO: validación de whitelist antes de concatenar al SQL
+        if (nombreTabla == null || !TABLAS_VALIDAS.contains(nombreTabla)) {
+            throw new IllegalArgumentException(
+                "Nombre de tabla no permitido en IdGenerator: '"
+                + nombreTabla + "'. "
+                + "Solo se permiten tablas definidas en TABLAS_VALIDAS."
+            );
+        }
+
         int año = LocalDate.now().getYear();
 
         // Patrón para filtrar solo los IDs de este año: "CLI-2026-%"
-        String patron  = prefijo + "-" + año + "-%";
-        // Prefijo con año para calcular el offset del SUBSTRING: "CLI-2026"
+        String patron   = prefijo + "-" + año + "-%";
+        // Prefijo con año para calcular el offset del SUBSTRING: "CLI-2026-"
         String prefYear = prefijo + "-" + año + "-";
 
         /*
@@ -72,6 +111,9 @@ public final class IdGenerator {
          *           LEN("CLI-2026-") = 9
          *           SUBSTRING(id, 10, LEN(id)) = "0042"
          *           CAST como INT = 42
+         *
+         * NOTA SOBRE SEGURIDAD: nombreTabla ya fue validado contra TABLAS_VALIDAS
+         * antes de llegar aquí, por lo que la concatenación es segura.
          */
         String sql =
             "SELECT ISNULL(MAX(CAST(SUBSTRING(id, LEN(?) + 1, LEN(id)) AS INT)), 0) + 1 " +

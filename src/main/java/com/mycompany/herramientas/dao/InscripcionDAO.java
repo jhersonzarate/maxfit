@@ -17,6 +17,17 @@ import java.util.logging.Logger;
  *   DATETIME DEFAULT GETDATE() en BD — no se envía desde Java.
  *
  * Tabla en la BD: Inscripcion_Clases (con guión bajo entre palabras).
+ *
+ * ← CORRECCIÓN transacciones:
+ *   Se añadieron overloads que reciben Connection como primer parámetro:
+ *     - countInscritos(Connection, claseId)
+ *     - save(Connection, InscripcionClase)
+ *   Estos métodos NO cierran la Connection, solo el PreparedStatement.
+ *   Son los que InscripcionService usa cuando hay una transacción activa
+ *   para garantizar que el count y el insert ocurran atómicamente,
+ *   previniendo race conditions en la validación de cupo (RF-11).
+ *
+ * @author MaxFit
  */
 public class InscripcionDAO {
 
@@ -48,47 +59,27 @@ public class InscripcionDAO {
         "SELECT COUNT(*) FROM Inscripcion_Clases " +
         "WHERE id_cliente = ? AND id_clase = ?";
 
-    /**
-     * Cuenta inscritos en una clase — usado por InscripcionService
-     * para verificar cupo antes de inscribir (RF-11).
-     * Nombre usado en InscripcionService: countInscritos(claseId)
-     */
     private static final String SQL_COUNT_INSCRITOS =
         "SELECT COUNT(*) FROM Inscripcion_Clases WHERE id_clase = ?";
 
-    /**
-     * Obtiene la capacidad máxima de una clase.
-     * Usado por InscripcionService.cuposInfo() para mostrar "X / Y cupos".
-     */
     private static final String SQL_GET_CAPACIDAD =
         "SELECT capacidad_maxima FROM Clases WHERE id = ?";
 
-    /**
-     * INSERT por ID de cliente + clase.
-     * fecha_inscripcion → BD usa DEFAULT GETDATE()
-     */
     private static final String SQL_INSERT =
         "INSERT INTO Inscripcion_Clases (id, id_cliente, id_clase) " +
         "VALUES (?, ?, ?)";
 
-    /** Elimina por (clienteId, claseId) — para cancelar inscripción desde vista */
     private static final String SQL_DELETE_BY_CLIENTE_CLASE =
         "DELETE FROM Inscripcion_Clases WHERE id_cliente = ? AND id_clase = ?";
 
-    /** Elimina por PK (id) — usado desde InscripcionService.cancelar(inscripcionId) */
     private static final String SQL_DELETE_BY_ID =
         "DELETE FROM Inscripcion_Clases WHERE id = ?";
 
-    /** Elimina todas las inscripciones de una clase (al cancelarla). */
     private static final String SQL_DELETE_BY_CLASE =
         "DELETE FROM Inscripcion_Clases WHERE id_clase = ?";
 
     // ─── Métodos públicos ─────────────────────────────────────────────────────
 
-    /**
-     * Todos los inscritos en una clase.
-     * Usado en el modal "Ver Inscritos" y en el dashboard del Instructor.
-     */
     public List<InscripcionClase> findByClaseId(String claseId) throws SQLException {
         List<InscripcionClase> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -101,10 +92,6 @@ public class InscripcionDAO {
         return lista;
     }
 
-    /**
-     * Todas las clases en las que un cliente está inscrito.
-     * Usado en el perfil del cliente (client-detail.jsp).
-     */
     public List<InscripcionClase> findByClienteId(String clienteId) throws SQLException {
         List<InscripcionClase> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -117,10 +104,6 @@ public class InscripcionDAO {
         return lista;
     }
 
-    /**
-     * Verifica si un cliente ya está inscrito en una clase.
-     * Llamar ANTES de save() para evitar duplicados.
-     */
     public boolean existeInscripcion(String clienteId, String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_EXISTE)) {
@@ -133,9 +116,7 @@ public class InscripcionDAO {
     }
 
     /**
-     * Cuenta los inscritos actuales en una clase.
-     * Nombre requerido por InscripcionService: countInscritos(claseId).
-     * Comparar con getCapacidadMaxima() para verificar cupo (RF-11).
+     * Cuenta inscritos usando su propia Connection (uso simple, sin transacción).
      */
     public int countInscritos(String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
@@ -149,10 +130,24 @@ public class InscripcionDAO {
     }
 
     /**
-     * Obtiene la capacidad máxima de una clase directamente de la BD.
-     * Nombre requerido por InscripcionService: getCapacidadMaxima(claseId).
-     * Devuelve 0 si la clase no existe.
+     * ← CORRECCIÓN transacciones: overload que usa la Connection proporcionada.
+     * No cierra la Connection — solo cierra PreparedStatement y ResultSet.
+     * InscripcionService lo llama dentro de beginTransaction() para que el count
+     * y el INSERT posterior sean atómicos, evitando race conditions de cupo.
+     *
+     * @param con     Connection con transacción ya activa
+     * @param claseId ID de la clase a contar
      */
+    public int countInscritos(Connection con, String claseId) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(SQL_COUNT_INSCRITOS)) {
+            ps.setString(1, claseId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
     public int getCapacidadMaxima(String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_GET_CAPACIDAD)) {
@@ -165,33 +160,34 @@ public class InscripcionDAO {
     }
 
     /**
-     * Registra una nueva inscripción.
-     * El ID debe venir generado por IdGenerator.parInscripcion().
-     * fecha_inscripcion la genera la BD con DEFAULT GETDATE().
+     * Registra una nueva inscripción (versión sin transacción del Service).
+     * Abre su propia Connection con try-with-resources.
+     * NO usar cuando hay una transacción activa; usar save(Connection, inscripcion).
      */
     public void save(InscripcionClase ins) throws SQLException {
-        
         if (ins.getId() == null || ins.getId().trim().isEmpty()) {
             ins.setId(IdGenerator.parInscripcion());
         }
-        
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
-            ps.setString(1, ins.getId());
-            ps.setString(2, ins.getCliente().getId());
-            ps.setString(3, ins.getClase().getId());
-            ps.executeUpdate();
-            LOGGER.info("Inscripción registrada: " + ins.getId()
-                    + " | cliente: " + ins.getCliente().getId()
-                    + " | clase: " + ins.getClase().getId());
+        try (Connection con = DatabaseConnection.getConnection()) {
+            doInsert(con, ins);
         }
     }
 
     /**
-     * Elimina por PK (id de la inscripción).
-     * Nombre requerido por InscripcionService.cancelar(inscripcionId).
-     * @return true si se eliminó, false si no existía
+     * ← CORRECCIÓN transacciones: registra la inscripción DENTRO de una transacción activa.
+     * Recibe la Connection del Service y NO la cierra.
+     * Solo el PreparedStatement se cierra con try-with-resources.
+     *
+     * @param con Connection con transacción ya iniciada
+     * @param ins objeto InscripcionClase a persistir
      */
+    public void save(Connection con, InscripcionClase ins) throws SQLException {
+        if (ins.getId() == null || ins.getId().trim().isEmpty()) {
+            ins.setId(IdGenerator.parInscripcion());
+        }
+        doInsert(con, ins);
+    }
+
     public boolean delete(String inscripcionId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_DELETE_BY_ID)) {
@@ -202,10 +198,6 @@ public class InscripcionDAO {
         }
     }
 
-    /**
-     * Elimina por par (clienteId, claseId).
-     * Para cancelar inscripción desde la vista de clases.
-     */
     public boolean delete(String clienteId, String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_DELETE_BY_CLIENTE_CLASE)) {
@@ -218,10 +210,6 @@ public class InscripcionDAO {
         }
     }
 
-    /**
-     * Elimina TODAS las inscripciones de una clase.
-     * Llamar cuando se cancela o elimina una clase (para respetar la FK).
-     */
     public int deleteByClaseId(String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_DELETE_BY_CLASE)) {
@@ -234,6 +222,22 @@ public class InscripcionDAO {
     }
 
     // ─── Privados ─────────────────────────────────────────────────────────────
+
+    /**
+     * Ejecuta el INSERT sobre la Connection proporcionada.
+     * Solo cierra el PreparedStatement; la Connection la gestiona el llamador.
+     */
+    private void doInsert(Connection con, InscripcionClase ins) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
+            ps.setString(1, ins.getId());
+            ps.setString(2, ins.getCliente().getId());
+            ps.setString(3, ins.getClase().getId());
+            ps.executeUpdate();
+            LOGGER.info("Inscripción registrada: " + ins.getId()
+                    + " | cliente: " + ins.getCliente().getId()
+                    + " | clase: " + ins.getClase().getId());
+        }
+    }
 
     private InscripcionClase mapRow(ResultSet rs) throws SQLException {
         Cliente cli = new Cliente();
