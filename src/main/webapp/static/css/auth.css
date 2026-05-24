@@ -1,0 +1,709 @@
+/* =========================================================
+   auth.css  —  MaxFit Sistema de Gestión
+   Estilos exclusivos para /auth/login.jsp y forgot-password.jsp
+   SIN JavaScript. CSS puro + Bootstrap clases base.
+   ========================================================= */
+
+/* ── 1. Variables de diseño ──────────────────────────────── */
+:root {
+    --clr-bg:          #0d0d0d;
+    --clr-panel:       #161618;
+    --clr-panel-edge:  #1f1f22;
+    --clr-surface:     #1c1c1f;
+    --clr-surface-2:   #252528;
+    --clr-border:      #2a2a2d;
+    --clr-border-focus:#c0392b;
+
+    --clr-red:         #e63027;
+    --clr-red-dark:    #c0392b;
+    --clr-red-glow:    rgba(230, 48, 39, 0.22);
+    --clr-red-hover:   #ff3d33;
+
+    --clr-text:        #f0f0f0;
+    --clr-text-muted:  #8a8a90;
+    --clr-text-dim:    #55555c;
+    --clr-placeholder: #4a4a52;
+
+    --font-display:    'Barlow Condensed', sans-serif;
+    --font-body:       'DM Sans', sans-serif;
+
+    --radius-sm:       6px;
+    --radius-md:       10px;
+    --radius-lg:       16px;
+    --radius-xl:       22px;
+
+    --shadow-panel:    0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+    --shadow-input:    inset 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-btn:      0 4px 20px rgba(230, 48, 39, 0.45);
+    --shadow-btn-hover:0 6px 28px rgba(230, 48, 39, 0.65);
+
+    --transition:      0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── 2. Reset base ───────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    max-height: 100vh;
+    font-family: var(--font-body);
+    background-color: var(--clr-bg);
+    color: var(--clr-text);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden; /* el scroll lo maneja .auth-panel internamente */
+}
+
+/* ── 3. Layout split: imagen izquierda / panel derecho ───── */
+.auth-wrapper {
+    display: flex;
+    height: 100vh;
+    max-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Panel izquierdo — imagen de fondo con overlay */
+.auth-hero {
+    flex: 1 1 58%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem;
+    height: 100vh;
+}
+
+.auth-hero__bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('../img/gym_welcome.png');
+    background-size: cover;
+    background-position: center 30%;
+    filter: brightness(0.45) saturate(0.8);
+    transform: scale(1.03);
+    transition: transform 12s ease;
+}
+
+/* Overlay gradiente oscuro sobre la imagen */
+.auth-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(0,0,0,0.75) 0%,
+        rgba(13,13,13,0.45) 50%,
+        rgba(0,0,0,0.82) 100%
+    );
+    pointer-events: none;
+}
+
+/* Franja roja decorativa izquierda */
+.auth-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--clr-red) 30%,
+        var(--clr-red) 70%,
+        transparent 100%
+    );
+    z-index: 2;
+}
+
+.auth-hero__content {
+    position: relative;
+    z-index: 3;
+}
+
+/* Palabras clave del hero */
+.auth-hero__tagline {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    line-height: 1.08;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #e8e8e8;
+}
+
+.auth-hero__tagline span.accent {
+    color: var(--clr-red);
+    display: block;
+}
+
+/* Tarjeta inferior del hero */
+.auth-hero__card {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    max-width: 380px;
+}
+
+.auth-hero__card-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.10);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-hero__card-icon svg {
+    width: 24px;
+    height: 24px;
+    color: var(--clr-text);
+}
+
+.auth-hero__card-text h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--clr-text);
+    line-height: 1.3;
+}
+
+.auth-hero__card-text p {
+    font-size: 0.82rem;
+    color: var(--clr-text-muted);
+    margin-top: 0.2rem;
+    line-height: 1.5;
+}
+
+/* Copyright del hero */
+.auth-hero__footer {
+    position: relative;
+    z-index: 3;
+    font-size: 0.78rem;
+    color: var(--clr-text-dim);
+}
+
+/* ── 4. Panel de formulario (derecha) ────────────────────── */
+.auth-panel {
+    flex: 0 0 42%;
+    max-width: 520px;
+    min-width: 360px;
+    background: var(--clr-panel);
+    border-left: 1px solid var(--clr-panel-edge);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2.5rem 3rem;
+    position: relative;
+    overflow-y: auto;      /* scroll INTERNO si el contenido no entra */
+    overflow-x: hidden;
+    height: 100vh;
+    /* Ocultar scrollbar visualmente pero mantener funcionalidad */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.auth-panel::-webkit-scrollbar {
+    display: none;
+}
+
+/* Decoración sutil de fondo del panel */
+.auth-panel::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, var(--clr-red-glow) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+/* ── 5. Logo ─────────────────────────────────────────────── */
+.auth-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.8rem;
+    gap: 0.4rem;
+}
+
+.auth-logo__wordmark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2.6rem;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+    user-select: none;
+}
+
+.auth-logo__wordmark span.max {
+    color: #f5f5f5;
+}
+
+.auth-logo__wordmark span.fit {
+    color: var(--clr-red);
+}
+
+.auth-logo__sub {
+    font-family: var(--font-body);
+    font-size: 0.70rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+}
+
+/* ── 6. Encabezado del formulario ────────────────────────── */
+.auth-heading {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-heading h1 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.45rem;
+    color: var(--clr-text);
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+}
+
+.auth-heading__divider {
+    width: 40px;
+    height: 2px;
+    background: var(--clr-red);
+    margin: 0.6rem auto 0.7rem;
+    border-radius: 2px;
+}
+
+.auth-heading p {
+    font-size: 0.875rem;
+    color: var(--clr-text-muted);
+}
+
+/* ── 7. Alerta de error (server-side, sin JS) ────────────── */
+.auth-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    background: rgba(230, 48, 39, 0.10);
+    border: 1px solid rgba(230, 48, 39, 0.30);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.auth-alert__icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--clr-red);
+    margin-top: 1px;
+}
+
+.auth-alert__text {
+    font-size: 0.82rem;
+    color: #f0a0a0;
+    line-height: 1.5;
+}
+
+/* Alerta éxito */
+.auth-alert--success {
+    background: rgba(39, 174, 96, 0.10);
+    border-color: rgba(39, 174, 96, 0.30);
+}
+
+.auth-alert--success .auth-alert__icon {
+    color: #27ae60;
+}
+
+.auth-alert--success .auth-alert__text {
+    color: #a0d4b0;
+}
+
+/* ── 8. Campos del formulario ────────────────────────────── */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.form-field label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--clr-text);
+    letter-spacing: 0.01em;
+}
+
+/* Wrapper del input con ícono SVG embebido */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper__icon {
+    position: absolute;
+    left: 1rem;
+    width: 16px;
+    height: 16px;
+    color: var(--clr-text-dim);
+    pointer-events: none;
+    transition: color var(--transition);
+    flex-shrink: 0;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.75rem;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    color: var(--clr-text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    box-shadow: var(--shadow-input);
+    transition: border-color var(--transition), background var(--transition),
+                box-shadow var(--transition);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.input-wrapper input::placeholder {
+    color: var(--clr-placeholder);
+}
+
+.input-wrapper input:hover {
+    border-color: #3a3a40;
+    background: var(--clr-surface-2);
+}
+
+.input-wrapper input:focus {
+    border-color: var(--clr-border-focus);
+    background: var(--clr-surface-2);
+    box-shadow: 0 0 0 3px var(--clr-red-glow), var(--shadow-input);
+}
+
+/* Cuando el input tiene foco, el ícono toma el color rojo */
+.input-wrapper input:focus ~ .input-wrapper__icon,
+.input-wrapper:focus-within .input-wrapper__icon {
+    color: var(--clr-red);
+}
+
+/* Ícono de ojo para password — posición derecha, sin JS: solo decorativo */
+.input-wrapper__eye {
+    position: absolute;
+    right: 1rem;
+    width: 17px;
+    height: 17px;
+    color: var(--clr-text-dim);
+    pointer-events: none;
+}
+
+/* Input de password tiene padding-right para no tapar el ícono */
+.input-wrapper input[type="password"] {
+    padding-right: 3rem;
+}
+
+/* ── 9. Fila "Recordarme" + link contraseña ──────────────── */
+.auth-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: -0.2rem;
+}
+
+/* Checkbox personalizado — solo CSS, sin JS */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--clr-border);
+    border-radius: 4px;
+    background: var(--clr-surface);
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+    flex-shrink: 0;
+    position: relative;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+    background: var(--clr-red);
+    border-color: var(--clr-red);
+}
+
+/* Tilde del checkbox — CSS puro */
+.checkbox-label input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(42deg);
+}
+
+.checkbox-label span {
+    font-size: 0.82rem;
+    color: var(--clr-text-muted);
+}
+
+.auth-link {
+    font-size: 0.82rem;
+    color: var(--clr-red);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition), opacity var(--transition);
+}
+
+.auth-link:hover {
+    color: var(--clr-red-hover);
+    text-decoration: underline;
+}
+
+/* ── 10. Botón de submit ─────────────────────────────────── */
+.btn-auth {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.95rem 1.5rem;
+    background: var(--clr-red);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    box-shadow: var(--shadow-btn);
+    transition: background var(--transition), box-shadow var(--transition),
+                transform var(--transition);
+    text-decoration: none;
+    margin-top: 0.25rem;
+}
+
+.btn-auth svg {
+    width: 18px;
+    height: 18px;
+    transition: transform var(--transition);
+}
+
+.btn-auth:hover {
+    background: var(--clr-red-hover);
+    box-shadow: var(--shadow-btn-hover);
+    transform: translateY(-1px);
+}
+
+.btn-auth:hover svg {
+    transform: translateX(3px);
+}
+
+.btn-auth:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-btn);
+}
+
+/* ── 11. Botón secundario (forgot-password de vuelta) ────── */
+.btn-auth--ghost {
+    background: transparent;
+    border: 1px solid var(--clr-border);
+    color: var(--clr-text-muted);
+    box-shadow: none;
+}
+
+.btn-auth--ghost:hover {
+    background: var(--clr-surface-2);
+    box-shadow: none;
+    transform: translateY(-1px);
+}
+
+/* ── 12. Animaciones de entrada ──────────────────────────── */
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.auth-panel > * {
+    animation: fadeSlideUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.auth-logo           { animation-delay: 0.05s; }
+.auth-heading        { animation-delay: 0.12s; }
+.auth-alert          { animation-delay: 0.16s; }
+.auth-form           { animation-delay: 0.20s; }
+
+.auth-hero__content  { animation: fadeIn 0.8s ease both 0.1s; }
+.auth-hero__card     { animation: fadeSlideUp 0.7s cubic-bezier(0.4,0,0.2,1) both 0.3s; }
+.auth-hero__footer   { animation: fadeIn 1s ease both 0.5s; }
+
+/* ── 13. Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+    .auth-hero {
+        flex: 1 1 50%;
+        padding: 2rem;
+    }
+    .auth-panel {
+        flex: 0 0 50%;
+        padding: 2.5rem 2rem;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 680px) {
+    .auth-wrapper {
+        flex-direction: column;
+    }
+    .auth-hero {
+        flex: 0 0 220px;
+        min-height: 220px;
+        padding: 1.5rem;
+    }
+    .auth-hero__tagline {
+        font-size: 1.8rem;
+    }
+    .auth-hero__card {
+        display: none;
+    }
+    .auth-panel {
+        flex: 1;
+        max-width: 100%;
+        padding: 2rem 1.5rem;
+        border-left: none;
+        border-top: 1px solid var(--clr-panel-edge);
+    }
+}
+
+/* ── 14. Extras para forgot-password.jsp ─────────────────── */
+
+/* Badge que muestra el email de la cuenta a modificar (paso 3) */
+.auth-account-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    margin-bottom: -0.2rem;
+}
+
+.auth-account-badge svg {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    color: var(--clr-text-muted);
+}
+
+.auth-account-badge span {
+    font-size: 0.85rem;
+    color: var(--clr-text-muted);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Hint debajo de un campo */
+.form-field__hint {
+    font-size: 0.76rem;
+    color: var(--clr-text-dim);
+    padding-left: 0.2rem;
+}
+
+/* Alerta informativa (azul apagado / neutro) */
+.auth-alert--info {
+    background: rgba(99, 179, 237, 0.08);
+    border-color: rgba(99, 179, 237, 0.25);
+}
+
+.auth-alert--info .auth-alert__icon {
+    color: #63b3ed;
+}
+
+.auth-alert--info .auth-alert__text {
+    color: #a8cfe8;
+}
+
+/* Volver al login */
+.auth-back {
+    margin-top: 1.5rem;
+    text-align: center;
+    animation: fadeSlideUp 0.5s cubic-bezier(0.4,0,0.2,1) both 0.35s;
+}
+
+.auth-back__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.83rem;
+    color: var(--clr-text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition), gap var(--transition);
+}
+
+.auth-back__link svg {
+    width: 15px;
+    height: 15px;
+    transition: transform var(--transition);
+}
+
+.auth-back__link:hover {
+    color: var(--clr-text);
+    gap: 0.65rem;
+}
+
+.auth-back__link:hover svg {
+    transform: translateX(-3px);
+}
