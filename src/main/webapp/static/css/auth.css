@@ -49,19 +49,21 @@
 
 html, body {
     height: 100%;
-    min-height: 100vh;
+    max-height: 100vh;
     font-family: var(--font-body);
     background-color: var(--clr-bg);
     color: var(--clr-text);
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
+    overflow: hidden; /* el scroll lo maneja .auth-panel internamente */
 }
 
 /* ── 3. Layout split: imagen izquierda / panel derecho ───── */
 .auth-wrapper {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
     width: 100%;
+    overflow: hidden;
 }
 
 /* Panel izquierdo — imagen de fondo con overlay */
@@ -73,11 +75,13 @@ html, body {
     flex-direction: column;
     justify-content: space-between;
     padding: 3rem;
+    height: 100vh;
 }
 
 .auth-hero__bg {
     position: absolute;
     inset: 0;
+    /* background-image se inyecta inline desde login.jsp via JSTL */
     background-size: cover;
     background-position: center 30%;
     filter: brightness(0.45) saturate(0.8);
@@ -204,11 +208,18 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 3.5rem 3rem;
+    padding: 2.5rem 3rem;
     position: relative;
-    overflow-y: auto;   /* scroll interno si el contenido crece */
+    overflow-y: auto;      /* scroll INTERNO si el contenido no entra */
     overflow-x: hidden;
-    max-height: 100vh;  /* nunca supera la pantalla */
+    height: 100vh;
+    /* Ocultar scrollbar visualmente pero mantener funcionalidad */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.auth-panel::-webkit-scrollbar {
+    display: none;
 }
 
 /* Decoración sutil de fondo del panel */
@@ -228,14 +239,14 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.8rem;
     gap: 0.4rem;
 }
 
 .auth-logo__wordmark {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 3rem;
+    font-size: 2.6rem;
     letter-spacing: 0.06em;
     line-height: 1;
     text-transform: uppercase;
@@ -262,13 +273,13 @@ html, body {
 /* ── 6. Encabezado del formulario ────────────────────────── */
 .auth-heading {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .auth-heading h1 {
     font-family: var(--font-body);
     font-weight: 700;
-    font-size: 1.65rem;
+    font-size: 1.45rem;
     color: var(--clr-text);
     line-height: 1.2;
     margin-bottom: 0.5rem;
@@ -331,7 +342,7 @@ html, body {
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
 }
 
 .form-field {
