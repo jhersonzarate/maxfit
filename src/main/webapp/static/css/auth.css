@@ -54,7 +54,7 @@ html, body {
     background-color: var(--clr-bg);
     color: var(--clr-text);
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 /* ── 3. Layout split: imagen izquierda / panel derecho ───── */
@@ -206,7 +206,9 @@ html, body {
     justify-content: center;
     padding: 3.5rem 3rem;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;   /* scroll interno si el contenido crece */
+    overflow-x: hidden;
+    max-height: 100vh;  /* nunca supera la pantalla */
 }
 
 /* Decoración sutil de fondo del panel */
