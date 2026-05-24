@@ -78,7 +78,6 @@ html, body {
 .auth-hero__bg {
     position: absolute;
     inset: 0;
-    background-image: url('../img/gym_welcome.png');
     background-size: cover;
     background-position: center 30%;
     filter: brightness(0.45) saturate(0.8);
