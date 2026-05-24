@@ -1,0 +1,647 @@
+/* =====================================================================
+   MaxFit — login.css
+   Dark luxury aesthetic, paleta: negro profundo + rojo sangre + blanco.
+   Solo estilos propios de la pantalla de login / forgot-password.
+   Bootstrap viene del CDN (head-common.jsp), NO se importa aquí.
+   ===================================================================== */
+
+/* ── Variables de paleta (scope login) ─────────────────────────────── */
+:root {
+  --mf-bg-void:        #080808;
+  --mf-bg-panel:       #111111;
+  --mf-bg-card:        #181818;
+  --mf-bg-input:       #1e1e1e;
+  --mf-red:            #e02020;
+  --mf-red-dark:       #b31515;
+  --mf-red-glow:       rgba(224, 32, 32, 0.35);
+  --mf-text-primary:   #f4f4f4;
+  --mf-text-secondary: #888888;
+  --mf-text-muted:     #555555;
+  --mf-border:         #2a2a2a;
+  --mf-border-focus:   #e02020;
+  --mf-white:          #ffffff;
+  --mf-font-display:   'Bebas Neue', 'Impact', sans-serif;
+  --mf-font-body:      'DM Sans', 'Segoe UI', sans-serif;
+  --mf-radius:         12px;
+  --mf-radius-sm:      8px;
+  --mf-transition:     0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Reset y base ───────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--mf-font-body);
+  background-color: var(--mf-bg-void);
+  color: var(--mf-text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Layout split pantalla ──────────────────────────────────────────── */
+.login-wrapper {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ─ Panel izquierdo: imagen + overlay ─ */
+.login-hero {
+  flex: 1.1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem;
+  background-color: #0d0d0d;
+}
+
+.login-hero__bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/Herramientas/static/img/gym_welcome.png');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.28) saturate(0.7);
+  transition: transform 12s ease;
+  will-change: transform;
+}
+
+.login-hero__bg:hover {
+  transform: scale(1.04);
+}
+
+/* Overlay rojo diagonal izquierda */
+.login-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(8, 8, 8, 0.92) 0%,
+    rgba(140, 15, 15, 0.15) 55%,
+    transparent 100%
+  );
+}
+
+/* Línea roja decorativa lateral */
+.login-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--mf-red) 30%,
+    var(--mf-red) 70%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+
+.login-hero__content {
+  position: relative;
+  z-index: 1;
+}
+
+.login-hero__manifesto {
+  font-family: var(--mf-font-display);
+  font-size: clamp(3rem, 5vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  color: var(--mf-white);
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.login-hero__manifesto span {
+  color: var(--mf-red);
+  display: block;
+}
+
+.login-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border-radius: 50px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mf-text-secondary);
+}
+
+.login-hero__badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mf-red);
+  box-shadow: 0 0 8px var(--mf-red);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+.login-hero__footer {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 3rem;
+  z-index: 1;
+  font-size: 0.72rem;
+  color: var(--mf-text-muted);
+  letter-spacing: 0.06em;
+}
+
+/* ─ Panel derecho: formulario ─ */
+.login-panel {
+  width: 480px;
+  min-width: 420px;
+  background: var(--mf-bg-panel);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 3rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle noise texture */
+.login-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Accent corner glow */
+.login-panel::after {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224,32,32,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Logotipo ───────────────────────────────────────────────────────── */
+.login-logo {
+  margin-bottom: 2.5rem;
+}
+
+.login-logo__wordmark {
+  font-family: var(--mf-font-display);
+  font-size: 2.6rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--mf-white);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.login-logo__wordmark .accent {
+  color: var(--mf-red);
+}
+
+.login-logo__sub {
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mf-text-muted);
+  margin-top: 0.3rem;
+  font-weight: 500;
+}
+
+/* ── Encabezado del form ─────────────────────────────────────────────── */
+.login-heading {
+  margin-bottom: 2rem;
+}
+
+.login-heading h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--mf-text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.login-heading p {
+  font-size: 0.85rem;
+  color: var(--mf-text-secondary);
+  font-weight: 400;
+}
+
+/* Separador rojo bajo heading */
+.login-heading::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: var(--mf-red);
+  margin-top: 1rem;
+  border-radius: 2px;
+}
+
+/* ── Grupos de campo ─────────────────────────────────────────────────── */
+.mf-field {
+  margin-bottom: 1.2rem;
+}
+
+.mf-field__label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mf-text-secondary);
+  margin-bottom: 0.55rem;
+}
+
+.mf-field__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mf-field__icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--mf-text-muted);
+  font-size: 1rem;
+  pointer-events: none;
+  transition: color var(--mf-transition);
+  z-index: 1;
+}
+
+.mf-input {
+  width: 100%;
+  background: var(--mf-bg-input);
+  border: 1px solid var(--mf-border);
+  border-radius: var(--mf-radius-sm);
+  color: var(--mf-text-primary);
+  font-family: var(--mf-font-body);
+  font-size: 0.9rem;
+  padding: 0.8rem 1rem 0.8rem 2.75rem;
+  outline: none;
+  transition: border-color var(--mf-transition), box-shadow var(--mf-transition), background var(--mf-transition);
+  caret-color: var(--mf-red);
+  -webkit-appearance: none;
+}
+
+.mf-input::placeholder {
+  color: var(--mf-text-muted);
+  font-size: 0.85rem;
+}
+
+.mf-input:focus {
+  border-color: var(--mf-red);
+  background: #222222;
+  box-shadow: 0 0 0 3px var(--mf-red-glow), 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.mf-input:focus + .mf-field__icon,
+.mf-field__input-wrap:focus-within .mf-field__icon {
+  color: var(--mf-red);
+}
+
+/* Icono de revelar password */
+.mf-input--password {
+  padding-right: 3rem;
+}
+
+.btn-toggle-pass {
+  position: absolute;
+  right: 0.9rem;
+  background: none;
+  border: none;
+  color: var(--mf-text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  transition: color var(--mf-transition);
+  line-height: 1;
+  z-index: 1;
+}
+
+.btn-toggle-pass:hover {
+  color: var(--mf-text-primary);
+}
+
+/* Input con error */
+.mf-input.is-invalid {
+  border-color: #ff4444;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.25);
+}
+
+/* ── Checkbox recordarme ─────────────────────────────────────────────── */
+.mf-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.6rem;
+  margin-top: 0.3rem;
+}
+
+.mf-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mf-check__input {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--mf-border);
+  border-radius: 4px;
+  background: var(--mf-bg-input);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--mf-transition);
+  flex-shrink: 0;
+}
+
+.mf-check__input:checked {
+  background: var(--mf-red);
+  border-color: var(--mf-red);
+}
+
+.mf-check__input:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.mf-check__label {
+  font-size: 0.82rem;
+  color: var(--mf-text-secondary);
+}
+
+.mf-forgot {
+  font-size: 0.82rem;
+  color: var(--mf-red);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--mf-transition), opacity var(--mf-transition);
+}
+
+.mf-forgot:hover {
+  color: #ff4444;
+  text-decoration: underline;
+}
+
+/* ── Botón principal ─────────────────────────────────────────────────── */
+.btn-mf-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  background: var(--mf-red);
+  color: var(--mf-white);
+  border: none;
+  border-radius: var(--mf-radius-sm);
+  font-family: var(--mf-font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 1.5rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--mf-transition), transform 0.15s, box-shadow var(--mf-transition);
+  box-shadow: 0 4px 20px rgba(224, 32, 32, 0.35);
+}
+
+.btn-mf-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--mf-transition);
+}
+
+.btn-mf-primary:hover {
+  background: #c81b1b;
+  box-shadow: 0 6px 28px rgba(224, 32, 32, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-mf-primary:hover::before {
+  opacity: 1;
+}
+
+.btn-mf-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(224, 32, 32, 0.4);
+}
+
+.btn-mf-primary:disabled,
+.btn-mf-primary.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-mf-primary .btn-arrow {
+  transition: transform var(--mf-transition);
+}
+
+.btn-mf-primary:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Spinner en botón */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Alertas de error / éxito ───────────────────────────────────────── */
+.mf-alert {
+  border-radius: var(--mf-radius-sm);
+  padding: 0.85rem 1rem;
+  font-size: 0.83rem;
+  font-weight: 500;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+  border: 1px solid transparent;
+  line-height: 1.45;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.mf-alert--error {
+  background: rgba(255, 50, 50, 0.1);
+  border-color: rgba(255, 50, 50, 0.3);
+  color: #ff7070;
+}
+
+.mf-alert--success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.mf-alert--info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+.mf-alert-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+/* ── Footer del panel ────────────────────────────────────────────────── */
+.login-panel__footer {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--mf-text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ── Forgot password steps ───────────────────────────────────────────── */
+.mf-steps {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.mf-step {
+  flex: 1;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--mf-border);
+  transition: background 0.4s ease;
+}
+
+.mf-step.active {
+  background: var(--mf-red);
+}
+
+.mf-step.done {
+  background: var(--mf-red-dark);
+}
+
+.btn-mf-ghost {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--mf-border);
+  color: var(--mf-text-secondary);
+  border-radius: var(--mf-radius-sm);
+  font-family: var(--mf-font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all var(--mf-transition);
+  text-decoration: none;
+}
+
+.btn-mf-ghost:hover {
+  border-color: var(--mf-text-muted);
+  color: var(--mf-text-primary);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .login-hero {
+    display: none;
+  }
+
+  .login-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 2.5rem 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-panel {
+    padding: 2rem 1.5rem;
+  }
+
+  .login-logo__wordmark {
+    font-size: 2.2rem;
+  }
+}
+
+/* ── Animaciones de entrada ──────────────────────────────────────────── */
+.fade-up {
+  animation: fadeUp 0.5s ease both;
+}
+
+.fade-up:nth-child(1) { animation-delay: 0.05s; }
+.fade-up:nth-child(2) { animation-delay: 0.12s; }
+.fade-up:nth-child(3) { animation-delay: 0.19s; }
+.fade-up:nth-child(4) { animation-delay: 0.26s; }
+.fade-up:nth-child(5) { animation-delay: 0.33s; }
+.fade-up:nth-child(6) { animation-delay: 0.40s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
