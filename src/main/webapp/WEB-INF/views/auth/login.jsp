@@ -44,7 +44,7 @@
     <%-- ── Panel izquierdo: imagen + texto de marca ─────── --%>
     <aside class="auth-hero" aria-hidden="true">
         <div class="auth-hero__bg"
-        style="background-image: url('${pageContext.request.contextPath}/static/img/gym_welcome.png');">
+        style="background-image: url('${pageContext.request.contextPath}/static/img/gym_welcome.jpg');">
     </div>
 
         <%-- Palabras clave de la marca --%>

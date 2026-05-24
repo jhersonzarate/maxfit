@@ -64,7 +64,7 @@
     <%-- ── Panel izquierdo: imagen de fondo + marca ──────── --%>
     <aside class="auth-hero" aria-hidden="true">
         <div class="auth-hero__bg"
-        style="background-image: url('${pageContext.request.contextPath}/static/img/gym_welcome.png');">
+        style="background-image: url('${pageContext.request.contextPath}/static/img/gym_welcome.jpg');">
     </div>
 
         <div class="auth-hero__content">
