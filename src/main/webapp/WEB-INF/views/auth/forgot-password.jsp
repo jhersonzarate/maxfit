@@ -173,7 +173,7 @@
 
                 <%-- Campo oculto que indica al controlador qué acción ejecutar --%>
                 <input type="hidden" name="action" value="buscar">
-                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+                <input type="hidden" name="_csrf" value="${csrfToken}">
 
                 <%-- Campo: email --%>
                 <div class="form-field">
@@ -233,7 +233,7 @@
                   autocomplete="off">
 
                 <input type="hidden" name="action" value="reset">
-                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+                <input type="hidden" name="_csrf" value="${csrfToken}">
 
                 <%-- Campo oculto con el email (lo muestra el controlador,
                      el guard real es SESSION_RESET_EMAIL en sesión) --%>

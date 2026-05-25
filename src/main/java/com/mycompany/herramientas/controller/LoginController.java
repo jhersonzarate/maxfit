@@ -203,6 +203,9 @@ public class LoginController extends HttpServlet {
                             .toLowerCase()
             );
         }
+        
+        req.setAttribute("csrfToken",
+        com.mycompany.herramientas.util.CsrfUtils.getOrCreate(req));
 
         req.getRequestDispatcher(
                 ViewRoutes.AUTH_LOGIN

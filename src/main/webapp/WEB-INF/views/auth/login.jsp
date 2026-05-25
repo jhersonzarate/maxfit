@@ -124,7 +124,7 @@
               autocomplete="on">
 
             <%-- Protección CSRF: token generado por CsrfFilter en el GET --%>
-            <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+            <input type="hidden" name="_csrf" value="${csrfToken}">
 
             <%-- ── Campo: Correo electrónico ─────────────────── --%>
             <div class="form-field">
