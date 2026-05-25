@@ -46,6 +46,18 @@ public class AuthService {
             return null;
         }
 
+        // ── LOGS TEMPORALES ──────────────────────────────────
+        LOGGER.severe("DEBUG LOGIN - email: " + emailLimpio);
+        LOGGER.severe("DEBUG LOGIN - usuario encontrado: " + (usuario != null));
+        if (usuario != null) {
+            LOGGER.severe("DEBUG LOGIN - estado: " + usuario.getEstado());
+            LOGGER.severe("DEBUG LOGIN - activo: " + usuario.isActivo());
+            LOGGER.severe("DEBUG LOGIN - hash: " + usuario.getPasswordUsuario());
+            boolean okDebug = PasswordService.verificar(rawPassword, usuario.getPasswordUsuario());
+            LOGGER.severe("DEBUG LOGIN - password ok: " + okDebug);
+        }
+        // ─────────────────────────────────────────────────────
+
         // usuario no existe
         if (usuario == null) {
             LOGGER.fine("Login fallido: no existe " + emailLimpio);

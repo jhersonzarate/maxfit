@@ -97,19 +97,14 @@ public class ForgotPasswordController extends HttpServlet {
 
         // validar campo vacío
         if (email == null || email.trim().isEmpty()) {
-
-            req.setAttribute(
-                    "errorMsg",
-                    "Ingresa tu correo electrónico registrado."
-            );
-
-            req.getRequestDispatcher(
-                    ViewRoutes.AUTH_FORGOT_PASSWORD
-            ).forward(req, resp);
-
-            return;
+                
+                req.setAttribute("errorMsg", "Ingresa tu correo electrónico registrado.");
+                req.setAttribute("csrfToken", com.mycompany.herramientas.util.CsrfUtils.getOrCreate(req));
+                req.getRequestDispatcher(ViewRoutes.AUTH_FORGOT_PASSWORD).forward(req, resp);
+                
+                return;
         }
-
+        
         String emailLimpio = email.trim().toLowerCase();
 
         try {
@@ -154,29 +149,20 @@ public class ForgotPasswordController extends HttpServlet {
                             + emailLimpio,
                     e
             );
-
-            req.setAttribute(
-                    "errorMsg",
-                    "Error interno. Intenta nuevamente en unos momentos."
-            );
-
-            req.getRequestDispatcher(
-                    ViewRoutes.AUTH_FORGOT_PASSWORD
-            ).forward(req, resp);
-
+            
+            req.setAttribute("errorMsg", "Error interno. Intenta nuevamente en unos momentos.");
+            req.setAttribute("csrfToken", com.mycompany.herramientas.util.CsrfUtils.getOrCreate(req));
+            req.getRequestDispatcher(ViewRoutes.AUTH_FORGOT_PASSWORD).forward(req, resp);
+            
             return;
         }
 
-        // mismo mensaje para ambos escenarios
-        req.setAttribute(
-                "infoMsg",
-                MSG_GENERICO_PASO2
-        );
+        // mismo mensaje para ambos escenarios 
+            req.setAttribute("infoMsg", MSG_GENERICO_PASO2);
+            req.setAttribute("csrfToken", com.mycompany.herramientas.util.CsrfUtils.getOrCreate(req));
+            req.getRequestDispatcher(ViewRoutes.AUTH_FORGOT_PASSWORD).forward(req, resp);
 
-        req.getRequestDispatcher(
-                ViewRoutes.AUTH_FORGOT_PASSWORD
-        ).forward(req, resp);
-    }
+        }
 
     // ───────────────── aplicar nueva contraseña ───────
 
@@ -325,15 +311,10 @@ public class ForgotPasswordController extends HttpServlet {
                     "emailEncontrado",
                     true
             );
-
-            req.setAttribute(
-                    "emailIngresado",
-                    email
-            );
-
-            req.getRequestDispatcher(
-                    ViewRoutes.AUTH_FORGOT_PASSWORD
-            ).forward(req, resp);
+            
+            req.setAttribute("emailIngresado", email);
+            req.setAttribute("csrfToken", com.mycompany.herramientas.util.CsrfUtils.getOrCreate(req));
+            req.getRequestDispatcher(ViewRoutes.AUTH_FORGOT_PASSWORD).forward(req, resp);
 
         } catch (ServletException e) {
 

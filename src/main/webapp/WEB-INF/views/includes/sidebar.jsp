@@ -561,7 +561,7 @@
    El sidebar se estrecha a --sidebar-collapsed.
    Solo se muestran íconos, sin etiquetas.
    ────────────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
     .sidebar-brand__tag,
     .sidebar-profile__info,
     .sidebar-nav__label,
