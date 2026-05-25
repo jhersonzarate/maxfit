@@ -9,34 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * DAO para la tabla Horarios (RF-09).
- *
- * Separado de ClaseDAO porque son entidades distintas:
- *   Una Clase puede tener múltiples Horarios.
- *   Una Clase puede modificarse sin tocar sus Horarios y viceversa.
- *
- * Tipos de datos críticos según el SQL:
- *   dia_semana  → TINYINT CHECK (dia_semana BETWEEN 1 AND 7)
- *                 1=Lunes, 2=Martes, …, 7=Domingo
- *                 En Java es int. El modelo Horario tiene getNombreDia().
- *   hora_inicio → TIME en BD → java.sql.Time → LocalTime en Java
- *   hora_fin    → TIME en BD → java.sql.Time → LocalTime en Java
- *
- * Estados válidos según BD:
- *   CHECK (estado IN ('programado','cancelado')) DEFAULT 'programado'
- *
- * ACTUALIZACIÓN:
- *   Se añadió deleteById(String horarioId) para eliminar un horario
- *   específico por su PK. SchedulesController.eliminarHorario() lo usa
- *   correctamente en lugar del anterior deleteByClaseId que borraba
- *   TODOS los horarios de la clase — bug corregido.
- */
+// DAO para la tabla Horarios (RF-09)
+// dia_semana → TINYINT 1-7 (1=Lunes … 7=Domingo) | hora_inicio/fin → TIME → LocalTime
+// estados válidos: 'programado' | 'cancelado'
 public class HorarioDAO {
 
     private static final Logger LOGGER = Logger.getLogger(HorarioDAO.class.getName());
 
-    // ─── SQL ─────────────────────────────────────────────────────────────────
+    // ─── SQL ───────────────────────────────────────────────────
 
     private static final String SQL_SELECT_BASE =
         "SELECT h.id, h.dia_semana, h.hora_inicio, h.hora_fin, h.estado, " +
@@ -44,28 +24,25 @@ public class HorarioDAO {
         "FROM Horarios h " +
         "INNER JOIN Clases cl ON h.id_clase = cl.id ";
 
-    /** Todos los horarios, ordenados por día y hora de inicio. */
+    // todos los horarios ordenados por día y hora de inicio
     private static final String SQL_FIND_ALL =
         SQL_SELECT_BASE +
         "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
 
-    /** Horarios de una clase específica. */
+    // horarios de una clase específica
     private static final String SQL_FIND_BY_CLASE =
         SQL_SELECT_BASE +
         "WHERE h.id_clase = ? " +
         "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
 
-    /** Solo horarios activos (estado='programado') de una clase. */
+    // solo horarios programados de una clase
     private static final String SQL_FIND_PROGRAMADOS_BY_CLASE =
         SQL_SELECT_BASE +
         "WHERE h.id_clase = ? AND h.estado = 'programado' " +
         "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
 
-    /**
-     * Horarios del día indicado (ISO: 1=Lunes … 7=Domingo).
-     * Se pasa el día desde Java con LocalDate.now().getDayOfWeek().getValue()
-     * para evitar dependencias de SET DATEFIRST de SQL Server.
-     */
+    // horarios del día indicado (ISO: 1=Lunes … 7=Domingo) — se pasa desde Java
+    // con LocalDate.now().getDayOfWeek().getValue() para evitar SET DATEFIRST
     private static final String SQL_FIND_HOY =
         SQL_SELECT_BASE +
         "WHERE h.dia_semana = ? AND h.estado = 'programado' " +
@@ -83,31 +60,21 @@ public class HorarioDAO {
         "SET dia_semana = ?, hora_inicio = ?, hora_fin = ?, estado = ? " +
         "WHERE id = ?";
 
-    /**
-     * Elimina UN horario específico por su PK.
-     * Usado por SchedulesController.eliminarHorario() — antes se usaba
-     * deleteByClaseId que borraba TODOS los horarios de la clase (bug).
-     */
+    // elimina UN horario por su PK — corrección del bug que usaba deleteByClaseId
     private static final String SQL_DELETE_BY_ID =
         "DELETE FROM Horarios WHERE id = ?";
 
-    /**
-     * Elimina TODOS los horarios de una clase.
-     * Llamar antes de borrar una clase para respetar la FK.
-     * NO usar para borrar un horario individual.
-     */
+    // elimina TODOS los horarios de una clase — usar antes de borrar la clase (FK)
+    // NUNCA usar para borrar un horario individual
     private static final String SQL_DELETE_BY_CLASE =
         "DELETE FROM Horarios WHERE id_clase = ?";
 
     private static final String SQL_COUNT_HOY =
         "SELECT COUNT(*) FROM Horarios WHERE dia_semana = ? AND estado = 'programado'";
 
-    // ─── Métodos públicos ─────────────────────────────────────────────────────
+    // ─── métodos públicos ──────────────────────────────────────
 
-    /**
-     * Devuelve todos los horarios del sistema.
-     * Usado en la vista de Calendario (calendar.jsp).
-     */
+    // devuelve todos los horarios del sistema — para la vista de calendario
     public List<Horario> findAll() throws SQLException {
         List<Horario> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -118,10 +85,7 @@ public class HorarioDAO {
         return lista;
     }
 
-    /**
-     * Devuelve todos los horarios de una clase (programados y cancelados).
-     * Para la vista de edición/gestión de horarios de una clase.
-     */
+    // devuelve todos los horarios de una clase (programados y cancelados)
     public List<Horario> findByClaseId(String claseId) throws SQLException {
         List<Horario> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -134,10 +98,7 @@ public class HorarioDAO {
         return lista;
     }
 
-    /**
-     * Solo los horarios programados de una clase.
-     * Para el widget de la tarjeta de clase en schedules.jsp.
-     */
+    // solo los horarios programados de una clase — para la tarjeta en schedules.jsp
     public List<Horario> findProgramadosByClaseId(String claseId) throws SQLException {
         List<Horario> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -150,12 +111,8 @@ public class HorarioDAO {
         return lista;
     }
 
-    /**
-     * Horarios programados para el día indicado.
-     * El parámetro diaSemana sigue el convenio ISO: 1=Lunes … 7=Domingo.
-     * Se obtiene con: LocalDate.now().getDayOfWeek().getValue()
-     * Usado en el dashboard para el widget "Clases del Día".
-     */
+    // horarios programados para el día indicado (ISO: 1=Lunes … 7=Domingo)
+    // para el widget "Clases del Día" del dashboard
     public List<Horario> findByDia(int diaSemana) throws SQLException {
         List<Horario> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -168,7 +125,7 @@ public class HorarioDAO {
         return lista;
     }
 
-    /** Busca un horario por su ID. Devuelve null si no existe. */
+    // busca un horario por id — devuelve null si no existe
     public Horario findById(String id) throws SQLException {
         if (id == null || id.trim().isEmpty()) return null;
         try (Connection con = DatabaseConnection.getConnection();
@@ -181,10 +138,7 @@ public class HorarioDAO {
         return null;
     }
 
-    /**
-     * Guarda (INSERT si es nuevo, UPDATE si ya existe).
-     * El ID debe venir generado por IdGenerator.parHorario().
-     */
+    // INSERT si es nuevo, UPDATE si ya existe — el ID debe venir de IdGenerator.parHorario()
     public void save(Horario h) throws SQLException {
         boolean esNuevo = h.getId() == null || h.getId().trim().isEmpty()
                 || findById(h.getId()) == null;
@@ -197,17 +151,9 @@ public class HorarioDAO {
         }
     }
 
-    /**
-     * Elimina UN horario específico por su PK (id).
-     *
-     * CORRECCIÓN de bug anterior: SchedulesController.eliminarHorario()
-     * llamaba a deleteByClaseId(claseId) que borraba TODOS los horarios
-     * de la clase. Ahora usa este método para borrar solo el horario indicado.
-     *
-     * @param horarioId ID del horario a eliminar (ej: "HOR-2026-0001")
-     * @return true si se eliminó, false si no existía
-     * @throws SQLException si hay error de BD o violación de FK
-     */
+    // elimina UN horario específico por su PK
+    // corrección: antes SchedulesController llamaba a deleteByClaseId() por error
+    // devuelve true si se eliminó, false si no existía
     public boolean deleteById(String horarioId) throws SQLException {
         if (horarioId == null || horarioId.trim().isEmpty()) return false;
         try (Connection con = DatabaseConnection.getConnection();
@@ -219,14 +165,9 @@ public class HorarioDAO {
         }
     }
 
-    /**
-     * Elimina TODOS los horarios de una clase.
-     * Llamar cuando se cancela o elimina una clase (para respetar la FK).
-     * NUNCA usar para borrar un horario individual — usar deleteById().
-     *
-     * @param claseId ID de la clase cuyos horarios se quieren eliminar
-     * @return número de filas eliminadas
-     */
+    // elimina TODOS los horarios de una clase — usar al cancelar o borrar una clase
+    // NUNCA usar para borrar un horario individual; usar deleteById()
+    // devuelve el número de filas eliminadas
     public int deleteByClaseId(String claseId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_DELETE_BY_CLASE)) {
@@ -238,12 +179,7 @@ public class HorarioDAO {
         }
     }
 
-    /**
-     * Cuenta los horarios programados para un día de la semana.
-     * Para el widget "Clases del Día" en el dashboard (número rápido).
-     *
-     * @param diaSemana día ISO (1=Lunes … 7=Domingo)
-     */
+    // cuenta los horarios programados para un día — para el widget "Clases del Día"
     public int countByDia(int diaSemana) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_HOY)) {
@@ -255,7 +191,7 @@ public class HorarioDAO {
         return 0;
     }
 
-    // ─── Privados ─────────────────────────────────────────────────────────────
+    // ─── privados ──────────────────────────────────────────────
 
     private void insert(Connection con, Horario h) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
@@ -284,12 +220,8 @@ public class HorarioDAO {
         }
     }
 
-    /**
-     * Mapea una fila del ResultSet a un objeto Horario.
-     * Solo hidrata los datos de Clase necesarios (id + nombre_clase + estado),
-     * no hace JOIN completo con Empleado/TipoClase para mantener el query liviano.
-     * Si se necesita el objeto Clase completo, usar ClaseDAO.findById().
-     */
+    // mapea una fila a Horario — hidrata solo id + nombre_clase + estado de Clase
+    // para el objeto Clase completo usar ClaseDAO.findById()
     private Horario mapRow(ResultSet rs) throws SQLException {
         Clase cl = new Clase();
         cl.setId(rs.getString("cl_id"));

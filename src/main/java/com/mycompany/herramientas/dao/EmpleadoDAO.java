@@ -10,22 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * DAO para la tabla Empleados (RF-12, RF-13).
- *
- * NOTA IMPORTANTE sobre la BD:
- *   La tabla Empleados NO tiene columna estado.
- *   Si se necesita desactivar empleados en el futuro,
- *   primero se debe agregar la columna a la BD.
- *
- * Tablas involucradas (JOINs):
- *   Empleados → TipoDocumentos, Cargos
- */
+// DAO para la tabla Empleados (RF-12, RF-13)
+// nota: la tabla NO tiene columna estado — si se necesita desactivar empleados
+// primero se debe agregar la columna a la BD
 public class EmpleadoDAO {
 
     private static final Logger LOGGER = Logger.getLogger(EmpleadoDAO.class.getName());
 
-    // ─── SQL ─────────────────────────────────────────────────────────────────
+    // ─── SQL ───────────────────────────────────────────────────
 
     private static final String SQL_SELECT_BASE =
         "SELECT e.id, e.nombre, e.apellido, e.numeroDocumento, " +
@@ -62,7 +54,7 @@ public class EmpleadoDAO {
     private static final String SQL_COUNT =
         "SELECT COUNT(*) FROM Empleados";
 
-    // ─── Métodos públicos ─────────────────────────────────────────────────────
+    // ─── métodos públicos ──────────────────────────────────────
 
     public List<Empleado> findAll() throws SQLException {
         List<Empleado> lista = new ArrayList<>();
@@ -85,11 +77,7 @@ public class EmpleadoDAO {
         return null;
     }
 
-    /**
-     * Devuelve empleados filtrando por cargo.
-     * Útil para obtener solo entrenadores (CARGO-TRAINER)
-     * al crear una clase grupal.
-     */
+    // filtra empleados por cargo — útil para obtener solo entrenadores (CARGO-TRAINER)
     public List<Empleado> findByCargo(String cargoId) throws SQLException {
         List<Empleado> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -102,6 +90,7 @@ public class EmpleadoDAO {
         return lista;
     }
 
+    // INSERT si es nuevo, UPDATE si ya existe
     public void save(Empleado empleado) throws SQLException {
         boolean existe = empleado.getId() != null
                 && findById(empleado.getId()) != null;
@@ -111,12 +100,7 @@ public class EmpleadoDAO {
         }
     }
 
-    /**
-     * Elimina un empleado.
-     * Si tiene contratos o clases asignadas la BD lanzará
-     * un error de integridad referencial — el controlador
-     * debe capturarlo y mostrar mensaje amigable.
-     */
+    // elimina un empleado — la BD lanza SQLException si tiene contratos o clases asignadas
     public boolean delete(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
@@ -134,7 +118,7 @@ public class EmpleadoDAO {
         return 0;
     }
 
-    // ─── Privados ─────────────────────────────────────────────────────────────
+    // ─── privados ──────────────────────────────────────────────
 
     private void insert(Connection con, Empleado e) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
@@ -144,7 +128,7 @@ public class EmpleadoDAO {
             ps.setString(4, e.getTipoDocumento().getId());
             ps.setString(5, e.getNumeroDocumento().trim());
             ps.setString(6, e.getEmail().trim().toLowerCase());
-            // telefono NULL-able
+            // telefono es NULL-able
             if (e.getTelefono() != null && !e.getTelefono().trim().isEmpty()) {
                 ps.setString(7, e.getTelefono().trim());
             } else {
@@ -163,6 +147,7 @@ public class EmpleadoDAO {
             ps.setString(3, e.getTipoDocumento().getId());
             ps.setString(4, e.getNumeroDocumento().trim());
             ps.setString(5, e.getEmail().trim().toLowerCase());
+            // telefono es NULL-able
             if (e.getTelefono() != null && !e.getTelefono().trim().isEmpty()) {
                 ps.setString(6, e.getTelefono().trim());
             } else {
@@ -195,6 +180,7 @@ public class EmpleadoDAO {
         e.setNumeroDocumento(rs.getString("numeroDocumento"));
         e.setEmail(rs.getString("email"));
 
+        // telefono es NULL-able
         String tel = rs.getString("telefono");
         e.setTelefono(rs.wasNull() ? null : tel);
 

@@ -2,36 +2,26 @@ package com.mycompany.herramientas.model;
 
 import java.time.LocalTime;
 
-/**
- * Horario asignado a una clase grupal. ID generado con prefijo HOR-AÑO-CORRELATIVO.
- *
- * Alineado a la tabla Horarios del SQL:
- *   id VARCHAR(20) PK,
- *   id_clase VARCHAR(20) FK → Clases,
- *   dia_semana TINYINT CHECK(1..7)  ← 1=Lunes ... 7=Domingo,
- *   hora_inicio TIME,
- *   hora_fin TIME,
- *   estado VARCHAR(20) CHECK('programado','cancelado') DEFAULT 'programado'
- *
- * IMPORTANTE: el SQL usa TINYINT para dia_semana (1-7), no un String.
- * Se provee el helper getNombreDia() para mostrar "Lunes", "Martes", etc. en la vista.
- * El DAO debe guardar el int y este modelo lo convierte para los JSP.
- */
+// horario asignado a una clase grupal
 public class Horario {
 
-    private String    id;          // Ej: HOR-2026-0001
-    private Clase     clase;       // FK → Clases
-    private int       diaSemana;   // 1=Lunes, 2=Martes, ..., 7=Domingo (TINYINT)
-    private LocalTime horaInicio;  // TIME en SQL → LocalTime en Java
-    private LocalTime horaFin;     // TIME en SQL → LocalTime en Java
-    private String    estado;      // 'programado' | 'cancelado'
+    // ─── atributos ─────────────────────────────────────────────
 
+    private String    id;          // Ej: HOR-2026-0001
+    private Clase     clase;       // clase asociada
+    private int       diaSemana;   // 1=lunes ... 7=domingo
+    private LocalTime horaInicio;  // hora inicio
+    private LocalTime horaFin;     // hora fin
+    private String    estado;      // programado | cancelado
+
+    // nombres de días para vista
     private static final String[] NOMBRES_DIA = {
         "", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
     };
 
     public Horario() {}
 
+    // constructor completo
     public Horario(String id, Clase clase, int diaSemana,
                    LocalTime horaInicio, LocalTime horaFin, String estado) {
         this.id          = id;
@@ -42,9 +32,7 @@ public class Horario {
         this.estado      = estado;
     }
 
-    // -----------------------------------------------------------------------
-    // Getters y Setters
-    // -----------------------------------------------------------------------
+    // ─── getters y setters ────────────────────────────────────
 
     public String getId()                { return id; }
     public void   setId(String id)       { this.id = id; }
@@ -52,7 +40,7 @@ public class Horario {
     public Clase  getClase()             { return clase; }
     public void   setClase(Clase clase)  { this.clase = clase; }
 
-    /** Valor numérico del día (1-7) tal como se guarda en la BD. */
+    // valor 1-7 tal como en BD
     public int  getDiaSemana()           { return diaSemana; }
     public void setDiaSemana(int dia)    { this.diaSemana = dia; }
 
@@ -65,26 +53,22 @@ public class Horario {
     public String getEstado()            { return estado; }
     public void   setEstado(String e)    { this.estado = e; }
 
-    // -----------------------------------------------------------------------
-    // Helpers para la vista (JSP)
-    // -----------------------------------------------------------------------
+    // ─── helpers para vista ───────────────────────────────────
 
-    /**
-     * Devuelve el nombre del día en español para mostrarlo en los JSP.
-     * Ej: diaSemana=1 → "Lunes", diaSemana=6 → "Sábado".
-     */
+    // nombre del día para JSP
     public String getNombreDia() {
         if (diaSemana < 1 || diaSemana > 7) return "Desconocido";
         return NOMBRES_DIA[diaSemana];
     }
 
-    /** Devuelve el horario formateado: "07:00 – 08:30". */
+    // rango horario formateado
     public String getRangoHorario() {
         String inicio = horaInicio != null ? horaInicio.toString().substring(0, 5) : "--:--";
         String fin    = horaFin    != null ? horaFin.toString().substring(0, 5)    : "--:--";
         return inicio + " – " + fin;
     }
 
+    // si está programado
     public boolean isProgramado() {
         return "programado".equalsIgnoreCase(estado);
     }

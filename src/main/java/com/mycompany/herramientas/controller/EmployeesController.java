@@ -19,31 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Controlador de Gestión de Empleados (RF-12, RF-13).
- *
- * Rutas y acciones:
- *   GET  /employees              → lista de empleados
- *   GET  /employees?action=new   → formulario de registro
- *   GET  /employees?action=edit&id={id} → formulario de edición
- *   GET  /employees?action=view&id={id} → detalle del empleado
- *   POST /employees?action=save  → crear o actualizar empleado
- *   POST /employees?action=delete&id={id} → eliminar empleado
- *
- * Acceso: ROL-ADMIN únicamente (RoleFilter → /employees).
- *
- * Notas del modelo:
- *   La tabla Empleados NO tiene columna estado (no se puede desactivar sin
- *   alterar la BD). Para "desactivar" un empleado en la práctica actual,
- *   se inactiva su usuario vinculado desde /users.
- *
- * Validaciones (RF-07 DocumentoValidator):
- *   - numeroDocumento: longitud y formato según TipoDocumento
- *   - email: obligatorio y único (la BD lanzará UNIQUE violation si está duplicado)
- *   - nombre, apellido, cargo: obligatorios
- *
- * @author MaxFit
- */
+// gestión de empleados del sistema
 @WebServlet("/employees")
 public class EmployeesController extends AbstractController {
 
@@ -53,7 +29,7 @@ public class EmployeesController extends AbstractController {
     private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
     private final CatalogoDAO catalogoDAO = new CatalogoDAO();
 
-    // ─── GET ──────────────────────────────────────────────────────────────────
+    // ───────────────── GET /employees ─────────────────
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -64,21 +40,25 @@ public class EmployeesController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
             case "new":
                 mostrarFormularioNuevo(req, resp);
                 break;
+
             case "edit":
                 mostrarFormularioEdicion(req, resp);
                 break;
+
             case "view":
                 mostrarDetalle(req, resp);
                 break;
+
             default:
                 mostrarLista(req, resp);
         }
     }
 
-    // ─── POST ─────────────────────────────────────────────────────────────────
+    // ───────────────── POST /employees ────────────────
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -87,274 +67,533 @@ public class EmployeesController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
             case "save":
                 guardarEmpleado(req, resp);
                 break;
+
             case "delete":
                 eliminarEmpleado(req, resp);
                 break;
+
             default:
                 redirigirA("/employees", req, resp);
         }
     }
 
-    // ─── GET: lista de empleados ───────────────────────────────────────────────
+    // ───────────────── listado de empleados ───────────
 
     private void mostrarLista(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
         try {
+
             List<Empleado> empleados = empleadoDAO.findAll();
-            req.setAttribute("empleados",      empleados);
+
+            req.setAttribute("empleados", empleados);
             req.setAttribute("totalEmpleados", empleados.size());
+
             irA(ViewRoutes.EMPLOYEES_INDEX, req, resp);
+
         } catch (SQLException e) {
+
             LOGGER.log(Level.SEVERE, "Error al listar empleados", e);
-            req.setAttribute("errorMsg", "Error al cargar los empleados.");
+
+            req.setAttribute(
+                    "errorMsg",
+                    "Error al cargar los empleados."
+            );
+
             irA(ViewRoutes.EMPLOYEES_INDEX, req, resp);
         }
     }
 
-    // ─── GET: formulario de nuevo empleado ────────────────────────────────────
+    // ───────────────── formulario de registro ─────────
 
-    private void mostrarFormularioNuevo(HttpServletRequest req, HttpServletResponse resp)
+    private void mostrarFormularioNuevo(HttpServletRequest req,
+                                        HttpServletResponse resp)
             throws ServletException, IOException {
+
         try {
+
             cargarCatalogosFormulario(req);
+
             req.setAttribute("modoEdicion", false);
-            req.setAttribute("empleado",    new Empleado());
-            irA(ViewRoutes.EMPLOYEES_INDEX + "?form=true", req, resp);
+            req.setAttribute("empleado", new Empleado());
+
+            irA(
+                    ViewRoutes.EMPLOYEES_INDEX + "?form=true",
+                    req,
+                    resp
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al cargar formulario de empleado", e);
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al cargar formulario de empleado",
+                    e
+            );
+
             mensajeError(req, "Error al cargar el formulario.");
+
             redirigirA("/employees", req, resp);
         }
     }
 
-    // ─── GET: formulario de edición ───────────────────────────────────────────
+    // ───────────────── formulario de edición ──────────
 
-    private void mostrarFormularioEdicion(HttpServletRequest req, HttpServletResponse resp)
+    private void mostrarFormularioEdicion(HttpServletRequest req,
+                                          HttpServletResponse resp)
             throws ServletException, IOException {
 
         String id = param(req, "id");
+
+        // validar existencia del ID
         if (id == null) {
+
             mensajeError(req, "ID de empleado no especificado.");
+
             redirigirA("/employees", req, resp);
+
             return;
         }
 
         try {
+
             Empleado empleado = empleadoDAO.findById(id);
+
+            // validar existencia del empleado
             if (empleado == null) {
-                mensajeError(req, "No se encontró el empleado con ID: " + id);
+
+                mensajeError(
+                        req,
+                        "No se encontró el empleado con ID: " + id
+                );
+
                 redirigirA("/employees", req, resp);
+
                 return;
             }
+
             cargarCatalogosFormulario(req);
-            req.setAttribute("empleado",    empleado);
+
+            req.setAttribute("empleado", empleado);
             req.setAttribute("modoEdicion", true);
-            irA(ViewRoutes.EMPLOYEES_INDEX + "?form=true", req, resp);
+
+            irA(
+                    ViewRoutes.EMPLOYEES_INDEX + "?form=true",
+                    req,
+                    resp
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al cargar empleado para edición: " + id, e);
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al cargar empleado para edición: " + id,
+                    e
+            );
+
             mensajeError(req, "Error al cargar el empleado.");
+
             redirigirA("/employees", req, resp);
         }
     }
 
-    // ─── GET: detalle del empleado ────────────────────────────────────────────
+    // ───────────────── detalle del empleado ───────────
 
-    private void mostrarDetalle(HttpServletRequest req, HttpServletResponse resp)
+    private void mostrarDetalle(HttpServletRequest req,
+                                HttpServletResponse resp)
             throws ServletException, IOException {
 
         String id = param(req, "id");
+
+        // validar existencia del ID
         if (id == null) {
+
             mensajeError(req, "ID de empleado no especificado.");
+
             redirigirA("/employees", req, resp);
+
             return;
         }
 
         try {
+
             Empleado empleado = empleadoDAO.findById(id);
+
+            // validar existencia del empleado
             if (empleado == null) {
-                mensajeError(req, "No se encontró el empleado con ID: " + id);
+
+                mensajeError(
+                        req,
+                        "No se encontró el empleado con ID: " + id
+                );
+
                 redirigirA("/employees", req, resp);
+
                 return;
             }
+
             req.setAttribute("empleado", empleado);
-            irA(ViewRoutes.EMPLOYEES_INDEX + "?detail=true", req, resp);
+
+            irA(
+                    ViewRoutes.EMPLOYEES_INDEX + "?detail=true",
+                    req,
+                    resp
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al cargar detalle del empleado: " + id, e);
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al cargar detalle del empleado: " + id,
+                    e
+            );
+
             mensajeError(req, "Error al cargar el empleado.");
+
             redirigirA("/employees", req, resp);
         }
     }
 
-    // ─── POST: guardar empleado (crear o actualizar) ──────────────────────────
+    // ───────────────── guardar empleado ───────────────
 
-    private void guardarEmpleado(HttpServletRequest req, HttpServletResponse resp)
+    private void guardarEmpleado(HttpServletRequest req,
+                                 HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String id            = param(req, "id");
-        String nombre        = param(req, "nombre");
-        String apellido      = param(req, "apellido");
-        String idTipoDoc     = param(req, "idTipoDocumento");
-        String numeroDoc     = param(req, "numeroDocumento");
-        String email         = param(req, "email");
-        String telefono      = param(req, "telefono");
-        String idCargo       = param(req, "idCargo");
+        String id        = param(req, "id");
+        String nombre    = param(req, "nombre");
+        String apellido  = param(req, "apellido");
+        String idTipoDoc = param(req, "idTipoDocumento");
+        String numeroDoc = param(req, "numeroDocumento");
+        String email     = param(req, "email");
+        String telefono  = param(req, "telefono");
+        String idCargo   = param(req, "idCargo");
 
         boolean esNuevo = (id == null || id.isBlank());
 
-        // ── Validaciones de campos obligatorios ──────────────────────────────
+        // validar campos obligatorios
         if (nombre == null || apellido == null) {
-            volverAlFormulario(req, resp, esNuevo, id,
-                    "El nombre y apellido son obligatorios.");
-            return;
-        }
-        if (email == null) {
-            volverAlFormulario(req, resp, esNuevo, id,
-                    "El correo electrónico es obligatorio.");
-            return;
-        }
-        if (idTipoDoc == null || numeroDoc == null) {
-            volverAlFormulario(req, resp, esNuevo, id,
-                    "Debe seleccionar tipo de documento e ingresar el número.");
-            return;
-        }
-        if (idCargo == null) {
-            volverAlFormulario(req, resp, esNuevo, id,
-                    "Debe seleccionar un cargo.");
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El nombre y apellido son obligatorios."
+            );
+
             return;
         }
 
-        // ── Validar número de documento con DocumentoValidator (RF-07) ───────
+        if (email == null) {
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El correo electrónico es obligatorio."
+            );
+
+            return;
+        }
+
+        if (idTipoDoc == null || numeroDoc == null) {
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "Debe seleccionar tipo de documento e ingresar el número."
+            );
+
+            return;
+        }
+
+        if (idCargo == null) {
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "Debe seleccionar un cargo."
+            );
+
+            return;
+        }
+
+        // validar documento según tipo seleccionado
         try {
-            TipoDocumento tipoDoc = catalogoDAO.findTipoDocumentoById(idTipoDoc);
+
+            TipoDocumento tipoDoc =
+                    catalogoDAO.findTipoDocumentoById(idTipoDoc);
+
             if (tipoDoc == null) {
-                volverAlFormulario(req, resp, esNuevo, id,
-                        "El tipo de documento seleccionado no es válido.");
+
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        "El tipo de documento seleccionado no es válido."
+                );
+
                 return;
             }
 
             DocumentoValidator.ResultadoValidacion validacion =
                     DocumentoValidator.validar(tipoDoc, numeroDoc);
+
             if (!validacion.isValido()) {
-                volverAlFormulario(req, resp, esNuevo, id, validacion.getMensaje());
+
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        validacion.getMensaje()
+                );
+
                 return;
             }
 
             Cargo cargo = catalogoDAO.findCargoById(idCargo);
+
             if (cargo == null) {
-                volverAlFormulario(req, resp, esNuevo, id,
-                        "El cargo seleccionado no es válido.");
+
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        "El cargo seleccionado no es válido."
+                );
+
                 return;
             }
 
-            // ── Construir objeto Empleado ──────────────────────────────────
+            // construir objeto empleado
             Empleado empleado = new Empleado();
+
             empleado.setId(esNuevo ? IdGenerator.parEmpleado() : id);
+
             empleado.setNombre(nombre.trim());
             empleado.setApellido(apellido.trim());
+
             empleado.setTipoDocumento(tipoDoc);
             empleado.setNumeroDocumento(numeroDoc.trim());
+
             empleado.setEmail(email.trim().toLowerCase());
+
             empleado.setTelefono(telefono);
             empleado.setCargo(cargo);
 
-            // ── Persistir ──────────────────────────────────────────────────
+            // guardar en base de datos
             empleadoDAO.save(empleado);
-            String accion = esNuevo ? "registrado" : "actualizado";
-            LOGGER.info("Empleado " + accion + ": " + empleado.getId()
-                    + " | " + empleado.getNombreCompleto());
-            mensajeExito(req, "Empleado " + empleado.getNombreCompleto()
-                    + " " + accion + " correctamente.");
+
+            String accion = esNuevo
+                    ? "registrado"
+                    : "actualizado";
+
+            LOGGER.info(
+                    "Empleado " + accion + ": "
+                            + empleado.getId()
+                            + " | "
+                            + empleado.getNombreCompleto()
+            );
+
+            mensajeExito(
+                    req,
+                    "Empleado "
+                            + empleado.getNombreCompleto()
+                            + " "
+                            + accion
+                            + " correctamente."
+            );
+
             redirigirA("/employees", req, resp);
 
         } catch (SQLException e) {
+
             LOGGER.log(Level.SEVERE, "Error al guardar empleado", e);
+
             String msg;
-            if (e.getMessage() != null && e.getMessage().contains("UNIQUE")) {
-                msg = "El número de documento o correo ya está registrado en el sistema.";
+
+            // detectar restricciones únicas de BD
+            if (e.getMessage() != null
+                    && e.getMessage().contains("UNIQUE")) {
+
+                msg = "El número de documento o correo ya está "
+                        + "registrado en el sistema.";
+
             } else {
-                msg = "Error al guardar el empleado. Intenta nuevamente.";
+
+                msg = "Error al guardar el empleado. "
+                        + "Intenta nuevamente.";
             }
-            volverAlFormulario(req, resp, esNuevo, id, msg);
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    msg
+            );
         }
     }
 
-    // ─── POST: eliminar empleado ──────────────────────────────────────────────
+    // ───────────────── eliminar empleado ──────────────
 
-    private void eliminarEmpleado(HttpServletRequest req, HttpServletResponse resp)
+    private void eliminarEmpleado(HttpServletRequest req,
+                                  HttpServletResponse resp)
             throws IOException {
 
         String id = param(req, "id");
+
+        // validar existencia del ID
         if (id == null) {
+
             mensajeError(req, "ID de empleado no especificado.");
+
             redirigirA("/employees", req, resp);
+
             return;
         }
 
         try {
+
             boolean eliminado = empleadoDAO.delete(id);
+
             if (eliminado) {
+
                 LOGGER.info("Empleado eliminado: " + id);
-                mensajeExito(req, "Empleado eliminado correctamente.");
+
+                mensajeExito(
+                        req,
+                        "Empleado eliminado correctamente."
+                );
+
             } else {
-                mensajeError(req, "No se encontró el empleado con ID: " + id);
+
+                mensajeError(
+                        req,
+                        "No se encontró el empleado con ID: " + id
+                );
             }
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al eliminar empleado: " + id, e);
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al eliminar empleado: " + id,
+                    e
+            );
+
             String msg;
-            if (e.getMessage() != null && e.getMessage().contains("REFERENCE")) {
-                msg = "No se puede eliminar el empleado porque tiene contratos o "
-                    + "clases asignadas. Reasígnalos primero.";
+
+            // validar restricciones por relaciones existentes
+            if (e.getMessage() != null
+                    && e.getMessage().contains("REFERENCE")) {
+
+                msg = "No se puede eliminar el empleado porque "
+                        + "tiene contratos o clases asignadas.";
+
             } else {
-                msg = "Error al eliminar el empleado. Intenta nuevamente.";
+
+                msg = "Error al eliminar el empleado. "
+                        + "Intenta nuevamente.";
             }
+
             mensajeError(req, msg);
         }
 
         redirigirA("/employees", req, resp);
     }
 
-    // ─── Helpers privados ─────────────────────────────────────────────────────
+    // ───────────────── helpers privados ───────────────
 
-    private void cargarCatalogosFormulario(HttpServletRequest req) throws SQLException {
-        req.setAttribute("tiposDocumento", catalogoDAO.findAllTipoDocumentos());
-        req.setAttribute("cargos",         catalogoDAO.findAllCargos());
+    private void cargarCatalogosFormulario(HttpServletRequest req)
+            throws SQLException {
+
+        req.setAttribute(
+                "tiposDocumento",
+                catalogoDAO.findAllTipoDocumentos()
+        );
+
+        req.setAttribute(
+                "cargos",
+                catalogoDAO.findAllCargos()
+        );
     }
 
+    // recargar formulario manteniendo datos ingresados
     private void volverAlFormulario(HttpServletRequest req,
-                                     HttpServletResponse resp,
-                                     boolean esNuevo,
-                                     String id,
-                                     String errorMsg)
+                                    HttpServletResponse resp,
+                                    boolean esNuevo,
+                                    String id,
+                                    String errorMsg)
             throws ServletException, IOException {
 
-        req.setAttribute("errorMsg",    errorMsg);
+        req.setAttribute("errorMsg", errorMsg);
+
         req.setAttribute("modoEdicion", !esNuevo);
 
         try {
+
             cargarCatalogosFormulario(req);
+
             if (!esNuevo && id != null) {
+
                 Empleado original = empleadoDAO.findById(id);
-                req.setAttribute("empleado", original != null ? original : new Empleado());
+
+                req.setAttribute(
+                        "empleado",
+                        original != null
+                                ? original
+                                : new Empleado()
+                );
+
             } else {
-                req.setAttribute("empleado", construirDesdeRequest(req));
+
+                req.setAttribute(
+                        "empleado",
+                        construirDesdeRequest(req)
+                );
             }
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al recargar formulario de empleado", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al recargar formulario de empleado",
+                    e
+            );
         }
 
-        irA(ViewRoutes.EMPLOYEES_INDEX + "?form=true", req, resp);
+        irA(
+                ViewRoutes.EMPLOYEES_INDEX + "?form=true",
+                req,
+                resp
+        );
     }
 
+    // construir empleado temporal desde request
     private Empleado construirDesdeRequest(HttpServletRequest req) {
+
         Empleado e = new Empleado();
-        e.setNombre(param(req,  "nombre", ""));
+
+        e.setNombre(param(req, "nombre", ""));
         e.setApellido(param(req, "apellido", ""));
         e.setNumeroDocumento(param(req, "numeroDocumento", ""));
         e.setEmail(param(req, "email", ""));
         e.setTelefono(param(req, "telefono"));
+
         return e;
     }
 }

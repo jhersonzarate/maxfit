@@ -16,163 +16,285 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Dashboard del Administrador (ROL-ADMIN).
- *
- * GET /inicio → panel principal con KPIs, alertas y actividad reciente.
- *
- * Widgets que muestra:
- *   - KPI: Total de clientes registrados
- *   - KPI: Contratos activos en este momento
- *   - KPI: Check-ins registrados hoy
- *   - KPI: Total de empleados
- *   - KPI: Clases vigentes
- *   - KPI: Ingresos del mes en curso (sum de monto_pagado)
- *   - Lista: Contratos próximos a vencer (próximos 7 días)
- *   - Lista: Asistencias recientes (últimas 5)
- *   - Lista: Clases programadas para hoy
- *
- * Acceso: ROL-ADMIN únicamente (garantizado por RoleFilter → /inicio).
- *
- * Patrón de carga:
- *   Cada DAO hace su propia consulta. Si alguno falla se registra el error
- *   y se continúa con los demás (degradado parcial), en lugar de lanzar
- *   un 500 completo al admin por un único widget fallido.
- *
- * @author MaxFit
- */
+// dashboard principal del administrador
 @WebServlet("/inicio")
 public class InicioController extends AbstractController {
 
     private static final Logger LOGGER =
             Logger.getLogger(InicioController.class.getName());
 
-    // Contratos que vencen en los próximos N días se muestran como alerta
+    // días previos usados para alertar contratos próximos a vencer
     private static final int DIAS_ALERTA_VENCIMIENTO = 7;
-    // Cantidad de asistencias recientes en el widget de actividad
+
+    // máximo de asistencias mostradas en actividad reciente
     private static final int MAX_ASISTENCIAS_RECIENTES = 5;
 
-    private final ClienteDAO    clienteDAO    = new ClienteDAO();
-    private final ContratoDAO   contratoDAO   = new ContratoDAO();
-    private final EmpleadoDAO   empleadoDAO   = new EmpleadoDAO();
-    private final ClaseDAO      claseDAO      = new ClaseDAO();
+    private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final ContratoDAO contratoDAO = new ContratoDAO();
+    private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private final ClaseDAO claseDAO = new ClaseDAO();
     private final AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
-    private final HorarioDAO    horarioDAO    = new HorarioDAO();
+    private final HorarioDAO horarioDAO = new HorarioDAO();
 
-    // ─── GET /inicio ──────────────────────────────────────────────────────────
+    // ───────────────── GET /inicio ────────────────────
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doGet(HttpServletRequest req,
+                         HttpServletResponse resp)
             throws ServletException, IOException {
 
         transferirFlashMessages(req);
+
         cargarKpis(req);
+
         cargarWidgets(req);
+
         irA(ViewRoutes.INICIO_ADMIN, req, resp);
     }
 
-    // ─── KPIs ────────────────────────────────────────────────────────────────
+    // ───────────────── KPIs principales ───────────────
 
-    /**
-     * Carga los 6 KPIs del panel superior.
-     * Cada uno es independiente: si uno falla, los demás siguen cargando.
-     */
     private void cargarKpis(HttpServletRequest req) {
 
-        // Total de clientes registrados
+        // total de clientes registrados
         try {
-            req.setAttribute("totalClientes", clienteDAO.count());
+
+            req.setAttribute(
+                    "totalClientes",
+                    clienteDAO.count()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar clientes", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar clientes",
+                    e
+            );
+
             req.setAttribute("totalClientes", "-");
         }
 
-        // Contratos activos ahora mismo
+        // contratos activos actualmente
         try {
-            req.setAttribute("contratosActivos", contratoDAO.countActivos());
+
+            req.setAttribute(
+                    "contratosActivos",
+                    contratoDAO.countActivos()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar contratos activos", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar contratos activos",
+                    e
+            );
+
             req.setAttribute("contratosActivos", "-");
         }
 
-        // Check-ins de hoy (estado = 'asistio')
+        // check-ins registrados hoy
         try {
-            req.setAttribute("atendidosHoy", asistenciaDAO.countHoy());
+
+            req.setAttribute(
+                    "atendidosHoy",
+                    asistenciaDAO.countHoy()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar check-ins hoy", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar check-ins hoy",
+                    e
+            );
+
             req.setAttribute("atendidosHoy", "-");
         }
 
-        // Total de empleados (la tabla no tiene estado → todos están activos)
+        // total de empleados registrados
         try {
-            req.setAttribute("totalEmpleados", empleadoDAO.count());
+
+            req.setAttribute(
+                    "totalEmpleados",
+                    empleadoDAO.count()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar empleados", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar empleados",
+                    e
+            );
+
             req.setAttribute("totalEmpleados", "-");
         }
 
-        // Clases con estado 'vigente'
+        // clases con estado vigente
         try {
-            req.setAttribute("clasesVigentes", claseDAO.countVigentes());
+
+            req.setAttribute(
+                    "clasesVigentes",
+                    claseDAO.countVigentes()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar clases vigentes", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar clases vigentes",
+                    e
+            );
+
             req.setAttribute("clasesVigentes", "-");
         }
 
-        // Ingresos del mes en curso (suma de monto_pagado)
-        // Usamos BigDecimal para evitar errores de punto flotante (nunca double para dinero)
+        // ingresos generados en el mes actual
         try {
-            BigDecimal ingresos = contratoDAO.getIngresosMesActual();
-            req.setAttribute("ingresosMes", ingresos);
+
+            // usar BigDecimal para cálculos monetarios
+            BigDecimal ingresos =
+                    contratoDAO.getIngresosMesActual();
+
+            req.setAttribute(
+                    "ingresosMes",
+                    ingresos
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al calcular ingresos del mes", e);
-            req.setAttribute("ingresosMes", BigDecimal.ZERO);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al calcular ingresos del mes",
+                    e
+            );
+
+            req.setAttribute(
+                    "ingresosMes",
+                    BigDecimal.ZERO
+            );
         }
     }
 
-    // ─── Widgets ─────────────────────────────────────────────────────────────
+    // ───────────────── widgets del dashboard ──────────
 
-    /**
-     * Carga los widgets de listas: próximos vencimientos, asistencias recientes,
-     * y clases programadas para hoy.
-     */
     private void cargarWidgets(HttpServletRequest req) {
 
-        // ── Contratos próximos a vencer (alertas) ───────────────────────────
+        // contratos próximos a vencer
         try {
+
             List<Contrato> proximos =
-                    contratoDAO.findProximosAVencer(DIAS_ALERTA_VENCIMIENTO);
-            req.setAttribute("proximosVencer", proximos);
-            req.setAttribute("countProximosVencer", proximos.size());
+                    contratoDAO.findProximosAVencer(
+                            DIAS_ALERTA_VENCIMIENTO
+                    );
+
+            req.setAttribute(
+                    "proximosVencer",
+                    proximos
+            );
+
+            req.setAttribute(
+                    "countProximosVencer",
+                    proximos.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar próximos vencimientos", e);
-            req.setAttribute("proximosVencer", java.util.Collections.emptyList());
-            req.setAttribute("countProximosVencer", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar próximos vencimientos",
+                    e
+            );
+
+            req.setAttribute(
+                    "proximosVencer",
+                    java.util.Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "countProximosVencer",
+                    0
+            );
         }
 
-        // ── Últimas asistencias del día (actividad reciente) ─────────────────
+        // últimas asistencias registradas
         try {
-            List<Asistencia> recientes = asistenciaDAO.findRecientes(MAX_ASISTENCIAS_RECIENTES);
-            req.setAttribute("asistenciasRecientes", recientes);
+
+            List<Asistencia> recientes =
+                    asistenciaDAO.findRecientes(
+                            MAX_ASISTENCIAS_RECIENTES
+                    );
+
+            req.setAttribute(
+                    "asistenciasRecientes",
+                    recientes
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar asistencias recientes", e);
-            req.setAttribute("asistenciasRecientes", java.util.Collections.emptyList());
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar asistencias recientes",
+                    e
+            );
+
+            req.setAttribute(
+                    "asistenciasRecientes",
+                    java.util.Collections.emptyList()
+            );
         }
 
-        // ── Clases programadas para hoy (por día de semana ISO: 1=Lunes … 7=Domingo) ──
+        // clases programadas para hoy
         try {
-            int diaSemanaHoy = LocalDate.now().getDayOfWeek().getValue();
-            List<Horario> clasesHoy = horarioDAO.findByDia(diaSemanaHoy);
-            req.setAttribute("clasesHoy", clasesHoy);
-            req.setAttribute("countClasesHoy", clasesHoy.size());
+
+            int diaSemanaHoy =
+                    LocalDate.now()
+                            .getDayOfWeek()
+                            .getValue();
+
+            List<Horario> clasesHoy =
+                    horarioDAO.findByDia(diaSemanaHoy);
+
+            req.setAttribute(
+                    "clasesHoy",
+                    clasesHoy
+            );
+
+            req.setAttribute(
+                    "countClasesHoy",
+                    clasesHoy.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar clases de hoy", e);
-            req.setAttribute("clasesHoy", java.util.Collections.emptyList());
-            req.setAttribute("countClasesHoy", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar clases de hoy",
+                    e
+            );
+
+            req.setAttribute(
+                    "clasesHoy",
+                    java.util.Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "countClasesHoy",
+                    0
+            );
         }
 
-        // Fecha de hoy para mostrar en el panel
-        req.setAttribute("fechaHoy", LocalDate.now().toString());
-        req.setAttribute("diasAlertaVencimiento", DIAS_ALERTA_VENCIMIENTO);
+        // datos auxiliares del panel
+        req.setAttribute(
+                "fechaHoy",
+                LocalDate.now().toString()
+        );
+
+        req.setAttribute(
+                "diasAlertaVencimiento",
+                DIAS_ALERTA_VENCIMIENTO
+        );
     }
 }

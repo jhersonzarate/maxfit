@@ -8,36 +8,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * DAO para la tabla Clases (RF-08).
- *
- * Solo gestiona la entidad Clase.
- * Horarios e Inscripciones tienen sus propios DAOs (HorarioDAO, InscripcionDAO).
- *
- * Tablas involucradas (JOINs en SELECT):
- *   Clases → Empleados → Cargos   (el entrenador asignado)
- *          → TipoClases            (Yoga, CrossFit, Spinning…)
- *
- * Estados válidos según BD:
- *   CHECK (estado IN ('vigente','suspendida')) DEFAULT 'vigente'
- *
- * La columna nombre en la BD es "nombre_clase" (no "nombre").
- * La columna del entrenador es "id_empleado" (no "id_entrenador").
- */
+// DAO para la tabla Clases (RF-08)
+// horarios e inscripciones tienen sus propios DAOs (HorarioDAO, InscripcionDAO)
+// estados válidos: 'vigente' | 'suspendida'
 public class ClaseDAO {
 
     private static final Logger LOGGER = Logger.getLogger(ClaseDAO.class.getName());
 
-    // ─── SQL ─────────────────────────────────────────────────────────────────
+    // ─── SQL ───────────────────────────────────────────────────
 
     private static final String SQL_SELECT_BASE =
         "SELECT cl.id, cl.nombre_clase, cl.capacidad_maxima, " +
         "       cl.descripcion, cl.estado, " +
-        // Empleado (entrenador)
+        // empleado (entrenador)
         "       emp.id AS emp_id, emp.nombre AS emp_nom, " +
         "       emp.apellido AS emp_ap, emp.email AS emp_email, " +
         "       cargo.id AS cargo_id, cargo.nombre AS cargo_nom, " +
-        // TipoClase
+        // tipo de clase
         "       tc.id AS tc_id, tc.nombre AS tc_nom " +
         "FROM Clases cl " +
         "INNER JOIN Empleados emp  ON cl.id_empleado  = emp.id " +
@@ -54,10 +41,7 @@ public class ClaseDAO {
     private static final String SQL_FIND_BY_ID =
         SQL_SELECT_BASE + "WHERE cl.id = ?";
 
-    /**
-     * Clases asignadas a un instructor específico.
-     * Usado en el dashboard del Instructor (ROL-TRAINER).
-     */
+    // clases asignadas a un instructor — para el dashboard del Trainer
     private static final String SQL_FIND_BY_EMPLEADO =
         SQL_SELECT_BASE +
         "WHERE cl.id_empleado = ? ORDER BY cl.nombre_clase";
@@ -76,9 +60,9 @@ public class ClaseDAO {
     private static final String SQL_COUNT_VIGENTES =
         "SELECT COUNT(*) FROM Clases WHERE estado = 'vigente'";
 
-    // ─── Métodos públicos ─────────────────────────────────────────────────────
+    // ─── métodos públicos ──────────────────────────────────────
 
-    /** Devuelve todas las clases (vigentes y suspendidas). */
+    // devuelve todas las clases (vigentes y suspendidas)
     public List<Clase> findAll() throws SQLException {
         List<Clase> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -89,10 +73,7 @@ public class ClaseDAO {
         return lista;
     }
 
-    /**
-     * Solo las clases con estado 'vigente'.
-     * Para el formulario de inscripción y la vista de horarios.
-     */
+    // solo clases vigentes — para el formulario de inscripción y la vista de horarios
     public List<Clase> findVigentes() throws SQLException {
         List<Clase> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -103,7 +84,7 @@ public class ClaseDAO {
         return lista;
     }
 
-    /** Busca una clase por su ID. Devuelve null si no existe. */
+    // busca una clase por id — devuelve null si no existe
     public Clase findById(String id) throws SQLException {
         if (id == null || id.trim().isEmpty()) return null;
         try (Connection con = DatabaseConnection.getConnection();
@@ -116,10 +97,7 @@ public class ClaseDAO {
         return null;
     }
 
-    /**
-     * Clases donde id_empleado = empleadoId.
-     * Usado en el dashboard del Instructor para mostrar "mis clases".
-     */
+    // clases donde id_empleado coincide — para "mis clases" en el dashboard del Trainer
     public List<Clase> findByEmpleadoId(String empleadoId) throws SQLException {
         List<Clase> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -132,10 +110,7 @@ public class ClaseDAO {
         return lista;
     }
 
-    /**
-     * Guarda (INSERT si es nueva, UPDATE si ya existe).
-     * El ID debe venir generado por IdGenerator.parClase() antes de llamar.
-     */
+    // INSERT si es nueva, UPDATE si ya existe — el ID debe venir de IdGenerator.parClase()
     public void save(Clase clase) throws SQLException {
         boolean existe = clase.getId() != null && findById(clase.getId()) != null;
         try (Connection con = DatabaseConnection.getConnection()) {
@@ -147,7 +122,7 @@ public class ClaseDAO {
         }
     }
 
-    /** Total de clases vigentes para el widget del dashboard. */
+    // total de clases vigentes para el widget del dashboard
     public int countVigentes() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_VIGENTES);
@@ -157,7 +132,7 @@ public class ClaseDAO {
         return 0;
     }
 
-    // ─── Privados ─────────────────────────────────────────────────────────────
+    // ─── privados ──────────────────────────────────────────────
 
     private void insert(Connection con, Clase c) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
@@ -188,12 +163,12 @@ public class ClaseDAO {
     }
 
     private Clase mapRow(ResultSet rs) throws SQLException {
-        // Cargo del empleado
+        // cargo del empleado
         Cargo cargo = new Cargo(
             rs.getString("cargo_id"),
             rs.getString("cargo_nom")
         );
-        // Empleado (entrenador)
+        // empleado (entrenador)
         Empleado emp = new Empleado();
         emp.setId(rs.getString("emp_id"));
         emp.setNombre(rs.getString("emp_nom"));
@@ -201,13 +176,13 @@ public class ClaseDAO {
         emp.setEmail(rs.getString("emp_email"));
         emp.setCargo(cargo);
 
-        // TipoClase
+        // tipo de clase
         TipoClase tc = new TipoClase(
             rs.getString("tc_id"),
             rs.getString("tc_nom")
         );
 
-        // Clase
+        // clase
         Clase c = new Clase();
         c.setId(rs.getString("id"));
         c.setNombreClase(rs.getString("nombre_clase"));

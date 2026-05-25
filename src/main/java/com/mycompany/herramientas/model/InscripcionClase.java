@@ -2,30 +2,19 @@ package com.mycompany.herramientas.model;
 
 import java.time.LocalDateTime;
 
-/**
- * Inscripción de un cliente a una clase grupal.
- * ID generado con prefijo INS-AÑO-CORRELATIVO.
- *
- * Alineado a la tabla Inscripcion_Clases del SQL:
- *   id                VARCHAR(20) PK,
- *   id_cliente        VARCHAR(20) FK → Clientes,
- *   id_clase          VARCHAR(20) FK → Clases,
- *   fecha_inscripcion DATETIME DEFAULT GETDATE()
- *
- * Antes de confirmar la inscripción, el servicio verifica:
- *   1. Que el cliente exista y tenga contrato activo (RF-11).
- *   2. Que la clase no haya superado capacidad_maxima (RF-11).
- *   3. Que el cliente no esté ya inscrito en esa clase.
- */
+// inscripción de cliente a clase grupal
 public class InscripcionClase {
 
+    // ─── atributos ─────────────────────────────────────────────
+
     private String        id;                // Ej: INS-2026-0001
-    private Cliente       cliente;           // FK → Clientes
-    private Clase         clase;             // FK → Clases
-    private LocalDateTime fechaInscripcion;  // DATETIME — GETDATE() por defecto en BD
+    private Cliente       cliente;           // cliente inscrito
+    private Clase         clase;             // clase asociada
+    private LocalDateTime fechaInscripcion;  // fecha registro
 
     public InscripcionClase() {}
 
+    // constructor completo
     public InscripcionClase(String id, Cliente cliente, Clase clase,
                              LocalDateTime fechaInscripcion) {
         this.id               = id;
@@ -34,9 +23,7 @@ public class InscripcionClase {
         this.fechaInscripcion = fechaInscripcion;
     }
 
-    // -----------------------------------------------------------------------
-    // Getters y Setters
-    // -----------------------------------------------------------------------
+    // ─── getters y setters ────────────────────────────────────
 
     public String        getId()                          { return id; }
     public void          setId(String id)                 { this.id = id; }
@@ -50,13 +37,12 @@ public class InscripcionClase {
     public LocalDateTime getFechaInscripcion()                     { return fechaInscripcion; }
     public void          setFechaInscripcion(LocalDateTime fecha)  { this.fechaInscripcion = fecha; }
 
-    // -----------------------------------------------------------------------
-    // Helpers para JSP
-    // -----------------------------------------------------------------------
+    // ─── helpers para JSP ─────────────────────────────────────
 
-    /** Fecha formateada "dd/MM/yyyy HH:mm" para tablas. */
+    // fecha formateada para tabla
     public String getFechaFormateada() {
         if (fechaInscripcion == null) return "—";
+
         return String.format("%02d/%02d/%d %02d:%02d",
                 fechaInscripcion.getDayOfMonth(),
                 fechaInscripcion.getMonthValue(),

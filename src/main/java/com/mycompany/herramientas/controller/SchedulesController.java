@@ -19,37 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Controlador de Clases, Horarios e Inscripciones (RF-08, RF-09, RF-10, RF-11).
- *
- * Rutas y acciones para /schedules:
- *   GET  /schedules                       → lista de clases vigentes con horarios
- *   GET  /schedules?action=new            → formulario de nueva clase (Admin)
- *   GET  /schedules?action=edit&id=CLA-X  → formulario de edición (Admin)
- *   GET  /schedules?action=horarios&id=CLA-X → gestión de horarios de una clase
- *   GET  /schedules?action=inscritos&id=CLA-X → lista de inscritos de una clase
- *   POST /schedules?action=saveClase      → crear o actualizar clase (Admin)
- *   POST /schedules?action=toggleEstado&id=CLA-X → vigente ↔ suspendida (Admin)
- *   POST /schedules?action=saveHorario    → agregar horario a una clase (Admin)
- *   POST /schedules?action=deleteHorario&id=HOR-X → eliminar UN horario (Admin)
- *   POST /schedules?action=inscribir      → inscribir cliente en clase (Admin/Recep)
- *   POST /schedules?action=cancelarInscripcion&id=INS-X → cancelar inscripción
- *
- * Rutas para /calendar:
- *   GET  /calendar → vista de calendario semanal con todos los horarios
- *
- * Acceso:
- *   Admin   → CRUD completo (clases, horarios, inscripciones)
- *   Recep   → ver + gestionar inscripciones
- *   Trainer → solo lectura (ver sus clases en /instructor)
- *
- * CORRECCIÓN (bug anterior):
- *   eliminarHorario() llamaba a horarioDAO.deleteByClaseId(claseId)
- *   que borraba TODOS los horarios de la clase. Ahora usa
- *   horarioDAO.deleteById(horarioId) para borrar solo el horario indicado.
- *
- * @author MaxFit
- */
+// controlador de clases, horarios e inscripciones
 @WebServlet({"/schedules", "/calendar"})
 public class SchedulesController extends AbstractController {
 
@@ -64,7 +34,7 @@ public class SchedulesController extends AbstractController {
     private final ClienteDAO         clienteDAO         = new ClienteDAO();
     private final InscripcionService inscripcionService = new InscripcionService();
 
-    // ─── GET ──────────────────────────────────────────────────────────────────
+    // ─── GET ───────────────────────────────────────────────────
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -72,7 +42,7 @@ public class SchedulesController extends AbstractController {
 
         transferirFlashMessages(req);
 
-        // Detectar si es la ruta /calendar
+        // detectar si es la ruta /calendar
         String uri = req.getRequestURI();
         if (uri.endsWith("/calendar")) {
             mostrarCalendario(req, resp);
@@ -82,24 +52,34 @@ public class SchedulesController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
+            // formulario de nueva clase
             case "new":
                 mostrarFormularioClase(req, resp, null);
                 break;
+
+            // formulario de edición de clase
             case "edit":
                 mostrarFormularioClase(req, resp, param(req, "id"));
                 break;
+
+            // gestión de horarios de una clase
             case "horarios":
                 mostrarGestionHorarios(req, resp);
                 break;
+
+            // lista de inscritos de una clase
             case "inscritos":
                 mostrarInscritos(req, resp);
                 break;
+
+            // lista de todas las clases
             default:
                 mostrarListaClases(req, resp);
         }
     }
 
-    // ─── POST ─────────────────────────────────────────────────────────────────
+    // ─── POST ──────────────────────────────────────────────────
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -108,34 +88,45 @@ public class SchedulesController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
+            // crear o actualizar clase
             case "saveClase":
                 guardarClase(req, resp);
                 break;
+
+            // cambiar estado vigente/suspendida
             case "toggleEstado":
                 toggleEstadoClase(req, resp);
                 break;
+
+            // agregar horario a una clase
             case "saveHorario":
                 guardarHorario(req, resp);
                 break;
+
+            // eliminar un horario específico
             case "deleteHorario":
                 eliminarHorario(req, resp);
                 break;
+
+            // inscribir cliente en clase
             case "inscribir":
                 inscribirCliente(req, resp);
                 break;
+
+            // cancelar inscripción de cliente
             case "cancelarInscripcion":
                 cancelarInscripcion(req, resp);
                 break;
+
             default:
                 redirigirA("/schedules", req, resp);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // GET: vistas
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─── lista de clases ───────────────────────────────────────
 
-    /** Lista de todas las clases con sus horarios programados. */
+    // carga todas las clases con sus horarios programados
     private void mostrarListaClases(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try {
@@ -150,7 +141,9 @@ public class SchedulesController extends AbstractController {
         }
     }
 
-    /** Formulario de nueva clase (claseId=null) o edición (claseId!=null). */
+    // ─── formulario de clase ───────────────────────────────────
+
+    // muestra el formulario para crear (claseId=null) o editar (claseId!=null)
     private void mostrarFormularioClase(HttpServletRequest req,
                                          HttpServletResponse resp,
                                          String claseId)
@@ -162,7 +155,7 @@ public class SchedulesController extends AbstractController {
         }
 
         try {
-            // Solo entrenadores (CARGO-TRAINER) pueden dictar clases
+            // solo entrenadores pueden dictar clases
             req.setAttribute("entrenadores", empleadoDAO.findByCargo(AppConfig.CARGO_TRAINER));
             req.setAttribute("tiposClase",   catalogoDAO.findAllTipoClases());
 
@@ -189,7 +182,9 @@ public class SchedulesController extends AbstractController {
         }
     }
 
-    /** Gestión de horarios de una clase: lista sus horarios + formulario para agregar. */
+    // ─── gestión de horarios ───────────────────────────────────
+
+    // lista los horarios de una clase y muestra el formulario para agregar
     private void mostrarGestionHorarios(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -225,7 +220,9 @@ public class SchedulesController extends AbstractController {
         }
     }
 
-    /** Lista de clientes inscritos en una clase + formulario para inscribir. */
+    // ─── lista de inscritos ────────────────────────────────────
+
+    // muestra los clientes inscritos en una clase y el formulario para inscribir
     private void mostrarInscritos(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -263,7 +260,9 @@ public class SchedulesController extends AbstractController {
         }
     }
 
-    /** Vista de calendario semanal con todos los horarios programados. */
+    // ─── calendario semanal ────────────────────────────────────
+
+    // carga todos los horarios para la vista de calendario
     private void mostrarCalendario(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try {
@@ -277,11 +276,9 @@ public class SchedulesController extends AbstractController {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // POST: operaciones
-    // ═══════════════════════════════════════════════════════════════════════
+    // ─── guardar clase ─────────────────────────────────────────
 
-    /** Crea o actualiza una clase (RF-08). Solo Admin. */
+    // crea o actualiza una clase según si llega id o no 
     private void guardarClase(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -296,6 +293,7 @@ public class SchedulesController extends AbstractController {
 
         boolean esNuevo = (id == null || id.isBlank());
 
+        // validar campos obligatorios
         if (nombreClase == null) {
             volverAlFormularioClase(req, resp, esNuevo, id,
                     "El nombre de la clase es obligatorio.");
@@ -307,6 +305,7 @@ public class SchedulesController extends AbstractController {
             return;
         }
 
+        // validar que la capacidad sea un entero positivo
         int capacidad;
         try {
             capacidad = Integer.parseInt(capacidadStr != null ? capacidadStr.trim() : "");
@@ -325,6 +324,7 @@ public class SchedulesController extends AbstractController {
             Empleado empleado   = empleadoDAO.findById(idEmpleado);
             TipoClase tipoClase = catalogoDAO.findTipoClaseById(idTipoClase);
 
+            // verificar que entrenador y tipo existen en BD
             if (empleado == null || tipoClase == null) {
                 volverAlFormularioClase(req, resp, esNuevo, id,
                         "El entrenador o tipo de clase seleccionado no existe.");
@@ -355,7 +355,9 @@ public class SchedulesController extends AbstractController {
         }
     }
 
-    /** Alterna el estado de una clase: vigente ↔ suspendida (RF-08). Solo Admin. */
+    // ─── toggle estado clase ───────────────────────────────────
+
+    // alterna el estado de una clase entre vigente y suspendida
     private void toggleEstadoClase(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -395,11 +397,10 @@ public class SchedulesController extends AbstractController {
         redirigirA("/schedules", req, resp);
     }
 
-    /**
-     * Agrega un horario a una clase (RF-09). Solo Admin.
-     * dia_semana: TINYINT 1-7 (1=Lunes … 7=Domingo) según el CHECK de la BD.
-     * hora_inicio y hora_fin: formato HH:mm del input type="time".
-     */
+    // ─── guardar horario ───────────────────────────────────────
+
+    // agrega un horario a una clase
+    // dia_semana: 1=Lunes … 7=Domingo | hora_inicio/fin: formato HH:mm
     private void guardarHorario(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -410,6 +411,7 @@ public class SchedulesController extends AbstractController {
         String horaIniStr   = param(req, "horaInicio");
         String horaFinStr   = param(req, "horaFin");
 
+        // validar que todos los campos lleguen
         if (claseId == null || diaSemanaStr == null
                 || horaIniStr == null || horaFinStr == null) {
             mensajeError(req, "Todos los campos del horario son obligatorios.");
@@ -417,6 +419,7 @@ public class SchedulesController extends AbstractController {
             return;
         }
 
+        // validar que el día esté en el rango permitido por la BD
         int diaSemana;
         try {
             diaSemana = Integer.parseInt(diaSemanaStr.trim());
@@ -429,6 +432,7 @@ public class SchedulesController extends AbstractController {
             return;
         }
 
+        // parsear horas y validar que fin sea posterior a inicio
         LocalTime horaInicio, horaFin;
         try {
             horaInicio = LocalTime.parse(horaIniStr.trim());
@@ -477,20 +481,10 @@ public class SchedulesController extends AbstractController {
         redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
     }
 
-    /**
-     * Elimina UN horario específico de una clase (RF-09). Solo Admin.
-     *
-     * CORRECCIÓN del bug anterior:
-     *   Antes llamaba a horarioDAO.deleteByClaseId(claseId) que borraba
-     *   TODOS los horarios de la clase — comportamiento incorrecto.
-     *   Ahora usa horarioDAO.deleteById(horarioId) que borra solo
-     *   el horario indicado por su PK. HorarioDAO fue actualizado
-     *   para exponer este método.
-     *
-     * Parámetros esperados del formulario:
-     *   id      → ID del horario a eliminar (ej: HOR-2026-0001)
-     *   claseId → ID de la clase (para redirigir a su página de horarios)
-     */
+    // ─── eliminar horario ──────────────────────────────────────
+
+    // elimina un único horario por su PK — no afecta a los demás de la clase
+    // corrección: antes usaba deleteByClaseId() que borraba todos los horarios
     private void eliminarHorario(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -506,7 +500,7 @@ public class SchedulesController extends AbstractController {
         }
 
         try {
-            // deleteById borra solo ese horario — no afecta a los demás
+            // deleteById borra solo ese horario
             boolean eliminado = horarioDAO.deleteById(horarioId);
             if (eliminado) {
                 LOGGER.info("Horario eliminado: " + horarioId
@@ -524,10 +518,9 @@ public class SchedulesController extends AbstractController {
                 req, resp);
     }
 
-    /**
-     * Inscribe un cliente en una clase (RF-11).
-     * Delega toda la lógica (cupo, duplicados, clase vigente) a InscripcionService.
-     */
+    // ─── inscribir cliente ─────────────────────────────────────
+
+    // delega la lógica de cupo, duplicados y estado a InscripcionService
     private void inscribirCliente(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -552,7 +545,9 @@ public class SchedulesController extends AbstractController {
         redirigirA("/schedules?action=inscritos&id=" + claseId, req, resp);
     }
 
-    /** Cancela la inscripción de un cliente en una clase. */
+    // ─── cancelar inscripción ──────────────────────────────────
+
+    // cancela la inscripción de un cliente en una clase
     private void cancelarInscripcion(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -578,8 +573,9 @@ public class SchedulesController extends AbstractController {
                 req, resp);
     }
 
-    // ─── Helpers privados ─────────────────────────────────────────────────────
+    // ─── helpers privados ──────────────────────────────────────
 
+    // recarga el formulario de clase mostrando el error recibido
     private void volverAlFormularioClase(HttpServletRequest req,
                                           HttpServletResponse resp,
                                           boolean esNuevo,

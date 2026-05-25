@@ -11,111 +11,148 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Filtro de autenticación global (primera línea de defensa).
- *
- * Se ejecuta ANTES que cualquier controlador para TODAS las rutas (/*).
- * Verifica que exista una sesión activa con userName.
- * Si no hay sesión → redirige a /login.
- * Si hay sesión   → deja pasar al siguiente filtro o controlador.
- *
- * Rutas públicas (no requieren sesión):
- *   /login, /logout, /forgot-password, /home, /static/*, index.jsp
- *
- * Por qué un Filter y no verificar en cada Servlet:
- *   - Un solo punto de control → imposible olvidarse de proteger una ruta nueva.
- *   - Si se agrega un controlador nuevo, queda automáticamente protegido.
- *   - Elimina el código repetido de "if session == null → redirect login" en cada servlet.
- *
- * Registro en web.xml (orden importa — debe ir antes que RoleFilter):
- *   <filter-name>AuthFilter</filter-name>
- *   <url-pattern>/*</url-pattern>
- */
+// filtro global de autenticación
 public class AuthFilter implements Filter {
 
-    /**
-     * Rutas accesibles SIN sesión iniciada.
-     * Usar el path relativo al contexto (sin el contextPath).
-     */
-    private static final Set<String> RUTAS_PUBLICAS = new HashSet<>(Arrays.asList(
-            "/login",
-            "/logout",
-            "/forgot-password",
-            "/home"
-    ));
+    // ─── rutas públicas ────────────────────────────────────────
 
-    /**
-     * Prefijos de rutas públicas (recursos estáticos y raíz).
-     * Cualquier ruta que EMPIECE con estos prefijos se deja pasar sin autenticación.
-     */
-    private static final Set<String> PREFIJOS_PUBLICOS = new HashSet<>(Arrays.asList(
-            "/static/",   // CSS, JS, imágenes
-            "/favicon"    // favicon.ico
-    ));
+    // rutas accesibles sin iniciar sesión
+    private static final Set<String> RUTAS_PUBLICAS =
+            new HashSet<>(Arrays.asList(
+
+                    "/login",
+                    "/logout",
+                    "/forgot-password",
+                    "/home"
+            ));
+
+    // prefijos públicos para recursos estáticos
+    private static final Set<String> PREFIJOS_PUBLICOS =
+            new HashSet<>(Arrays.asList(
+
+                    "/static/",
+                    "/favicon"
+            ));
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // No se necesita inicialización
+    public void init(FilterConfig filterConfig)
+            throws ServletException {
+
+        // no se necesita inicialización
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response,
-                         FilterChain chain) throws IOException, ServletException {
+    public void doFilter(
+            ServletRequest request,
+            ServletResponse response,
+            FilterChain chain
+    ) throws IOException, ServletException {
 
-        HttpServletRequest  req  = (HttpServletRequest)  request;
-        HttpServletResponse resp = (HttpServletResponse) response;
+        HttpServletRequest req =
+                (HttpServletRequest) request;
 
-        String contextPath = req.getContextPath();         // Ej: /Herramientas
-        String requestURI  = req.getRequestURI();          // Ej: /Herramientas/clients
-        String path        = requestURI.substring(contextPath.length()); // Ej: /clients
+        HttpServletResponse resp =
+                (HttpServletResponse) response;
 
-        // ── 1. Rutas públicas exactas ────────────────────────────────────────
+        // contexto de la aplicación
+        String contextPath =
+                req.getContextPath();
+
+        // URI completa
+        String requestURI =
+                req.getRequestURI();
+
+        // ruta relativa
+        String path =
+                requestURI.substring(
+                        contextPath.length()
+                );
+
+        // ─── rutas públicas exactas ───────────────────────────
+
         if (RUTAS_PUBLICAS.contains(path)) {
+
             chain.doFilter(request, response);
+
             return;
         }
 
-        // ── 2. Prefijos públicos (estáticos, favicon) ────────────────────────
+        // ─── recursos públicos ───────────────────────────────
+
         for (String prefijo : PREFIJOS_PUBLICOS) {
+
+            // permitir css, js e imágenes
             if (path.startsWith(prefijo)) {
+
                 chain.doFilter(request, response);
+
                 return;
             }
         }
 
-        // ── 3. Raíz del contexto y index.jsp ────────────────────────────────
-        if (path.isEmpty() || path.equals("/") || path.equals("/index.jsp")) {
+        // ─── raíz e index ────────────────────────────────────
+
+        if (path.isEmpty()
+                || path.equals("/")
+                || path.equals("/index.jsp")) {
+
             chain.doFilter(request, response);
+
             return;
         }
 
-        // ── 4. Verificar sesión activa ───────────────────────────────────────
-        HttpSession session = req.getSession(false); // false = no crear sesión nueva
+        // ─── validar sesión activa ───────────────────────────
 
-        boolean autenticado = session != null
-                && session.getAttribute(AppConfig.SESSION_USER_NAME) != null;
+        // false = no crear sesión nueva
+        HttpSession session =
+                req.getSession(false);
 
+        boolean autenticado =
+                session != null
+                && session.getAttribute(
+                        AppConfig.SESSION_USER_NAME
+                ) != null;
+
+        // usuario autenticado
         if (autenticado) {
-            // Sesión válida → continuar al siguiente filtro o controlador
-            chain.doFilter(request, response);
-        } else {
-            // Sin sesión → redirigir al login
-            // Se guarda la URL original para poder redirigir después del login (opcional)
-            String urlOriginal = req.getRequestURI();
-            String query       = req.getQueryString();
-            if (query != null) urlOriginal += "?" + query;
 
-            // Solo guardar si no es una petición de recurso
-            if (!urlOriginal.contains(".")) {
-                req.getSession(true).setAttribute("redirectAfterLogin", urlOriginal);
+            chain.doFilter(request, response);
+
+        } else {
+
+            // ─── guardar URL original ────────────────────────
+
+            String urlOriginal =
+                    req.getRequestURI();
+
+            String query =
+                    req.getQueryString();
+
+            // agregar query string si existe
+            if (query != null) {
+
+                urlOriginal += "?" + query;
             }
 
-            resp.sendRedirect(contextPath + "/login");
+            // evitar guardar recursos estáticos
+            if (!urlOriginal.contains(".")) {
+
+                req.getSession(true).setAttribute(
+                        "redirectAfterLogin",
+                        urlOriginal
+                );
+            }
+
+            // redirigir al login
+            resp.sendRedirect(
+                    contextPath + "/login"
+            );
         }
     }
 
     @Override
     public void destroy() {
-        // No hay recursos que liberar
+
+        // no hay recursos que liberar
     }
 }

@@ -16,46 +16,21 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Controlador de Gestión de Usuarios del Sistema (RF-14).
- *
- * Rutas y acciones:
- *   GET  /users                    → lista de usuarios
- *   GET  /users?action=new         → formulario de creación
- *   GET  /users?action=edit&id={id} → formulario de edición
- *   POST /users?action=save        → crear o actualizar usuario
- *   POST /users?action=toggleEstado&id={id} → activar/inactivar cuenta
- *   POST /users?action=resetPassword&id={id} → resetear contraseña
- *
- * Acceso: ROL-ADMIN únicamente (RoleFilter → /users).
- *
- * Seguridad:
- *   - La contraseña NUNCA se muestra en ningún formulario ni log.
- *   - Al crear: se hashea con PasswordService.hashear() antes de guardar.
- *   - Al resetear: el admin ingresa la nueva contraseña y se hashea de nuevo.
- *   - El admin NO puede desactivar su propia cuenta (previene auto-bloqueo).
- *   - id_empleado es UNIQUE en la BD: un empleado → máximo un usuario.
- *
- * Regla de negocio:
- *   Un usuario puede existir sin empleado vinculado (id_empleado nullable),
- *   pero en la práctica todos los usuarios del sistema son empleados.
- *
- * @author MaxFit
- */
+// controlador de gestión de usuarios del sistema (RF-14)
 @WebServlet("/users")
 public class UsersController extends AbstractController {
 
     private static final Logger LOGGER =
             Logger.getLogger(UsersController.class.getName());
 
-    // Longitud mínima de contraseña (política básica)
+    // longitud mínima de contraseña (política básica)
     private static final int MIN_PASSWORD_LENGTH = 8;
 
     private final UsuarioDAO  usuarioDAO  = new UsuarioDAO();
     private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
     private final CatalogoDAO catalogoDAO = new CatalogoDAO();
 
-    // ─── GET ──────────────────────────────────────────────────────────────────
+    // ─── GET ───────────────────────────────────────────────────
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -66,18 +41,24 @@ public class UsersController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
+            // formulario de creación
             case "new":
                 mostrarFormularioNuevo(req, resp);
                 break;
+
+            // formulario de edición
             case "edit":
                 mostrarFormularioEdicion(req, resp);
                 break;
+
+            // lista de usuarios
             default:
                 mostrarLista(req, resp);
         }
     }
 
-    // ─── POST ─────────────────────────────────────────────────────────────────
+    // ─── POST ──────────────────────────────────────────────────
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -86,22 +67,30 @@ public class UsersController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
+            // crear o actualizar usuario
             case "save":
                 guardarUsuario(req, resp);
                 break;
+
+            // activar o inactivar cuenta
             case "toggleEstado":
                 toggleEstadoUsuario(req, resp);
                 break;
+
+            // resetear contraseña
             case "resetPassword":
                 resetearContrasena(req, resp);
                 break;
+
             default:
                 redirigirA("/users", req, resp);
         }
     }
 
-    // ─── GET: lista de usuarios ───────────────────────────────────────────────
+    // ─── lista de usuarios ─────────────────────────────────────
 
+    // carga todos los usuarios para mostrar en la tabla
     private void mostrarLista(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try {
@@ -116,8 +105,9 @@ public class UsersController extends AbstractController {
         }
     }
 
-    // ─── GET: formulario de nuevo usuario ─────────────────────────────────────
+    // ─── formulario nuevo usuario ──────────────────────────────
 
+    // prepara el formulario vacío para crear un usuario
     private void mostrarFormularioNuevo(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try {
@@ -132,8 +122,9 @@ public class UsersController extends AbstractController {
         }
     }
 
-    // ─── GET: formulario de edición ───────────────────────────────────────────
+    // ─── formulario edición usuario ────────────────────────────
 
+    // carga el usuario existente en el formulario para editar
     private void mostrarFormularioEdicion(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
@@ -162,20 +153,21 @@ public class UsersController extends AbstractController {
         }
     }
 
-    // ─── POST: crear o actualizar usuario ────────────────────────────────────
+    // ─── guardar usuario ───────────────────────────────────────
 
+    // crea o actualiza un usuario según si llega id o no
     private void guardarUsuario(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         String id           = param(req, "id");
         String email        = param(req, "email");
-        String rawPassword  = param(req, "password");          // solo en creación
+        String rawPassword  = param(req, "password");       // solo en creación
         String idRol        = param(req, "idRol");
-        String idEmpleado   = param(req, "idEmpleado");        // puede ser null
+        String idEmpleado   = param(req, "idEmpleado");     // puede ser null
 
         boolean esNuevo = (id == null || id.isBlank());
 
-        // ── Validaciones básicas ─────────────────────────────────────────────
+        // validar campos obligatorios
         if (email == null) {
             volverAlFormulario(req, resp, esNuevo, id, "El correo es obligatorio.");
             return;
@@ -184,7 +176,7 @@ public class UsersController extends AbstractController {
             volverAlFormulario(req, resp, esNuevo, id, "Debe seleccionar un rol.");
             return;
         }
-        // Contraseña obligatoria solo en creación
+        // contraseña obligatoria solo al crear
         if (esNuevo && (rawPassword == null || rawPassword.length() < MIN_PASSWORD_LENGTH)) {
             volverAlFormulario(req, resp, esNuevo, id,
                     "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH
@@ -193,14 +185,14 @@ public class UsersController extends AbstractController {
         }
 
         try {
-            // ── Verificar rol válido ─────────────────────────────────────────
+            // verificar que el rol exista en catálogo
             Rol rol = catalogoDAO.findRolById(idRol);
             if (rol == null) {
                 volverAlFormulario(req, resp, esNuevo, id, "El rol seleccionado no es válido.");
                 return;
             }
 
-            // ── Verificar empleado vinculado (opcional) ──────────────────────
+            // verificar empleado vinculado (campo opcional)
             Empleado empleado = null;
             if (idEmpleado != null && !idEmpleado.isBlank()) {
                 empleado = empleadoDAO.findById(idEmpleado);
@@ -211,7 +203,7 @@ public class UsersController extends AbstractController {
                 }
             }
 
-            // ── Construir objeto Usuario ──────────────────────────────────
+            // construir objeto usuario
             Usuario usuario = new Usuario();
             usuario.setId(esNuevo ? IdGenerator.parUsuario() : id);
             usuario.setEmail(email.trim().toLowerCase());
@@ -219,12 +211,12 @@ public class UsersController extends AbstractController {
             usuario.setEmpleado(empleado);
             usuario.setEstado(AppConfig.ESTADO_ACTIVO); // activo por defecto
 
-            // ── Contraseña: solo en creación; en edición no se toca ─────────
+            // contraseña: hashear solo en creación; en edición conservar el hash existente
             if (esNuevo) {
-                // Hashear la contraseña con BCrypt (NUNCA guardar en texto plano)
+                // hashear con BCrypt — nunca guardar en texto plano
                 usuario.setPasswordUsuario(PasswordService.hashear(rawPassword));
             } else {
-                // En edición: mantener el hash existente
+                // mantener hash y estado actuales del usuario
                 Usuario existente = usuarioDAO.findById(id);
                 if (existente == null) {
                     mensajeError(req, "Usuario no encontrado para actualizar.");
@@ -232,10 +224,10 @@ public class UsersController extends AbstractController {
                     return;
                 }
                 usuario.setPasswordUsuario(existente.getPasswordUsuario());
-                usuario.setEstado(existente.getEstado()); // mantener estado actual
+                usuario.setEstado(existente.getEstado());
             }
 
-            // ── Persistir ─────────────────────────────────────────────────
+            // persistir en BD
             usuarioDAO.save(usuario);
             String accion = esNuevo ? "creado" : "actualizado";
             LOGGER.info("Usuario " + accion + ": " + usuario.getEmail()
@@ -246,6 +238,7 @@ public class UsersController extends AbstractController {
 
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al guardar usuario", e);
+            // distinguir violación de UNIQUE para mensaje más claro
             String msg;
             if (e.getMessage() != null && e.getMessage().contains("UNIQUE")) {
                 msg = "El correo o el empleado vinculado ya tiene una cuenta asignada.";
@@ -256,12 +249,10 @@ public class UsersController extends AbstractController {
         }
     }
 
-    // ─── POST: activar / inactivar cuenta ────────────────────────────────────
+    // ─── toggle estado usuario ─────────────────────────────────
 
-    /**
-     * Alterna el estado de un usuario entre 'activo' e 'inactivo'.
-     * El admin NO puede inactivar su propia cuenta (previene auto-bloqueo).
-     */
+    // alterna la cuenta entre activo e inactivo
+    // el admin no puede desactivar su propia cuenta (previene auto-bloqueo)
     private void toggleEstadoUsuario(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -272,7 +263,7 @@ public class UsersController extends AbstractController {
             return;
         }
 
-        // Prevenir auto-bloqueo del administrador
+        // prevenir que el admin se bloquee a sí mismo
         String miId = getSessionUserId(req);
         if (id.equals(miId)) {
             mensajeError(req, "No puedes desactivar tu propia cuenta.");
@@ -288,7 +279,7 @@ public class UsersController extends AbstractController {
                 return;
             }
 
-            // Alternar estado
+            // alternar estado
             String nuevoEstado = usuario.isActivo()
                     ? AppConfig.ESTADO_INACTIVO
                     : AppConfig.ESTADO_ACTIVO;
@@ -309,13 +300,10 @@ public class UsersController extends AbstractController {
         redirigirA("/users", req, resp);
     }
 
-    // ─── POST: resetear contraseña ────────────────────────────────────────────
+    // ─── resetear contraseña ───────────────────────────────────
 
-    /**
-     * El admin puede asignar una contraseña nueva a cualquier usuario.
-     * La contraseña nueva se hashea con BCrypt antes de guardar.
-     * NUNCA se log-ea la contraseña en texto plano.
-     */
+    // el admin asigna una contraseña nueva — se hashea con BCrypt antes de guardar
+    // nunca se loguea la contraseña en texto plano
     private void resetearContrasena(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
 
@@ -328,6 +316,7 @@ public class UsersController extends AbstractController {
             return;
         }
 
+        // validar longitud mínima
         if (rawPassword.length() < MIN_PASSWORD_LENGTH) {
             mensajeError(req, "La nueva contraseña debe tener al menos "
                     + MIN_PASSWORD_LENGTH + " caracteres.");
@@ -336,7 +325,7 @@ public class UsersController extends AbstractController {
         }
 
         try {
-            // Hashear la nueva contraseña con BCrypt (NUNCA guardar en texto plano)
+            // hashear y persistir — nunca guardar en texto plano
             String nuevoHash = PasswordService.hashear(rawPassword);
             usuarioDAO.actualizarPassword(id, nuevoHash);
 
@@ -351,17 +340,15 @@ public class UsersController extends AbstractController {
         redirigirA("/users", req, resp);
     }
 
-    // ─── Helpers privados ─────────────────────────────────────────────────────
+    // ─── helpers privados ──────────────────────────────────────
 
-    /**
-     * Carga los catálogos necesarios para el formulario: roles y empleados.
-     * Los empleados sin usuario vinculado se filtran en la vista para el select.
-     */
+    // carga roles y empleados en el request para los selects del formulario
     private void cargarCatalogosFormulario(HttpServletRequest req) throws SQLException {
         req.setAttribute("roles",     catalogoDAO.findAllRoles());
         req.setAttribute("empleados", empleadoDAO.findAll());
     }
 
+    // recarga el formulario mostrando el error recibido
     private void volverAlFormulario(HttpServletRequest req,
                                      HttpServletResponse resp,
                                      boolean esNuevo,

@@ -11,64 +11,89 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-/**
- * Controlador de cierre de sesión.
- *
- * GET  /logout → invalida la sesión y redirige al login con mensaje de confirmación
- * POST /logout → mismo comportamiento (para formularios con botón "Salir")
- *
- * Seguridad:
- *   - Invalida la sesión completa (no solo borra atributos).
- *   - Limpia la cookie JSESSIONID explícitamente para evitar que el navegador
- *     la reutilice en la misma pestaña.
- *   - Cabeceras de no-caché para evitar que el botón "Atrás" muestre
- *     páginas protegidas después del logout.
- *
- * @author MaxFit
- */
+// controlador encargado del cierre de sesión
 @WebServlet("/logout")
 public class LogoutController extends HttpServlet {
 
     private static final Logger LOGGER =
             Logger.getLogger(LogoutController.class.getName());
 
+    // ───────────────── GET /logout ────────────────────
+
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doGet(HttpServletRequest req,
+                         HttpServletResponse resp)
             throws ServletException, IOException {
+
         procesarLogout(req, resp);
     }
 
+    // ───────────────── POST /logout ───────────────────
+
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+    protected void doPost(HttpServletRequest req,
+                          HttpServletResponse resp)
             throws ServletException, IOException {
+
         procesarLogout(req, resp);
     }
 
-    // ─── Lógica de logout ─────────────────────────────────────────────────────
+    // ───────────────── lógica de logout ───────────────
 
-    private void procesarLogout(HttpServletRequest req, HttpServletResponse resp)
+    private void procesarLogout(HttpServletRequest req,
+                                HttpServletResponse resp)
             throws IOException {
 
-        // ── 1. Registrar el cierre de sesión en el log ───────────────────────
-        HttpSession sesion = req.getSession(false);
-        if (sesion != null) {
-            String userName = (String) sesion.getAttribute(AppConfig.SESSION_USER_NAME);
-            String userRole = (String) sesion.getAttribute(AppConfig.SESSION_USER_ROLE);
-            LOGGER.info("Logout: usuario='" + userName
-                    + "' | rol='" + userRole + "'");
+        // obtener sesión actual si existe
+        HttpSession sesion =
+                req.getSession(false);
 
-            // ── 2. Invalidar la sesión completa ──────────────────────────────
+        if (sesion != null) {
+
+            // obtener datos básicos del usuario
+            String userName = (String)
+                    sesion.getAttribute(
+                            AppConfig.SESSION_USER_NAME
+                    );
+
+            String userRole = (String)
+                    sesion.getAttribute(
+                            AppConfig.SESSION_USER_ROLE
+                    );
+
+            // registrar cierre de sesión
+            LOGGER.info(
+                    "Logout: usuario='"
+                            + userName
+                            + "' | rol='"
+                            + userRole
+                            + "'"
+            );
+
+            // invalidar sesión completa
             sesion.invalidate();
         }
 
-        // ── 3. Cabeceras de no-caché ─────────────────────────────────────────
-        // Impide que el botón "Atrás" del navegador muestre páginas protegidas
-        resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        resp.setHeader("Pragma", "no-cache");
-        resp.setDateHeader("Expires", 0);
+        // evitar caché del navegador
+        resp.setHeader(
+                "Cache-Control",
+                "no-cache, no-store, must-revalidate"
+        );
 
-        // ── 4. Redirigir al login con mensaje de confirmación ────────────────
-        resp.sendRedirect(req.getContextPath()
-                + "/login?msg=logout");
+        resp.setHeader(
+                "Pragma",
+                "no-cache"
+        );
+
+        resp.setDateHeader(
+                "Expires",
+                0
+        );
+
+        // redirigir al login con mensaje de confirmación
+        resp.sendRedirect(
+                req.getContextPath()
+                        + "/login?msg=logout"
+        );
     }
 }

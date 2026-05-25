@@ -1,38 +1,22 @@
 package com.mycompany.herramientas.model;
 
-/**
- * Empleado del gimnasio. ID autogenerado con formato EMP-AÑO-CORRELATIVO.
- *
- * Alineado a la tabla Empleados del SQL:
- *   id               VARCHAR(20) PK,
- *   nombre           VARCHAR(100),
- *   id_TipoDocumento VARCHAR(20) FK → TipoDocumentos,
- *   numeroDocumento  VARCHAR(20) UNIQUE,
- *   email            VARCHAR(150),
- *   apellido         VARCHAR(100),
- *   telefono         VARCHAR(20) NULL,
- *   id_Cargo         VARCHAR(10) FK → Cargos
- *
- * NOTA: la tabla Empleados NO tiene columna estado.
- * Si se necesita activar/desactivar empleados en el futuro,
- * se debe agregar la columna a la BD primero.
- *
- * Un empleado puede ser responsable de contratos (FK en Contratos)
- * y entrenador de clases (FK en Clases).
- */
+// modelo de empleado del gimnasio
 public class Empleado {
+
+    // ─── atributos ─────────────────────────────────────────────
 
     private String        id;              // Ej: EMP-2026-0001
     private String        nombre;
     private String        apellido;
-    private TipoDocumento tipoDocumento;   // FK → TipoDocumentos (objeto completo)
-    private String        numeroDocumento; // UNIQUE en BD
+    private TipoDocumento tipoDocumento;   // tipo de documento asociado
+    private String        numeroDocumento; // documento único
     private String        email;
-    private String        telefono;        // NULL permitido
-    private Cargo         cargo;           // FK → Cargos (objeto completo)
+    private String        telefono;        // puede ser null
+    private Cargo         cargo;           // cargo del empleado
 
     public Empleado() {}
 
+    // constructor completo del empleado
     public Empleado(String id, String nombre, String apellido,
                     TipoDocumento tipoDocumento, String numeroDocumento,
                     String email, String telefono, Cargo cargo) {
@@ -46,9 +30,7 @@ public class Empleado {
         this.cargo           = cargo;
     }
 
-    // -----------------------------------------------------------------------
-    // Getters y Setters
-    // -----------------------------------------------------------------------
+    // ─── getters y setters ────────────────────────────────────
 
     public String getId()                        { return id; }
     public void   setId(String id)               { this.id = id; }
@@ -62,7 +44,7 @@ public class Empleado {
     public TipoDocumento getTipoDocumento()                      { return tipoDocumento; }
     public void          setTipoDocumento(TipoDocumento td)      { this.tipoDocumento = td; }
 
-    public String getNumeroDocumento()                     { return numeroDocumento; }
+    public String getNumeroDocumento()                       { return numeroDocumento; }
     public void   setNumeroDocumento(String numeroDocumento) { this.numeroDocumento = numeroDocumento; }
 
     public String getEmail()                     { return email; }
@@ -74,11 +56,9 @@ public class Empleado {
     public Cargo getCargo()                      { return cargo; }
     public void  setCargo(Cargo cargo)           { this.cargo = cargo; }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
+    // ─── helpers ──────────────────────────────────────────────
 
-    /** Nombre completo para mostrar en tablas y selects de los JSP. */
+    // obtener nombre completo para tablas y vistas
     public String getNombreCompleto() {
         return nombre + " " + apellido;
     }

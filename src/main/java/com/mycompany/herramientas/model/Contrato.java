@@ -4,39 +4,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Contrato entre un cliente y una membresía. ID generado con prefijo CON-AÑO-CORRELATIVO.
- *
- * Alineado a la tabla Contratos del SQL:
- *   id VARCHAR(20) PK,
- *   id_cliente     VARCHAR(20) FK → Clientes,
- *   id_membresia   VARCHAR(20) FK → Membresias,
- *   id_empleado    VARCHAR(20) FK → Empleados  (responsable del contrato),
- *   id_metodo_pago VARCHAR(20) FK → MetodosPago,
- *   fecha_inicio   DATE,
- *   fecha_fin      DATE,
- *   monto_pagado   DECIMAL(10,2)   → BigDecimal en Java (nunca double para dinero),
- *   fecha_pago     DATETIME DEFAULT GETDATE(),
- *   estado         VARCHAR(10) CHECK('activo','vencido','cancelado') DEFAULT 'activo'
- *
- * El DAO actualiza el estado a 'vencido' cuando fecha_fin < GETDATE().
- * La cancelación manual la hace el Administrador (RF-03).
- */
+// modelo de contrato entre cliente y membresía
 public class Contrato {
 
+    // ─── atributos ─────────────────────────────────────────────
+
     private String        id;              // Ej: CON-2026-0001
-    private Cliente       cliente;         // FK → Clientes
-    private Membresia     membresia;       // FK → Membresias
-    private Empleado      empleado;        // FK → Empleados (responsable)
-    private MetodoPago    metodoPago;      // FK → MetodosPago
-    private LocalDate     fechaInicio;     // DATE
-    private LocalDate     fechaFin;        // DATE
-    private BigDecimal    montoPagado;     // DECIMAL(10,2)
-    private LocalDateTime fechaPago;       // DATETIME — por defecto GETDATE()
-    private String        estado;          // 'activo' | 'vencido' | 'cancelado'
+    private Cliente       cliente;         // cliente asociado al contrato
+    private Membresia     membresia;       // membresía adquirida
+    private Empleado      empleado;        // empleado responsable
+    private MetodoPago    metodoPago;      // método de pago usado
+    private LocalDate     fechaInicio;     // fecha de inicio
+    private LocalDate     fechaFin;        // fecha de vencimiento
+    private BigDecimal    montoPagado;     // monto pagado
+    private LocalDateTime fechaPago;       // fecha y hora del pago
+    private String        estado;          // activo | vencido | cancelado
 
     public Contrato() {}
 
+    // constructor completo del contrato
     public Contrato(String id, Cliente cliente, Membresia membresia,
                     Empleado empleado, MetodoPago metodoPago,
                     LocalDate fechaInicio, LocalDate fechaFin,
@@ -54,9 +40,7 @@ public class Contrato {
         this.estado      = estado;
     }
 
-    // -----------------------------------------------------------------------
-    // Getters y Setters
-    // -----------------------------------------------------------------------
+    // ─── getters y setters ────────────────────────────────────
 
     public String     getId()                          { return id; }
     public void       setId(String id)                 { this.id = id; }
@@ -88,28 +72,30 @@ public class Contrato {
     public String     getEstado()                      { return estado; }
     public void       setEstado(String estado)         { this.estado = estado; }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
+    // ─── helpers ──────────────────────────────────────────────
 
+    // verificar si el contrato está activo
     public boolean isActivo() {
         return "activo".equalsIgnoreCase(estado);
     }
 
+    // verificar si el contrato está vencido
     public boolean isVencido() {
         return "vencido".equalsIgnoreCase(estado);
     }
 
+    // verificar si el contrato fue cancelado
     public boolean isCancelado() {
         return "cancelado".equalsIgnoreCase(estado);
     }
 
-    /**
-     * Indica si la membresía está próxima a vencer (en los próximos N días).
-     * Útil para mostrar alertas en el dashboard.
-     */
+    // validar si la membresía vencerá pronto
     public boolean proximoAVencer(int dias) {
-        if (fechaFin == null || !isActivo()) return false;
+
+        if (fechaFin == null || !isActivo()) {
+            return false;
+        }
+
         return !fechaFin.isAfter(LocalDate.now().plusDays(dias));
     }
 

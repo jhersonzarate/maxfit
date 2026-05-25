@@ -1,22 +1,24 @@
 package com.mycompany.herramientas.model;
 
-/**
- * Representa un rol del sistema (ROL-ADMIN, ROL-RECEP, ROL-TRAINER).
- * Es un catálogo fijo: los IDs no se autogeneran, se insertan manualmente en la BD.
- */
+// rol del sistema (catálogo fijo)
 public class Rol {
 
+    // ─── atributos ─────────────────────────────────────────────
+
     private String id;        // Ej: ROL-ADMIN
-    private String nombreRol; // Ej: Administrador
+    private String nombreRol; // nombre del rol
     private String descripcion;
 
     public Rol() {}
 
+    // constructor completo
     public Rol(String id, String nombreRol, String descripcion) {
         this.id = id;
         this.nombreRol = nombreRol;
         this.descripcion = descripcion;
     }
+
+    // ─── getters y setters ────────────────────────────────────
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

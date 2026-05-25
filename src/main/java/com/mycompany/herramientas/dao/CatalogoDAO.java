@@ -8,37 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * DAO para las cinco tablas de catálogo del sistema (RF-06, RF-07, RF-10, RF-13).
- *
- * Agrupa en un solo DAO las tablas que son catálogos fijos:
- *   TipoDocumentos  → RF-07 (tipos de documento: DNI, CE, Pasaporte)
- *   Cargos          → RF-13 (cargos del personal: Admin, Recep, Trainer)
- *   MetodosPago     → RF-06 (métodos de pago: Efectivo, Yape, Tarjeta…)
- *   Roles           → RF-15 (roles del sistema: ROL-ADMIN, ROL-RECEP, ROL-TRAINER)
- *   TipoClases      → RF-10 (tipos de clase: Yoga, CrossFit, Spinning…)
- *
- * Por qué un DAO unificado y no cinco separados:
- *   Estas tablas son catálogos de solo lectura en la operación diaria.
- *   Solo MetodosPago tiene un UPDATE de estado (RF-06 permite
- *   activar/desactivar). Las demás solo se leen.
- *   Unificarlas evita crear cinco archivos de 30 líneas cada uno.
- *
- * Los IDs de los catálogos son fijos (ej: "TDOC-DNI", "CARGO-TRAINER")
- * y se insertan con el script SQL inicial, no con IdGenerator.
- */
+// DAO unificado para las cinco tablas de catálogo del sistema
+// TipoDocumentos (RF-07) | Cargos (RF-13) | MetodosPago (RF-06)
+// Roles (RF-15) | TipoClases (RF-10)
+// los IDs son fijos (ej: "TDOC-DNI", "CARGO-TRAINER") — no usan IdGenerator
 public class CatalogoDAO {
 
     private static final Logger LOGGER = Logger.getLogger(CatalogoDAO.class.getName());
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // TipoDocumentos  (RF-07)
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ─── TipoDocumentos (RF-07) ────────────────────────────────
 
-    /**
-     * Devuelve todos los tipos de documento ordenados por nombre.
-     * Se usa en los formularios de registro de cliente y empleado.
-     */
+    // devuelve todos los tipos de documento — para selects de cliente y empleado
     public List<TipoDocumento> findAllTipoDocumentos() throws SQLException {
         List<TipoDocumento> lista = new ArrayList<>();
         String sql =
@@ -54,11 +34,8 @@ public class CatalogoDAO {
         return lista;
     }
 
-    /**
-     * Busca un tipo de documento por su ID.
-     * Devuelve null si no existe.
-     * Usado en DocumentoValidator para obtener tamañoMin/Max/esAlfanumerico.
-     */
+    // busca un tipo de documento por id — usado en DocumentoValidator
+    // devuelve null si no existe
     public TipoDocumento findTipoDocumentoById(String id) throws SQLException {
         if (id == null || id.trim().isEmpty()) return null;
         String sql =
@@ -74,14 +51,9 @@ public class CatalogoDAO {
         return null;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Cargos  (RF-13)
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ─── Cargos (RF-13) ────────────────────────────────────────
 
-    /**
-     * Devuelve todos los cargos disponibles ordenados por nombre.
-     * Se usa en el formulario de registro/edición de empleados.
-     */
+    // devuelve todos los cargos — para el formulario de empleados
     public List<Cargo> findAllCargos() throws SQLException {
         List<Cargo> lista = new ArrayList<>();
         String sql = "SELECT id, nombre FROM Cargos ORDER BY nombre";
@@ -98,10 +70,7 @@ public class CatalogoDAO {
         return lista;
     }
 
-    /**
-     * Busca un cargo por su ID.
-     * Devuelve null si no existe.
-     */
+    // busca un cargo por id — devuelve null si no existe
     public Cargo findCargoById(String id) throws SQLException {
         if (id == null || id.trim().isEmpty()) return null;
         String sql = "SELECT id, nombre FROM Cargos WHERE id = ?";
@@ -117,14 +86,9 @@ public class CatalogoDAO {
         return null;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MetodosPago  (RF-06)
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ─── MetodosPago (RF-06) ───────────────────────────────────
 
-    /**
-     * Devuelve TODOS los métodos de pago (activos e inactivos).
-     * Para la vista de administración de métodos de pago (solo Admin).
-     */
+    // devuelve TODOS los métodos de pago (activos e inactivos) — para vista de admin
     public List<MetodoPago> findAllMetodosPago() throws SQLException {
         List<MetodoPago> lista = new ArrayList<>();
         String sql =
@@ -144,11 +108,7 @@ public class CatalogoDAO {
         return lista;
     }
 
-    /**
-     * Devuelve solo los métodos de pago con estado 'activo'.
-     * Para el select del formulario de nuevo contrato (RF-06).
-     * El recepcionista y el admin solo ven los activos al registrar.
-     */
+    // devuelve solo los métodos activos — para el select del formulario de contrato
     public List<MetodoPago> findMetodosPagoActivos() throws SQLException {
         List<MetodoPago> lista = new ArrayList<>();
         String sql =
@@ -168,14 +128,8 @@ public class CatalogoDAO {
         return lista;
     }
 
-    /**
-     * Cambia el estado de un método de pago ('activo' ↔ 'inactivo').
-     * Solo el Admin puede hacer esto (RF-06).
-     *
-     * @param id     ID del método de pago (ej: "PAY-YAPE")
-     * @param estado nuevo estado: "activo" o "inactivo"
-     * @return true si se actualizó, false si no existía
-     */
+    // alterna el estado de un método de pago ('activo' ↔ 'inactivo') — solo Admin
+    // devuelve true si se actualizó, false si no existía
     public boolean updateEstadoMetodoPago(String id, String estado) throws SQLException {
         String sql = "UPDATE MetodosPago SET estado = ? WHERE id = ?";
         try (Connection con = DatabaseConnection.getConnection();
@@ -188,14 +142,9 @@ public class CatalogoDAO {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Roles  (RF-15 — control de acceso)
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ─── Roles (RF-15) ─────────────────────────────────────────
 
-    /**
-     * Devuelve todos los roles del sistema.
-     * Se usa en el formulario de gestión de usuarios (RF-14, solo Admin).
-     */
+    // devuelve todos los roles — para el formulario de gestión de usuarios
     public List<Rol> findAllRoles() throws SQLException {
         List<Rol> lista = new ArrayList<>();
         String sql =
@@ -209,17 +158,14 @@ public class CatalogoDAO {
                 lista.add(new Rol(
                     rs.getString("id"),
                     rs.getString("nombre_rol"),
-                    rs.wasNull() ? null : desc   // descripcion NULL-able en la BD
+                    rs.wasNull() ? null : desc   // descripcion es NULL-able en la BD
                 ));
             }
         }
         return lista;
     }
 
-    /**
-     * Busca un rol por su ID.
-     * Devuelve null si no existe.
-     */
+    // busca un rol por id — devuelve null si no existe
     public Rol findRolById(String id) throws SQLException {
         if (id == null || id.trim().isEmpty()) return null;
         String sql = "SELECT id, nombre_rol, descripcion FROM Roles WHERE id = ?";
@@ -240,14 +186,9 @@ public class CatalogoDAO {
         return null;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // TipoClases  (RF-10)
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ─── TipoClases (RF-10) ────────────────────────────────────
 
-    /**
-     * Devuelve todos los tipos de clase disponibles ordenados por nombre.
-     * Se usa en el formulario de nueva clase grupal (RF-08).
-     */
+    // devuelve todos los tipos de clase — para el formulario de nueva clase (RF-08)
     public List<TipoClase> findAllTipoClases() throws SQLException {
         List<TipoClase> lista = new ArrayList<>();
         String sql = "SELECT id, nombre FROM TipoClases ORDER BY nombre";
@@ -264,10 +205,7 @@ public class CatalogoDAO {
         return lista;
     }
 
-    /**
-     * Busca un tipo de clase por su ID.
-     * Devuelve null si no existe.
-     */
+    // busca un tipo de clase por id — devuelve null si no existe
     public TipoClase findTipoClaseById(String id) throws SQLException {
         if (id == null || id.trim().isEmpty()) return null;
         String sql = "SELECT id, nombre FROM TipoClases WHERE id = ?";
@@ -283,12 +221,9 @@ public class CatalogoDAO {
         return null;
     }
 
-    // ─── Helpers privados ─────────────────────────────────────────────────────
+    // ─── helpers privados ──────────────────────────────────────
 
-    /**
-     * Mapea una fila de TipoDocumentos a objeto.
-     * Centralizado para no repetir el mismo mapeo en findAll y findById.
-     */
+    // mapea una fila de TipoDocumentos a objeto — compartido por findAll y findById
     private TipoDocumento mapTipoDocumento(ResultSet rs) throws SQLException {
         TipoDocumento td = new TipoDocumento();
         td.setId(rs.getString("id"));

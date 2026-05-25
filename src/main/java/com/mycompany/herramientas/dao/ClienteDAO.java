@@ -10,24 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * DAO para la tabla Clientes (RF-01).
- *
- * Tablas involucradas:
- *   Clientes → TipoDocumentos (JOIN para hidratar el objeto completo)
- *
- * Columnas NULL-able en la BD:
- *   email, telefono, fecha_nacimiento, genero → se manejan con rs.wasNull()
- *   y setNull() en los INSERT/UPDATE.
- *
- * La búsqueda por documento (findByDocument) se usa en el check-in del
- * recepcionista para identificar al cliente rápidamente (RF-04, RF-05).
- */
+// DAO para la tabla Clientes (RF-01)
+// columnas NULL-able: email, telefono, fecha_nacimiento, genero
+// findByDocument se usa en el check-in del recepcionista (RF-04, RF-05)
 public class ClienteDAO {
 
     private static final Logger LOGGER = Logger.getLogger(ClienteDAO.class.getName());
 
-    // ─── SQL ─────────────────────────────────────────────────────────────────
+    // ─── SQL ───────────────────────────────────────────────────
 
     private static final String SQL_SELECT_BASE =
         "SELECT c.id, c.nombre, c.apellido, c.numero_documento, " +
@@ -46,7 +36,7 @@ public class ClienteDAO {
     private static final String SQL_FIND_BY_DOCUMENT =
         SQL_SELECT_BASE + "WHERE c.numero_documento = ?";
 
-    /** Búsqueda libre por nombre, apellido o número de documento (para el buscador) */
+    // búsqueda libre por nombre, apellido o documento (para el buscador)
     private static final String SQL_SEARCH =
         SQL_SELECT_BASE +
         "WHERE c.nombre LIKE ? OR c.apellido LIKE ? OR c.numero_documento LIKE ? " +
@@ -70,9 +60,9 @@ public class ClienteDAO {
     private static final String SQL_COUNT =
         "SELECT COUNT(*) FROM Clientes";
 
-    // ─── Métodos públicos ─────────────────────────────────────────────────────
+    // ─── métodos públicos ──────────────────────────────────────
 
-    /** Devuelve todos los clientes ordenados por apellido, nombre. */
+    // devuelve todos los clientes ordenados por apellido, nombre
     public List<Cliente> findAll() throws SQLException {
         List<Cliente> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -83,7 +73,7 @@ public class ClienteDAO {
         return lista;
     }
 
-    /** Busca un cliente por su ID primario. Devuelve null si no existe. */
+    // busca un cliente por id — devuelve null si no existe
     public Cliente findById(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
@@ -95,11 +85,8 @@ public class ClienteDAO {
         return null;
     }
 
-    /**
-     * Busca cliente por número de documento.
-     * Usado en el check-in de recepción (RF-04).
-     * Devuelve null si no existe.
-     */
+    // busca cliente por número de documento — usado en el check-in (RF-04)
+    // devuelve null si no existe
     public Cliente findByDocument(String numeroDocumento) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_DOCUMENT)) {
@@ -111,11 +98,8 @@ public class ClienteDAO {
         return null;
     }
 
-    /**
-     * Búsqueda libre por nombre, apellido o documento.
-     * Si query es null o vacío, devuelve todos los clientes.
-     * Usa LIKE con % para búsqueda parcial (ej: "ele" encuentra "Elena").
-     */
+    // búsqueda libre por nombre, apellido o documento con LIKE parcial
+    // si query es null o vacío devuelve todos los clientes
     public List<Cliente> search(String query) throws SQLException {
         if (query == null || query.trim().isEmpty()) return findAll();
 
@@ -133,11 +117,7 @@ public class ClienteDAO {
         return lista;
     }
 
-    /**
-     * INSERT si el cliente es nuevo (id vacío o no existe en BD),
-     * UPDATE si ya existe.
-     * El ID debe venir generado por IdGenerator antes de llamar save().
-     */
+    // INSERT si es nuevo, UPDATE si ya existe — el ID debe venir de IdGenerator
     public void save(Cliente cliente) throws SQLException {
         boolean existe = cliente.getId() != null
                 && findById(cliente.getId()) != null;
@@ -151,15 +131,8 @@ public class ClienteDAO {
         }
     }
 
-    /**
-     * Elimina un cliente por ID.
-     * Precaución: la BD tiene FKs desde Contratos e Inscripcion_Clases.
-     * Si el cliente tiene contratos o inscripciones, la BD lanzará un error
-     * de integridad referencial — este DAO lo propaga como SQLException.
-     * El controlador debe capturarlo y mostrar un mensaje amigable.
-     *
-     * @return true si se eliminó, false si no existía
-     */
+    // elimina un cliente por id — la BD lanza SQLException si tiene contratos/inscripciones
+    // devuelve true si se eliminó, false si no existía
     public boolean delete(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
@@ -169,7 +142,7 @@ public class ClienteDAO {
         }
     }
 
-    /** Total de clientes registrados (para el dashboard). */
+    // total de clientes registrados para el dashboard
     public int count() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT);
@@ -179,7 +152,7 @@ public class ClienteDAO {
         return 0;
     }
 
-    // ─── Privados ─────────────────────────────────────────────────────────────
+    // ─── privados ──────────────────────────────────────────────
 
     private void insert(Connection con, Cliente c) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
@@ -213,10 +186,7 @@ public class ClienteDAO {
         }
     }
 
-    /**
-     * Mapea una fila del ResultSet a un objeto Cliente con su TipoDocumento.
-     * Usa rs.wasNull() para las columnas NULL-able.
-     */
+    // mapea una fila a Cliente con su TipoDocumento — usa wasNull() para columnas NULL-able
     private Cliente mapRow(ResultSet rs) throws SQLException {
         TipoDocumento td = new TipoDocumento();
         td.setId(rs.getString("td_id"));
@@ -233,7 +203,7 @@ public class ClienteDAO {
         c.setTipoDocumento(td);
         c.setNumeroDocumento(rs.getString("numero_documento"));
 
-        // Columnas NULL-able
+        // columnas NULL-able
         String email = rs.getString("email");
         c.setEmail(rs.wasNull() ? null : email);
 
@@ -249,9 +219,9 @@ public class ClienteDAO {
         return c;
     }
 
-    // ─── Helpers para NULL en PreparedStatement ───────────────────────────────
+    // ─── helpers para NULL en PreparedStatement ────────────────
 
-    /** Establece un String o NULL en el PreparedStatement. */
+    // establece un String o NULL en el PreparedStatement
     private void setNullableString(PreparedStatement ps, int i, String val)
             throws SQLException {
         if (val != null && !val.trim().isEmpty()) {
@@ -261,7 +231,7 @@ public class ClienteDAO {
         }
     }
 
-    /** Establece un LocalDate o NULL en el PreparedStatement. */
+    // establece un LocalDate o NULL en el PreparedStatement
     private void setNullableDate(PreparedStatement ps, int i, LocalDate fecha)
             throws SQLException {
         if (fecha != null) {

@@ -15,33 +15,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Reglas de negocio para inscripción a clases grupales (RF-11).
- *
- * Flujo de inscripción:
- *   1. Verificar que el cliente exista.
- *   2. Verificar que la clase exista y esté vigente.
- *   3. Verificar que el cliente NO esté ya inscrito en esa clase.
- *   4. Verificar que la clase tenga cupo disponible (inscritos < capacidad_maxima).
- *   5. Registrar la inscripción dentro de una transacción.
- *
- * ← CORRECCIÓN CRÍTICA — Transacciones:
- *   El patrón anterior abría una transacción pero el DAO cerraba la Connection
- *   con try-with-resources antes del commit(), rompiendo la atomicidad.
- *
- *   Ahora:
- *     1. beginTransaction() pone autoCommit=false en la Connection del ThreadLocal.
- *     2. getConnection() devuelve esa misma Connection.
- *     3. Los métodos del DAO que participan en la transacción reciben la
- *        Connection como parámetro (overloads) y NO la cierran.
- *     4. commit() / rollback() operan sobre la misma Connection.
- *     5. closeConnection() cierra en finally.
- *
- *   Esto garantiza que el countInscritos() y el save() de la inscripción
- *   ocurran en la misma transacción, evitando race conditions de cupo.
- *
- * @author MaxFit
- */
+// reglas de negocio para inscripción a clases grupales
 public class InscripcionService {
 
     private static final Logger LOGGER = Logger.getLogger(InscripcionService.class.getName());
@@ -63,7 +37,7 @@ public class InscripcionService {
         this.inscripcionDAO = inscripcionDAO;
     }
 
-    // ── Resultado tipado ─────────────────────────────────────────────────────
+    // ─── RESULTADO ─────────────────────────────────────────────
 
     public enum TipoResultado {
         OK,
@@ -76,186 +50,180 @@ public class InscripcionService {
     }
 
     public static final class Resultado {
-        private final TipoResultado    tipo;
-        private final String           mensaje;
+
+        private final TipoResultado tipo;
+        private final String mensaje;
         private final InscripcionClase inscripcion;
 
         private Resultado(TipoResultado tipo, String mensaje, InscripcionClase inscripcion) {
-            this.tipo        = tipo;
-            this.mensaje     = mensaje;
+            this.tipo = tipo;
+            this.mensaje = mensaje;
             this.inscripcion = inscripcion;
         }
 
-        public TipoResultado   getTipo()        { return tipo; }
-        public String          getMensaje()     { return mensaje; }
+        public TipoResultado getTipo() { return tipo; }
+        public String getMensaje() { return mensaje; }
         public InscripcionClase getInscripcion() { return inscripcion; }
-        public boolean         isExitoso()      { return tipo == TipoResultado.OK; }
+        public boolean isExitoso() { return tipo == TipoResultado.OK; }
 
         static Resultado ok(InscripcionClase ic) {
             return new Resultado(TipoResultado.OK, "Inscripción registrada correctamente.", ic);
         }
+
         static Resultado clienteNoExiste(String id) {
             return new Resultado(TipoResultado.CLIENTE_NO_EXISTE,
-                    "No se encontró el cliente con ID: " + id, null);
+                    "No se encontró el cliente: " + id, null);
         }
+
         static Resultado claseNoExiste(String id) {
             return new Resultado(TipoResultado.CLASE_NO_EXISTE,
-                    "No se encontró la clase con ID: " + id, null);
+                    "No se encontró la clase: " + id, null);
         }
+
         static Resultado claseSuspendida(Clase c) {
             return new Resultado(TipoResultado.CLASE_SUSPENDIDA,
-                    "La clase \"" + c.getNombreClase()
-                    + "\" está suspendida y no acepta inscripciones.", null);
+                    "Clase suspendida: " + c.getNombreClase(), null);
         }
-        static Resultado yaInscrito(Cliente cli, Clase c) {
+
+        static Resultado yaInscrito(Cliente c, Clase cl) {
             return new Resultado(TipoResultado.YA_INSCRITO,
-                    cli.getNombreCompleto() + " ya está inscrito/a en \""
-                    + c.getNombreClase() + "\".", null);
+                    c.getNombreCompleto() + " ya está inscrito en " + cl.getNombreClase(), null);
         }
+
         static Resultado sinCupo(Clase c) {
             return new Resultado(TipoResultado.SIN_CUPO,
-                    "La clase \"" + c.getNombreClase()
-                    + "\" no tiene cupos disponibles (capacidad máxima: "
-                    + c.getCapacidadMaxima() + ").", null);
+                    "Sin cupos en " + c.getNombreClase(), null);
         }
+
         static Resultado errorBd() {
             return new Resultado(TipoResultado.ERROR_BD,
-                    "Error interno. Intenta nuevamente.", null);
+                    "Error interno en la base de datos.", null);
         }
     }
 
-    // ── Inscribir cliente a clase ────────────────────────────────────────────
+    // ─── INSCRIPCIÓN ──────────────────────────────────────────
 
-    /**
-     * Inscribe a un cliente en una clase grupal cumpliendo todas las reglas de RF-11.
-     *
-     * @param clienteId ID del cliente a inscribir
-     * @param claseId   ID de la clase destino
-     * @return Resultado tipado con isExitoso() y getMensaje()
-     */
     public Resultado inscribir(String clienteId, String claseId) {
 
         try {
-            // 1. Verificar cliente
+
+            // validar cliente
             Cliente cliente = clienteDAO.findById(clienteId);
             if (cliente == null) return Resultado.clienteNoExiste(clienteId);
 
-            // 2. Verificar clase
+            // validar clase
             Clase clase = claseDAO.findById(claseId);
             if (clase == null) return Resultado.claseNoExiste(claseId);
 
-            // 3. Verificar que la clase esté vigente
+            // estado de clase
             if (!clase.isVigente()) return Resultado.claseSuspendida(clase);
 
-            // 4. Verificar que no esté ya inscrito (fuera de transacción — solo lectura)
+            // ya inscrito
             if (inscripcionDAO.existeInscripcion(clienteId, claseId)) {
                 return Resultado.yaInscrito(cliente, clase);
             }
 
-            /*
-             * ← CORRECCIÓN CRÍTICA:
-             * El countInscritos() y el save() deben ocurrir dentro de la
-             * misma transacción para evitar que dos requests simultáneos lean
-             * "hay cupo" e inscriban ambos superando capacidad_maxima.
-             *
-             * beginTransaction() → misma Connection para count y save.
-             */
+            // transacción
             DatabaseConnection.beginTransaction();
             Connection txCon = DatabaseConnection.getConnection();
 
-            // 5. Verificar cupo dentro de la transacción (evita race condition)
-            int inscritos       = inscripcionDAO.countInscritos(txCon, claseId);
-            int capacidadMaxima = clase.getCapacidadMaxima();
+            int inscritos = inscripcionDAO.countInscritos(txCon, claseId);
+            int capacidad = clase.getCapacidadMaxima();
 
-            if (inscritos >= capacidadMaxima) {
+            if (inscritos >= capacidad) {
                 DatabaseConnection.rollback();
                 return Resultado.sinCupo(clase);
             }
 
-            // 6. Registrar inscripción dentro de la misma transacción
             InscripcionClase inscripcion = new InscripcionClase();
             inscripcion.setCliente(cliente);
             inscripcion.setClase(clase);
+
             inscripcionDAO.save(txCon, inscripcion);
 
             DatabaseConnection.commit();
 
-            LOGGER.info("Inscripción exitosa: cliente=" + clienteId
-                    + " | clase=" + claseId
-                    + " | cupo=" + (inscritos + 1) + "/" + capacidadMaxima);
+            LOGGER.info("Inscripción OK: " + clienteId + " -> " + claseId);
 
             return Resultado.ok(inscripcion);
 
         } catch (SQLException e) {
+
             DatabaseConnection.rollback();
             LOGGER.log(Level.SEVERE,
-                    "Error de BD al inscribir cliente=" + clienteId
-                    + " clase=" + claseId, e);
+                    "Error inscribiendo cliente=" + clienteId + " clase=" + claseId, e);
+
             return Resultado.errorBd();
+
         } finally {
+
             DatabaseConnection.closeConnection();
         }
     }
 
-    // ── Cancelar inscripción ─────────────────────────────────────────────────
+    // ─── CANCELAR ─────────────────────────────────────────────
 
-    /**
-     * Cancela la inscripción de un cliente en una clase.
-     *
-     * @param inscripcionId ID de la inscripción (PK de Inscripcion_Clases)
-     * @return ContratoService.Resultado con isExitoso() y getMensaje()
-     */
     public ContratoService.Resultado cancelar(String inscripcionId) {
+
         if (inscripcionId == null || inscripcionId.trim().isEmpty()) {
-            return ContratoService.Resultado.error("ID de inscripción inválido.");
+            return ContratoService.Resultado.error("ID inválido");
         }
+
         try {
+
             boolean ok = inscripcionDAO.delete(inscripcionId);
+
             if (ok) {
                 LOGGER.info("Inscripción cancelada: " + inscripcionId);
-                return ContratoService.Resultado.ok("Inscripción cancelada correctamente.");
+                return ContratoService.Resultado.ok("Cancelado correctamente");
             }
-            return ContratoService.Resultado.error("No se encontró la inscripción.");
+
+            return ContratoService.Resultado.error("No encontrado");
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al cancelar inscripción: " + inscripcionId, e);
-            return ContratoService.Resultado.error("Error interno al cancelar la inscripción.");
+
+            LOGGER.log(Level.SEVERE, "Error cancelando inscripción", e);
+            return ContratoService.Resultado.error("Error interno");
         }
     }
 
-    // ── Consultas ────────────────────────────────────────────────────────────
+    // ─── CONSULTAS ────────────────────────────────────────────
 
     public List<InscripcionClase> listarPorCliente(String clienteId) {
+
         try {
             return inscripcionDAO.findByClienteId(clienteId);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE,
-                    "Error al listar inscripciones del cliente: " + clienteId, e);
+            LOGGER.log(Level.SEVERE, "Error lista cliente", e);
             return Collections.emptyList();
         }
     }
 
     public List<InscripcionClase> listarPorClase(String claseId) {
+
         try {
             return inscripcionDAO.findByClaseId(claseId);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE,
-                    "Error al listar inscripciones de clase: " + claseId, e);
+            LOGGER.log(Level.SEVERE, "Error lista clase", e);
             return Collections.emptyList();
         }
     }
 
-    /**
-     * Cupos disponibles en una clase.
-     * @return int[]{inscritos, capacidadMaxima}, o int[]{0,0} si error
-     */
+    // ─── CUPOS ────────────────────────────────────────────────
+
     public int[] cuposInfo(String claseId) {
+
         try {
+
             int inscritos = inscripcionDAO.countInscritos(claseId);
             int capacidad = inscripcionDAO.getCapacidadMaxima(claseId);
-            return new int[]{ inscritos, capacidad };
+
+            return new int[]{inscritos, capacidad};
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al obtener cupos de clase: " + claseId, e);
-            return new int[]{ 0, 0 };
+
+            LOGGER.log(Level.SEVERE, "Error cupos clase", e);
+            return new int[]{0, 0};
         }
     }
 }

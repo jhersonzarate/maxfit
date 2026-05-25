@@ -10,40 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * DAO para la tabla Contratos (RF-03).
- *
- * Nota sobre tipos de datos:
- *   monto_pagado → DECIMAL(10,2) en BD → BigDecimal en Java.
- *   NUNCA usar double para dinero (errores de punto flotante).
- *
- *   fecha_pago → DATETIME DEFAULT GETDATE() → se deja que la BD
- *   la genere automáticamente con DEFAULT, no se envía desde Java.
- *
- * Tablas involucradas (JOINs):
- *   Contratos → Clientes → TipoDocumentos
- *             → Membresias
- *             → Empleados → TipoDocumentos + Cargos
- *             → MetodosPago
- *
- * ← CORRECCIÓN menor (Corrección 4 del análisis):
- *   Se añadió findAllActivos() para que ReportsController pueda obtener
- *   todos los contratos activos de forma limpia, sin el hack de
- *   findProximosAVencer(36500) que era confuso y dependía de un detalle
- *   de implementación interna del SQL.
- *
- * @author MaxFit
- */
+// DAO para la tabla Contratos (RF-03)
+// monto_pagado → DECIMAL(10,2) en BD → BigDecimal en Java (nunca double para dinero)
+// fecha_pago no se envía desde Java — la BD la genera con DEFAULT GETDATE()
 public class ContratoDAO {
 
     private static final Logger LOGGER = Logger.getLogger(ContratoDAO.class.getName());
 
-    // ─── SQL ─────────────────────────────────────────────────────────────────
+    // ─── SQL ───────────────────────────────────────────────────
 
     private static final String SQL_SELECT_BASE =
         "SELECT con.id, con.fecha_inicio, con.fecha_fin, " +
         "       con.monto_pagado, con.fecha_pago, con.estado, " +
-        // Cliente
+        // cliente
         "       cli.id AS cli_id, cli.nombre AS cli_nom, cli.apellido AS cli_ap, " +
         "       cli.numero_documento AS cli_doc, cli.email AS cli_email, " +
         "       cli.telefono AS cli_tel, cli.fecha_nacimiento, cli.genero, " +
@@ -51,14 +30,14 @@ public class ContratoDAO {
         "       tdcli.nombre_documento AS tdcli_nom, " +
         "       tdcli.tamañoMax AS tdcli_max, tdcli.tamañoMin AS tdcli_min, " +
         "       tdcli.esAlfanumerico AS tdcli_alfa, " +
-        // Membresía
+        // membresía
         "       mem.id AS mem_id, mem.nombre_membresia, mem.precio, " +
         "       mem.duracion_meses, mem.descripcion AS mem_desc, " +
-        // Empleado responsable
+        // empleado responsable
         "       emp.id AS emp_id, emp.nombre AS emp_nom, emp.apellido AS emp_ap, " +
         "       emp.email AS emp_email, " +
         "       cargo.id AS cargo_id, cargo.nombre AS cargo_nom, " +
-        // Método de pago
+        // método de pago
         "       mp.id AS mp_id, mp.nombre_metodo, mp.estado AS mp_estado " +
         "FROM Contratos con " +
         "INNER JOIN Clientes cli         ON con.id_cliente     = cli.id " +
@@ -90,12 +69,7 @@ public class ContratoDAO {
         "AND DATEADD(day, ?, CAST(GETDATE() AS DATE)) " +
         "ORDER BY con.fecha_fin ASC";
 
-    /**
-     * ← CORRECCIÓN 4: Devuelve todos los contratos activos ordenados por fecha_fin.
-     * Reemplaza el hack de findProximosAVencer(36500) que se usaba en
-     * ReportsController para obtener "todos los activos".
-     * Este query es semánticamente correcto y legible.
-     */
+    // todos los contratos activos sin límite de fecha — reemplaza el hack de findProximosAVencer(36500)
     private static final String SQL_FIND_ALL_ACTIVOS =
         SQL_SELECT_BASE +
         "WHERE con.estado = 'activo' ORDER BY con.fecha_fin ASC";
@@ -111,12 +85,12 @@ public class ContratoDAO {
         "WHERE MONTH(fecha_inicio) = MONTH(GETDATE()) " +
         "AND   YEAR(fecha_inicio)  = YEAR(GETDATE())";
 
+    // fecha_pago no se incluye → la BD usa DEFAULT GETDATE()
     private static final String SQL_INSERT =
         "INSERT INTO Contratos " +
         "(id, id_cliente, id_membresia, id_empleado, id_metodo_pago, " +
         " fecha_inicio, fecha_fin, monto_pagado, estado) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    // fecha_pago no se incluye → la BD usa DEFAULT GETDATE()
 
     private static final String SQL_UPDATE_ESTADO =
         "UPDATE Contratos SET estado = ? WHERE id = ?";
@@ -125,7 +99,7 @@ public class ContratoDAO {
         "UPDATE Contratos SET estado = ? " +
         "WHERE estado = ? AND fecha_fin < ?";
 
-    // ─── Métodos públicos ─────────────────────────────────────────────────────
+    // ─── métodos públicos ──────────────────────────────────────
 
     public List<Contrato> findAll() throws SQLException {
         List<Contrato> lista = new ArrayList<>();
@@ -148,7 +122,7 @@ public class ContratoDAO {
         return null;
     }
 
-    /** Todos los contratos de un cliente, ordenados por fecha desc. */
+    // todos los contratos de un cliente ordenados por fecha desc
     public List<Contrato> findByClienteId(String clienteId) throws SQLException {
         List<Contrato> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -161,11 +135,8 @@ public class ContratoDAO {
         return lista;
     }
 
-    /**
-     * Busca el contrato activo vigente de un cliente.
-     * Devuelve null si no tiene ninguno.
-     * Usado en el check-in (RF-04) y en ContratoService.
-     */
+    // contrato activo y vigente de un cliente — usado en check-in (RF-04) y ContratoService
+    // devuelve null si no tiene ninguno
     public Contrato findActiveByClienteId(String clienteId) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_ACTIVE_BY_CLIENTE)) {
@@ -177,14 +148,8 @@ public class ContratoDAO {
         return null;
     }
 
-    /**
-     * Contratos activos que vencen en los próximos N días.
-     * Usado en el widget de "Próximos Vencimientos" del dashboard.
-     *
-     * NOTA: este método es para alertas de vencimiento próximo.
-     * Para obtener TODOS los contratos activos sin límite de días,
-     * usar findAllActivos() — no pasar un número absurdo como 36500.
-     */
+    // contratos activos que vencen en los próximos N días — para el widget del dashboard
+    // para obtener TODOS los activos sin límite usar findAllActivos()
     public List<Contrato> findProximosAVencer(int diasHastaVencer) throws SQLException {
         List<Contrato> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -197,16 +162,8 @@ public class ContratoDAO {
         return lista;
     }
 
-    /**
-     * ← CORRECCIÓN 4: Todos los contratos con estado 'activo', sin límite de fecha.
-     * Ordenados por fecha_fin ascendente (los que vencen antes, primero).
-     *
-     * Usar este método cuando se necesiten todos los contratos activos,
-     * por ejemplo en el reporte de membresías de ReportsController.
-     * Es la alternativa limpia al antiguo hack de findProximosAVencer(36500).
-     *
-     * @return lista de contratos activos, nunca null (puede ser vacía)
-     */
+    // todos los contratos activos sin límite de fecha, ordenados por fecha_fin asc
+    // alternativa limpia al antiguo findProximosAVencer(36500)
     public List<Contrato> findAllActivos() throws SQLException {
         List<Contrato> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
@@ -217,7 +174,7 @@ public class ContratoDAO {
         return lista;
     }
 
-    /** Total de contratos con estado 'activo' (para el dashboard). */
+    // total de contratos activos para el dashboard
     public int countActivos() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_ACTIVOS);
@@ -227,15 +184,8 @@ public class ContratoDAO {
         return 0;
     }
 
-    /**
-     * Cuenta contratos por estado (activo, vencido o cancelado).
-     * Usado por ReportsController para mostrar el desglose por estado
-     * sin cargar todos los contratos en memoria.
-     *
-     * @param estado uno de: 'activo', 'vencido', 'cancelado'
-     *               (usar constantes de AppConfig.CONTRATO_*)
-     * @return número de contratos en ese estado
-     */
+    // cuenta contratos por estado — para el desglose del reporte sin cargar todo en memoria
+    // estado: usar constantes AppConfig.CONTRATO_*
     public int countByEstado(String estado) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_COUNT_BY_ESTADO)) {
@@ -247,7 +197,7 @@ public class ContratoDAO {
         return 0;
     }
 
-    /** Suma de monto_pagado de contratos del mes en curso (para Reportes). */
+    // suma de monto_pagado del mes en curso para el reporte de ingresos
     public BigDecimal getIngresosMesActual() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_INGRESOS_MES);
@@ -260,11 +210,7 @@ public class ContratoDAO {
         return BigDecimal.ZERO;
     }
 
-    /**
-     * Guarda un contrato nuevo.
-     * El ID debe venir generado por IdGenerator.
-     * fecha_pago la pone la BD con DEFAULT GETDATE().
-     */
+    // guarda un contrato nuevo sin transacción — el ID debe venir de IdGenerator
     public void save(Contrato contrato) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
@@ -282,15 +228,7 @@ public class ContratoDAO {
         }
     }
 
-    /**
-     * Guarda un contrato nuevo DENTRO de una transacción activa.
-     *
-     * ← CORRECCIÓN transacciones: overload que recibe la Connection
-     *   para no cerrarla — el Service hace commit() después.
-     *
-     * @param con      Connection con transacción ya iniciada
-     * @param contrato objeto a persistir
-     */
+    // guarda un contrato dentro de una transacción activa — no cierra la Connection
     public void save(Connection con, Contrato contrato) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
             ps.setString(1, contrato.getId());
@@ -307,10 +245,8 @@ public class ContratoDAO {
         }
     }
 
-    /**
-     * Cambia el estado de un contrato (cancelar, vencer manualmente).
-     * @return true si se actualizó al menos una fila
-     */
+    // cambia el estado de un contrato (cancelar, vencer manualmente)
+    // devuelve true si se actualizó al menos una fila
     public boolean cancelar(String id, String nuevoEstado) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_UPDATE_ESTADO)) {
@@ -320,16 +256,9 @@ public class ContratoDAO {
         }
     }
 
-    /**
-     * UPDATE masivo: marca como 'vencido' todos los contratos
-     * cuya fecha_fin ya pasó y aún tienen estado 'activo'.
-     * Llamado desde ContratoService.actualizarVencidos().
-     *
-     * @param hoy          fecha actual (LocalDate.now())
-     * @param estadoActual estado que tienen ahora ('activo')
-     * @param estadoNuevo  estado nuevo ('vencido')
-     * @return número de filas actualizadas
-     */
+    // UPDATE masivo: marca como 'vencido' los contratos con fecha_fin pasada y estado 'activo'
+    // llamado desde ContratoService.actualizarVencidos()
+    // devuelve el número de filas actualizadas
     public int marcarVencidos(LocalDate hoy, String estadoActual,
                                String estadoNuevo) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
@@ -341,10 +270,10 @@ public class ContratoDAO {
         }
     }
 
-    // ─── Privados ─────────────────────────────────────────────────────────────
+    // ─── privados ──────────────────────────────────────────────
 
     private Contrato mapRow(ResultSet rs) throws SQLException {
-        // TipoDocumento del cliente
+        // tipo de documento del cliente
         TipoDocumento tdCli = new TipoDocumento();
         tdCli.setId(rs.getString("tdcli_id"));
         tdCli.setAbreviado(rs.getString("tdcli_abr"));
@@ -353,7 +282,7 @@ public class ContratoDAO {
         tdCli.setTamañoMin(rs.getInt("tdcli_min"));
         tdCli.setEsAlfanumerico(rs.getBoolean("tdcli_alfa"));
 
-        // Cliente
+        // cliente
         Cliente cli = new Cliente();
         cli.setId(rs.getString("cli_id"));
         cli.setNombre(rs.getString("cli_nom"));
@@ -369,7 +298,7 @@ public class ContratoDAO {
         String genero = rs.getString("genero");
         cli.setGenero(rs.wasNull() ? null : genero);
 
-        // Membresía
+        // membresía
         Membresia mem = new Membresia();
         mem.setId(rs.getString("mem_id"));
         mem.setNombreMembresia(rs.getString("nombre_membresia"));
@@ -378,12 +307,12 @@ public class ContratoDAO {
         String memDesc = rs.getString("mem_desc");
         mem.setDescripcion(rs.wasNull() ? null : memDesc);
 
-        // Cargo del empleado
+        // cargo del empleado
         Cargo cargo = new Cargo();
         cargo.setId(rs.getString("cargo_id"));
         cargo.setNombre(rs.getString("cargo_nom"));
 
-        // Empleado responsable
+        // empleado responsable
         Empleado emp = new Empleado();
         emp.setId(rs.getString("emp_id"));
         emp.setNombre(rs.getString("emp_nom"));
@@ -391,13 +320,13 @@ public class ContratoDAO {
         emp.setEmail(rs.getString("emp_email"));
         emp.setCargo(cargo);
 
-        // Método de pago
+        // método de pago
         MetodoPago mp = new MetodoPago();
         mp.setId(rs.getString("mp_id"));
         mp.setNombre(rs.getString("nombre_metodo"));
         mp.setEstado(rs.getString("mp_estado"));
 
-        // Contrato
+        // contrato
         Contrato c = new Contrato();
         c.setId(rs.getString("id"));
         c.setCliente(cli);

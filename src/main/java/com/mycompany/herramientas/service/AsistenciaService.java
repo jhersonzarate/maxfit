@@ -16,36 +16,7 @@ import java.time.LocalTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Reglas de negocio para el registro de asistencia / check-in (RF-04, RF-05).
- *
- * Flujo de check-in:
- *   1. Buscar cliente por número de documento.
- *   2. Verificar que tenga contrato activo y vigente (RF-04).
- *   3. Verificar que no haya ya un registro de asistencia hoy para ese contrato
- *      (respeta el UNIQUE (id_contrato, fecha) de la BD).
- *   4. Registrar la asistencia con estado 'asistio' y hora_ingreso = ahora.
- *
- * Resultado tipado (ResultadoCheckIn) para que el controlador sepa exactamente
- * qué pasó sin comparar strings mágicos.
- *
- * ← CORRECCIÓN CRÍTICA — Transacciones:
- *   El patrón anterior hacía:
- *     DatabaseConnection.beginTransaction();   // autoCommit = false
- *     asistenciaDAO.save(asistencia);          // el DAO abría y cerraba su
- *                                              // propia Connection con TW-R,
- *                                              // rompiendo la transacción
- *     DatabaseConnection.commit();             // nueva conexión, sin efecto
- *
- *   Ahora el Service:
- *     1. Obtiene la Connection con beginTransaction().
- *     2. Pasa esa misma Connection al overload save(Connection, Asistencia)
- *        del DAO, que NO la cierra (solo cierra el PreparedStatement).
- *     3. Hace commit() sobre la misma Connection.
- *     4. Cierra en finally con closeConnection().
- *
- * @author MaxFit
- */
+// reglas de negocio para registro de asistencia (check-in)
 public class AsistenciaService {
 
     private static final Logger LOGGER = Logger.getLogger(AsistenciaService.class.getName());
@@ -68,73 +39,69 @@ public class AsistenciaService {
         this.asistenciaDAO = asistenciaDAO;
     }
 
-    // ── Tipos de resultado ───────────────────────────────────────────────────
+    // ─── RESULTADO ─────────────────────────────────────────────
 
     public enum TipoResultado {
-        OK,                    // Ingreso autorizado y registrado
-        CLIENTE_NO_ENCONTRADO, // El documento no corresponde a ningún cliente
-        SIN_CONTRATO_ACTIVO,   // El cliente existe pero no tiene contrato vigente
-        YA_REGISTRADO_HOY,     // Ya hizo check-in hoy (UNIQUE de BD)
-        ERROR_BD               // Error interno de base de datos
+        OK,
+        CLIENTE_NO_ENCONTRADO,
+        SIN_CONTRATO_ACTIVO,
+        YA_REGISTRADO_HOY,
+        ERROR_BD
     }
 
     public static final class ResultadoCheckIn {
 
         private final TipoResultado tipo;
-        private final Cliente       cliente;
-        private final Contrato      contrato;
-        private final String        mensaje;
+        private final Cliente cliente;
+        private final Contrato contrato;
+        private final String mensaje;
 
         private ResultadoCheckIn(TipoResultado tipo, Cliente cliente,
-                                  Contrato contrato, String mensaje) {
-            this.tipo     = tipo;
-            this.cliente  = cliente;
+                                 Contrato contrato, String mensaje) {
+            this.tipo = tipo;
+            this.cliente = cliente;
             this.contrato = contrato;
-            this.mensaje  = mensaje;
+            this.mensaje = mensaje;
         }
 
-        public TipoResultado getTipo()     { return tipo; }
-        public Cliente       getCliente()  { return cliente; }
-        public Contrato      getContrato() { return contrato; }
-        public String        getMensaje()  { return mensaje; }
-        public boolean       isExitoso()   { return tipo == TipoResultado.OK; }
+        public TipoResultado getTipo() { return tipo; }
+        public Cliente getCliente() { return cliente; }
+        public Contrato getContrato() { return contrato; }
+        public String getMensaje() { return mensaje; }
+        public boolean isExitoso() { return tipo == TipoResultado.OK; }
 
         static ResultadoCheckIn ok(Cliente c, Contrato con) {
             return new ResultadoCheckIn(TipoResultado.OK, c, con,
-                    "Ingreso autorizado para " + c.getNombreCompleto());
+                    "Ingreso autorizado: " + c.getNombreCompleto());
         }
+
         static ResultadoCheckIn clienteNoEncontrado(String doc) {
             return new ResultadoCheckIn(TipoResultado.CLIENTE_NO_ENCONTRADO,
                     null, null,
-                    "No se encontró ningún cliente con el documento: " + doc);
+                    "Cliente no encontrado: " + doc);
         }
+
         static ResultadoCheckIn sinContrato(Cliente c) {
             return new ResultadoCheckIn(TipoResultado.SIN_CONTRATO_ACTIVO,
                     c, null,
-                    c.getNombreCompleto() + " no tiene una membresía activa.");
+                    c.getNombreCompleto() + " no tiene contrato activo.");
         }
+
         static ResultadoCheckIn yaRegistrado(Cliente c, Contrato con) {
             return new ResultadoCheckIn(TipoResultado.YA_REGISTRADO_HOY,
                     c, con,
-                    c.getNombreCompleto() + " ya registró ingreso hoy ("
-                    + LocalDate.now() + ").");
+                    c.getNombreCompleto() + " ya registró ingreso hoy.");
         }
+
         static ResultadoCheckIn errorBd() {
             return new ResultadoCheckIn(TipoResultado.ERROR_BD,
                     null, null,
-                    "Error interno. Intenta nuevamente.");
+                    "Error interno.");
         }
     }
 
-    // ── Check-in ─────────────────────────────────────────────────────────────
+    // ─── CHECK-IN ─────────────────────────────────────────────
 
-    /**
-     * Registra el ingreso de un cliente al gimnasio.
-     *
-     * @param numeroDocumento el número de documento escaneado o ingresado
-     *                        en la recepción
-     * @return ResultadoCheckIn con el tipo de resultado y datos del cliente
-     */
     public ResultadoCheckIn registrarCheckIn(String numeroDocumento) {
 
         if (!DocumentoValidator.esFormatoBasicoValido(numeroDocumento)) {
@@ -145,57 +112,56 @@ public class AsistenciaService {
         String docLimpio = numeroDocumento.trim();
 
         try {
-            // ── 1. Buscar cliente ────────────────────────────────────────────
+
+            // buscar cliente
             Cliente cliente = clienteDAO.findByDocument(docLimpio);
             if (cliente == null) {
                 return ResultadoCheckIn.clienteNoEncontrado(docLimpio);
             }
 
-            // ── 2. Verificar contrato activo (RF-04) ─────────────────────────
+            // contrato activo
             Contrato contrato = contratoDAO.findActiveByClienteId(cliente.getId());
             if (contrato == null) {
                 return ResultadoCheckIn.sinContrato(cliente);
             }
 
-            // ── 3. Verificar UNIQUE (id_contrato, fecha) ─────────────────────
-            boolean yaRegistrado = asistenciaDAO.existeHoy(contrato.getId(), LocalDate.now());
+            // ya registrado hoy
+            boolean yaRegistrado = asistenciaDAO.existeHoy(
+                    contrato.getId(),
+                    LocalDate.now()
+            );
+
             if (yaRegistrado) {
                 return ResultadoCheckIn.yaRegistrado(cliente, contrato);
             }
 
-            // ── 4. Registrar asistencia ──────────────────────────────────────
+            // registrar asistencia
             Asistencia asistencia = new Asistencia();
             asistencia.setContrato(contrato);
             asistencia.setFecha(LocalDate.now());
             asistencia.setEstado(AppConfig.ASISTENCIA_ASISTIO);
-            asistencia.setHoraIngreso(LocalTime.now().withNano(0)); // sin nanosegundos
+            asistencia.setHoraIngreso(LocalTime.now().withNano(0));
 
-            /*
-             * ← CORRECCIÓN CRÍTICA — Transacciones:
-             *
-             * beginTransaction() obtiene la Connection del ThreadLocal y pone
-             * autoCommit = false. Esa misma Connection se pasa al DAO para que
-             * el INSERT ocurra dentro de la misma unidad de trabajo.
-             * El DAO solo cierra el PreparedStatement, no la Connection.
-             * El Service hace commit() y en finally closeConnection().
-             */
             DatabaseConnection.beginTransaction();
             Connection txCon = DatabaseConnection.getConnection();
+
             asistenciaDAO.save(txCon, asistencia);
+
             DatabaseConnection.commit();
 
-            LOGGER.info("Check-in registrado: " + cliente.getNombreCompleto()
-                    + " | contrato: " + contrato.getId()
-                    + " | hora: " + asistencia.getHoraIngreso());
+            LOGGER.info("Check-in OK: " + cliente.getNombreCompleto());
 
             return ResultadoCheckIn.ok(cliente, contrato);
 
         } catch (SQLException e) {
+
             DatabaseConnection.rollback();
-            LOGGER.log(Level.SEVERE,
-                    "Error de BD al registrar check-in para doc: " + docLimpio, e);
+            LOGGER.log(Level.SEVERE, "Error check-in: " + numeroDocumento, e);
+
             return ResultadoCheckIn.errorBd();
+
         } finally {
+
             DatabaseConnection.closeConnection();
         }
     }

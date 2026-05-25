@@ -25,39 +25,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Controlador de Reportes del Administrador.
- *
- * Rutas y acciones:
- *   GET /reports                    → resumen general (KPIs globales + alertas)
- *   GET /reports?action=contratos   → reporte detallado de contratos por estado
- *   GET /reports?action=asistencia  → reporte de asistencia (historial reciente)
- *   GET /reports?action=membresias  → reporte de planes de membresía
- *
- * Acceso: ROL-ADMIN únicamente (RoleFilter → /reports).
- *
- * Diseño de carga (degradado parcial):
- *   Cada bloque de datos es independiente. Si un DAO falla, se registra
- *   el WARNING y se continúa con el resto de los widgets.
- *
- * ← CORRECCIÓN 4 (Corrección menor del análisis):
- *   En reporteMembresias(), se reemplazó el hack de:
- *     contratoDAO.findProximosAVencer(36500)
- *   por la llamada correcta y semánticamente clara:
- *     contratoDAO.findAllActivos()
- *   El "truco" de los 36500 días (~100 años) era confuso y dependía de
- *   un detalle de implementación interna del SQL de findProximosAVencer.
- *   findAllActivos() hace exactamente lo que su nombre indica, con un
- *   query dedicado limpio en ContratoDAO.
- *
- * @author MaxFit
- */
+// reportes globales del sistema para administrador
 @WebServlet("/reports")
 public class ReportsController extends AbstractController {
 
     private static final Logger LOGGER =
             Logger.getLogger(ReportsController.class.getName());
 
+    // máximo de asistencias mostradas en historial
     private static final int MAX_ASISTENCIAS_REPORTE = 50;
 
     private final ContratoDAO   contratoDAO   = new ContratoDAO();
@@ -67,7 +42,7 @@ public class ReportsController extends AbstractController {
     private final ClaseDAO      claseDAO      = new ClaseDAO();
     private final MembresiaDAO  membresiaDAO  = new MembresiaDAO();
 
-    // ─── GET ──────────────────────────────────────────────────────────────────
+    // ─── GET ──────────────────────────────────────────────────
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -75,6 +50,7 @@ public class ReportsController extends AbstractController {
 
         transferirFlashMessages(req);
 
+        // actualizar contratos vencidos antes de generar reportes
         actualizarVencidosSilencioso();
 
         String action = getAction(req);
@@ -94,225 +70,556 @@ public class ReportsController extends AbstractController {
         }
     }
 
-    // ─── Reporte de resumen general (default) ─────────────────────────────────
+    // ─── reporte general ─────────────────────────────────────
 
-    private void reporteResumen(HttpServletRequest req, HttpServletResponse resp)
+    private void reporteResumen(HttpServletRequest req,
+                                 HttpServletResponse resp)
             throws ServletException, IOException {
 
         cargarKpisGlobales(req);
 
+        // contratos próximos a vencer
         try {
-            List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
-            req.setAttribute("proximosVencer",      proximos);
-            req.setAttribute("countProximosVencer", proximos.size());
+
+            List<Contrato> proximos =
+                    contratoDAO.findProximosAVencer(7);
+
+            req.setAttribute(
+                    "proximosVencer",
+                    proximos
+            );
+
+            req.setAttribute(
+                    "countProximosVencer",
+                    proximos.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar próximos vencimientos", e);
-            req.setAttribute("proximosVencer",      Collections.emptyList());
-            req.setAttribute("countProximosVencer", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar próximos vencimientos",
+                    e
+            );
+
+            req.setAttribute(
+                    "proximosVencer",
+                    Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "countProximosVencer",
+                    0
+            );
         }
 
+        // últimas asistencias registradas
         try {
-            List<Asistencia> recientes = asistenciaDAO.findRecientes(10);
-            req.setAttribute("asistenciasRecientes", recientes);
+
+            List<Asistencia> recientes =
+                    asistenciaDAO.findRecientes(10);
+
+            req.setAttribute(
+                    "asistenciasRecientes",
+                    recientes
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar asistencias recientes", e);
-            req.setAttribute("asistenciasRecientes", Collections.emptyList());
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar asistencias recientes",
+                    e
+            );
+
+            req.setAttribute(
+                    "asistenciasRecientes",
+                    Collections.emptyList()
+            );
         }
 
-        req.setAttribute("vistaActiva",  "resumen");
-        req.setAttribute("fechaReporte", LocalDate.now().toString());
+        req.setAttribute("vistaActiva", "resumen");
+
+        req.setAttribute(
+                "fechaReporte",
+                LocalDate.now().toString()
+        );
+
         irA(ViewRoutes.REPORTS_INDEX, req, resp);
     }
 
-    // ─── Reporte de contratos ─────────────────────────────────────────────────
+    // ─── reporte de contratos ────────────────────────────────
 
-    private void reporteContratos(HttpServletRequest req, HttpServletResponse resp)
+    private void reporteContratos(HttpServletRequest req,
+                                   HttpServletResponse resp)
             throws ServletException, IOException {
 
         int activos    = 0;
         int vencidos   = 0;
         int cancelados = 0;
 
+        // contar contratos por estado
         try {
-            activos    = contratoDAO.countByEstado(AppConfig.CONTRATO_ACTIVO);
-            vencidos   = contratoDAO.countByEstado(AppConfig.CONTRATO_VENCIDO);
-            cancelados = contratoDAO.countByEstado(AppConfig.CONTRATO_CANCELADO);
+
+            activos = contratoDAO.countByEstado(
+                    AppConfig.CONTRATO_ACTIVO
+            );
+
+            vencidos = contratoDAO.countByEstado(
+                    AppConfig.CONTRATO_VENCIDO
+            );
+
+            cancelados = contratoDAO.countByEstado(
+                    AppConfig.CONTRATO_CANCELADO
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar contratos por estado", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar contratos por estado",
+                    e
+            );
         }
 
         int total = activos + vencidos + cancelados;
 
-        req.setAttribute("contratosActivos",    activos);
-        req.setAttribute("contratosVencidos",   vencidos);
-        req.setAttribute("contratosCancelados", cancelados);
-        req.setAttribute("contratosTotal",      total);
+        req.setAttribute("contratosActivos", activos);
 
-        req.setAttribute("pctActivos",
-                total > 0 ? (activos    * 100 / total) : 0);
-        req.setAttribute("pctVencidos",
-                total > 0 ? (vencidos   * 100 / total) : 0);
-        req.setAttribute("pctCancelados",
-                total > 0 ? (cancelados * 100 / total) : 0);
+        req.setAttribute(
+                "contratosVencidos",
+                vencidos
+        );
 
+        req.setAttribute(
+                "contratosCancelados",
+                cancelados
+        );
+
+        req.setAttribute(
+                "contratosTotal",
+                total
+        );
+
+        // porcentajes para gráficos o métricas visuales
+        req.setAttribute(
+                "pctActivos",
+                total > 0 ? (activos * 100 / total) : 0
+        );
+
+        req.setAttribute(
+                "pctVencidos",
+                total > 0 ? (vencidos * 100 / total) : 0
+        );
+
+        req.setAttribute(
+                "pctCancelados",
+                total > 0 ? (cancelados * 100 / total) : 0
+        );
+
+        // ingresos del mes actual
         try {
-            BigDecimal ingresos = contratoDAO.getIngresosMesActual();
-            req.setAttribute("ingresosMes", ingresos);
+
+            BigDecimal ingresos =
+                    contratoDAO.getIngresosMesActual();
+
+            req.setAttribute(
+                    "ingresosMes",
+                    ingresos
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al calcular ingresos del mes", e);
-            req.setAttribute("ingresosMes", BigDecimal.ZERO);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al calcular ingresos del mes",
+                    e
+            );
+
+            req.setAttribute(
+                    "ingresosMes",
+                    BigDecimal.ZERO
+            );
         }
 
+        // contratos próximos a vencer
         try {
-            List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
-            req.setAttribute("proximosVencer",      proximos);
-            req.setAttribute("countProximosVencer", proximos.size());
+
+            List<Contrato> proximos =
+                    contratoDAO.findProximosAVencer(7);
+
+            req.setAttribute(
+                    "proximosVencer",
+                    proximos
+            );
+
+            req.setAttribute(
+                    "countProximosVencer",
+                    proximos.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar próximos vencimientos", e);
-            req.setAttribute("proximosVencer",      Collections.emptyList());
-            req.setAttribute("countProximosVencer", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar próximos vencimientos",
+                    e
+            );
+
+            req.setAttribute(
+                    "proximosVencer",
+                    Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "countProximosVencer",
+                    0
+            );
         }
 
-        req.setAttribute("vistaActiva",  "contratos");
-        req.setAttribute("fechaReporte", LocalDate.now().toString());
+        req.setAttribute("vistaActiva", "contratos");
+
+        req.setAttribute(
+                "fechaReporte",
+                LocalDate.now().toString()
+        );
+
         irA(ViewRoutes.REPORTS_INDEX, req, resp);
     }
 
-    // ─── Reporte de asistencia ────────────────────────────────────────────────
+    // ─── reporte de asistencia ───────────────────────────────
 
-    private void reporteAsistencia(HttpServletRequest req, HttpServletResponse resp)
+    private void reporteAsistencia(HttpServletRequest req,
+                                    HttpServletResponse resp)
             throws ServletException, IOException {
 
+        // total de asistencias del día
         try {
-            req.setAttribute("atendidosHoy", asistenciaDAO.countHoy());
+
+            req.setAttribute(
+                    "atendidosHoy",
+                    asistenciaDAO.countHoy()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al contar asistencias hoy", e);
-            req.setAttribute("atendidosHoy", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al contar asistencias hoy",
+                    e
+            );
+
+            req.setAttribute(
+                    "atendidosHoy",
+                    0
+            );
         }
 
+        // historial reciente de asistencias
         try {
+
             List<Asistencia> historial =
-                    asistenciaDAO.findRecientes(MAX_ASISTENCIAS_REPORTE);
-            req.setAttribute("historialAsistencia", historial);
-            req.setAttribute("totalHistorial",      historial.size());
+                    asistenciaDAO.findRecientes(
+                            MAX_ASISTENCIAS_REPORTE
+                    );
+
+            req.setAttribute(
+                    "historialAsistencia",
+                    historial
+            );
+
+            req.setAttribute(
+                    "totalHistorial",
+                    historial.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar historial de asistencia", e);
-            req.setAttribute("historialAsistencia", Collections.emptyList());
-            req.setAttribute("totalHistorial",      0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar historial de asistencia",
+                    e
+            );
+
+            req.setAttribute(
+                    "historialAsistencia",
+                    Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "totalHistorial",
+                    0
+            );
         }
 
-        req.setAttribute("vistaActiva",    "asistencia");
-        req.setAttribute("maxAsistencias", MAX_ASISTENCIAS_REPORTE);
-        req.setAttribute("fechaReporte",   LocalDate.now().toString());
+        req.setAttribute("vistaActiva", "asistencia");
+
+        req.setAttribute(
+                "maxAsistencias",
+                MAX_ASISTENCIAS_REPORTE
+        );
+
+        req.setAttribute(
+                "fechaReporte",
+                LocalDate.now().toString()
+        );
+
         irA(ViewRoutes.REPORTS_INDEX, req, resp);
     }
 
-    // ─── Reporte de membresías ────────────────────────────────────────────────
+    // ─── reporte de membresías ───────────────────────────────
 
-    /**
-     * Catálogo de planes de membresía con métricas.
-     *
-     * ← CORRECCIÓN 4:
-     *   Antes: contratoDAO.findProximosAVencer(36500)
-     *     → hack que abusaba del filtro de vencimiento para obtener "todos los activos"
-     *     → confuso, dependía de un detalle interno del SQL de findProximosAVencer
-     *     → semánticamente incorrecto (findProximosAVencer es para alertas, no para reportes)
-     *
-     *   Ahora: contratoDAO.findAllActivos()
-     *     → query dedicado, limpio y correctamente nombrado en ContratoDAO
-     *     → SELECT ... WHERE estado = 'activo' ORDER BY fecha_fin ASC
-     *     → sin trucos ni números mágicos
-     */
-    private void reporteMembresias(HttpServletRequest req, HttpServletResponse resp)
+    private void reporteMembresias(HttpServletRequest req,
+                                    HttpServletResponse resp)
             throws ServletException, IOException {
 
+        // catálogo completo de planes
         try {
-            List<Membresia> membresias = membresiaDAO.findAll();
-            req.setAttribute("membresias",  membresias);
-            req.setAttribute("totalPlanes", membresias.size());
+
+            List<Membresia> membresias =
+                    membresiaDAO.findAll();
+
+            req.setAttribute(
+                    "membresias",
+                    membresias
+            );
+
+            req.setAttribute(
+                    "totalPlanes",
+                    membresias.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar membresías", e);
-            req.setAttribute("membresias",  Collections.emptyList());
-            req.setAttribute("totalPlanes", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar membresías",
+                    e
+            );
+
+            req.setAttribute(
+                    "membresias",
+                    Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "totalPlanes",
+                    0
+            );
         }
 
-        // ← CORRECCIÓN 4: findAllActivos() en lugar del hack de 36500 días
+        // contratos activos actuales
         try {
-            List<Contrato> contratosActivos = contratoDAO.findAllActivos();
-            req.setAttribute("contratosActivos",      contratosActivos);
-            req.setAttribute("totalContratosActivos", contratosActivos.size());
+
+            List<Contrato> contratosActivos =
+                    contratoDAO.findAllActivos();
+
+            req.setAttribute(
+                    "contratosActivos",
+                    contratosActivos
+            );
+
+            req.setAttribute(
+                    "totalContratosActivos",
+                    contratosActivos.size()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error al cargar contratos activos", e);
-            req.setAttribute("contratosActivos",      Collections.emptyList());
-            req.setAttribute("totalContratosActivos", 0);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar contratos activos",
+                    e
+            );
+
+            req.setAttribute(
+                    "contratosActivos",
+                    Collections.emptyList()
+            );
+
+            req.setAttribute(
+                    "totalContratosActivos",
+                    0
+            );
         }
 
-        req.setAttribute("vistaActiva",  "membresias");
-        req.setAttribute("fechaReporte", LocalDate.now().toString());
+        req.setAttribute("vistaActiva", "membresias");
+
+        req.setAttribute(
+                "fechaReporte",
+                LocalDate.now().toString()
+        );
+
         irA(ViewRoutes.REPORTS_INDEX, req, resp);
     }
 
-    // ─── Helpers privados ─────────────────────────────────────────────────────
+    // ─── helpers privados ────────────────────────────────────
 
     private void cargarKpisGlobales(HttpServletRequest req) {
 
+        // total de clientes registrados
         try {
-            req.setAttribute("totalClientes", clienteDAO.count());
+
+            req.setAttribute(
+                    "totalClientes",
+                    clienteDAO.count()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "KPI fallido: totalClientes", e);
-            req.setAttribute("totalClientes", "-");
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "KPI fallido: totalClientes",
+                    e
+            );
+
+            req.setAttribute(
+                    "totalClientes",
+                    "-"
+            );
         }
 
+        // contratos activos
         try {
-            req.setAttribute("contratosActivos", contratoDAO.countActivos());
+
+            req.setAttribute(
+                    "contratosActivos",
+                    contratoDAO.countActivos()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "KPI fallido: contratosActivos", e);
-            req.setAttribute("contratosActivos", "-");
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "KPI fallido: contratosActivos",
+                    e
+            );
+
+            req.setAttribute(
+                    "contratosActivos",
+                    "-"
+            );
         }
 
+        // check-ins registrados hoy
         try {
-            req.setAttribute("atendidosHoy", asistenciaDAO.countHoy());
+
+            req.setAttribute(
+                    "atendidosHoy",
+                    asistenciaDAO.countHoy()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "KPI fallido: atendidosHoy", e);
-            req.setAttribute("atendidosHoy", "-");
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "KPI fallido: atendidosHoy",
+                    e
+            );
+
+            req.setAttribute(
+                    "atendidosHoy",
+                    "-"
+            );
         }
 
+        // total de empleados
         try {
-            req.setAttribute("totalEmpleados", empleadoDAO.count());
+
+            req.setAttribute(
+                    "totalEmpleados",
+                    empleadoDAO.count()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "KPI fallido: totalEmpleados", e);
-            req.setAttribute("totalEmpleados", "-");
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "KPI fallido: totalEmpleados",
+                    e
+            );
+
+            req.setAttribute(
+                    "totalEmpleados",
+                    "-"
+            );
         }
 
+        // clases vigentes
         try {
-            req.setAttribute("clasesVigentes", claseDAO.countVigentes());
+
+            req.setAttribute(
+                    "clasesVigentes",
+                    claseDAO.countVigentes()
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "KPI fallido: clasesVigentes", e);
-            req.setAttribute("clasesVigentes", "-");
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "KPI fallido: clasesVigentes",
+                    e
+            );
+
+            req.setAttribute(
+                    "clasesVigentes",
+                    "-"
+            );
         }
 
+        // ingresos del mes
         try {
-            BigDecimal ingresos = contratoDAO.getIngresosMesActual();
-            req.setAttribute("ingresosMes", ingresos);
+
+            BigDecimal ingresos =
+                    contratoDAO.getIngresosMesActual();
+
+            req.setAttribute(
+                    "ingresosMes",
+                    ingresos
+            );
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "KPI fallido: ingresosMes", e);
-            req.setAttribute("ingresosMes", BigDecimal.ZERO);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "KPI fallido: ingresosMes",
+                    e
+            );
+
+            req.setAttribute(
+                    "ingresosMes",
+                    BigDecimal.ZERO
+            );
         }
     }
 
+    // actualizar contratos vencidos sin interrumpir reportes
     private void actualizarVencidosSilencioso() {
+
         try {
-            int n = contratoDAO.marcarVencidos(
-                    LocalDate.now(),
-                    AppConfig.CONTRATO_ACTIVO,
-                    AppConfig.CONTRATO_VENCIDO
-            );
-            if (n > 0) {
-                LOGGER.info("Reports: contratos marcados como vencidos = " + n);
+
+            int actualizados =
+                    contratoDAO.marcarVencidos(
+                            LocalDate.now(),
+                            AppConfig.CONTRATO_ACTIVO,
+                            AppConfig.CONTRATO_VENCIDO
+                    );
+
+            if (actualizados > 0) {
+
+                LOGGER.info(
+                        "Reports: contratos vencidos actualizados = "
+                                + actualizados
+                );
             }
+
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING,
-                    "Reports: no se pudieron actualizar contratos vencidos", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Reports: error al actualizar contratos vencidos",
+                    e
+            );
         }
     }
 }
