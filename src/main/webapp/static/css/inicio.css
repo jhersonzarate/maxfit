@@ -16,8 +16,7 @@
 
 /* Áreas nombradas del grid */
 .dashboard-grid .area-kpis        { grid-column: 1 / -1; }
-.dashboard-grid .area-checkin      { grid-column: 1 / 3; }
-.dashboard-grid .area-vencimientos { grid-column: 3 / 4; }
+.dashboard-grid .area-vencimientos { grid-column: 1 / -1; }
 .dashboard-grid .area-clases       { grid-column: 1 / 2; }
 .dashboard-grid .area-asistencias  { grid-column: 2 / 4; }
 
@@ -803,7 +802,6 @@
     .kpi-row {
         grid-template-columns: repeat(3, 1fr);
     }
-    .dashboard-grid .area-checkin { grid-column: 1 / -1; }
     .dashboard-grid .area-vencimientos { grid-column: 1 / -1; }
     .dashboard-grid .area-clases { grid-column: 1 / 2; }
     .dashboard-grid .area-asistencias { grid-column: 2 / 4; }

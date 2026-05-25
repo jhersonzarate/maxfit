@@ -56,43 +56,9 @@
     <%-- ── Derecha: usuario + logout ─────────────────────── --%>
     <div class="navbar-actions">
 
-        <%-- Badge del rol --%>
-        <span class="navbar-role-badge" aria-label="Tu rol actual">
-            <c:choose>
-                <c:when test="${userRole eq 'ROL-ADMIN'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6
-                                 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623
-                                 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196
-                                 0-6.1-1.248-8.25-3.285Z"/>
-                    </svg>
-                    Administrador
-                </c:when>
-                <c:when test="${userRole eq 'ROL-RECEP'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5
-                                 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933
-                                 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
-                    </svg>
-                    Recepcionista
-                </c:when>
-                <c:when test="${userRole eq 'ROL-TRAINER'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
-                    </svg>
-                    Instructor
-                </c:when>
-            </c:choose>
-        </span>
-
-        <%-- Separador visual --%>
-        <div class="navbar-sep" aria-hidden="true"></div>
+        <%-- Badge de rol eliminado: el rol ya se deduce del contexto del sistema.
+             El nombre + email del usuario son suficiente identidad en el navbar.
+             (Fuente: Nielsen Norman Group — "Avoid redundant labels") --%>
 
         <%-- Info del usuario --%>
         <div class="navbar-user" aria-label="Usuario actual">
@@ -223,36 +189,7 @@
     flex-shrink: 0;
 }
 
-/* Badge del rol */
-.navbar-role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.28rem 0.7rem;
-    border-radius: var(--radius-full);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: var(--clr-red-subtle);
-    color: var(--clr-red);
-    border: 1px solid rgba(230,48,39,0.2);
-    white-space: nowrap;
-}
-
-.navbar-role-badge svg {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-}
-
-/* Separador vertical */
-.navbar-sep {
-    width: 1px;
-    height: 24px;
-    background: var(--clr-border);
-    flex-shrink: 0;
-}
+/* .navbar-role-badge y .navbar-sep eliminados — sin uso */
 
 /* Info de usuario */
 .navbar-user {
@@ -341,8 +278,6 @@
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .navbar-role-badge { display: none; }
-    .navbar-sep        { display: none; }
     .navbar-user__info { display: none; }
     .navbar-logout-label { display: none; }
     .flash-messages-container {

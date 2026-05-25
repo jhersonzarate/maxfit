@@ -26,30 +26,8 @@
         <span class="sidebar-brand__tag">Sistema de Gestión</span>
     </div>
 
-    <%-- ── Perfil compacto del usuario ──────────────────── --%>
-    <div class="sidebar-profile">
-        <div class="sidebar-profile__avatar" aria-hidden="true">
-            <c:choose>
-                <c:when test="${not empty sessionScope.userName}">
-                    <c:out value="${fn:substring(sessionScope.userName, 0, 1)}"/>
-                </c:when>
-                <c:otherwise>U</c:otherwise>
-            </c:choose>
-        </div>
-        <div class="sidebar-profile__info">
-            <span class="sidebar-profile__name">
-                <c:out value="${not empty sessionScope.userName ? sessionScope.userName : 'Usuario'}"/>
-            </span>
-            <span class="sidebar-profile__role">
-                <c:choose>
-                    <c:when test="${userRole eq 'ROL-ADMIN'}">Administrador</c:when>
-                    <c:when test="${userRole eq 'ROL-RECEP'}">Recepcionista</c:when>
-                    <c:when test="${userRole eq 'ROL-TRAINER'}">Instructor</c:when>
-                    <c:otherwise>Usuario</c:otherwise>
-                </c:choose>
-            </span>
-        </div>
-    </div>
+    <%-- sidebar-profile eliminado: el usuario ya se muestra en el navbar
+         (principio UX: cada dato en un solo lugar) --%>
 
     <%-- ── Navegación ────────────────────────────────────── --%>
     <nav class="sidebar-nav" role="navigation">
@@ -331,7 +309,9 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 1.25rem 1.1rem 0.9rem;
+    justify-content: center;
+    height: var(--navbar-height);
+    padding: 0 1.1rem;
     border-bottom: 1px solid var(--clr-sidebar-border);
     flex-shrink: 0;
 }
@@ -362,61 +342,7 @@
     margin-top: 0.25rem;
 }
 
-/* ── Perfil compacto ──────────────────────────────────────── */
-.sidebar-profile {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.85rem 1.1rem;
-    margin: 0.5rem 0.65rem;
-    border-radius: var(--radius-md);
-    background: var(--clr-surface);
-    border: 1px solid var(--clr-border-light);
-    flex-shrink: 0;
-    overflow: hidden;
-    min-width: 0;
-}
-
-.sidebar-profile__avatar {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    background: var(--clr-red);
-    color: #fff;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-    letter-spacing: 0;
-}
-
-.sidebar-profile__info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.sidebar-profile__name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--clr-text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
-}
-
-.sidebar-profile__role {
-    font-size: 0.70rem;
-    color: var(--clr-text-dim);
-    white-space: nowrap;
-    letter-spacing: 0.02em;
-}
+/* .sidebar-profile y sus clases hijas eliminadas — sin uso */
 
 /* ── Navegación ──────────────────────────────────────────── */
 .sidebar-nav {
@@ -527,7 +453,6 @@
    ────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
     .sidebar-brand__tag,
-    .sidebar-profile__info,
     .sidebar-nav__label,
     .sidebar-nav__group-label,
     .sidebar-footer__version {
@@ -536,17 +461,12 @@
 
     .sidebar-brand {
         align-items: center;
-        padding: 1.1rem 0;
+        padding: 0;
+        justify-content: center;
     }
 
     .sidebar-brand__wordmark {
         font-size: 1.1rem;
-    }
-
-    .sidebar-profile {
-        justify-content: center;
-        padding: 0.65rem;
-        margin: 0.5rem 0.4rem;
     }
 
     .sidebar-nav {
