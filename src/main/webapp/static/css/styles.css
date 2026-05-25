@@ -1,12 +1,9 @@
 /* =========================================================
    styles.css  —  MaxFit Sistema de Gestión
    Estilos globales para todas las páginas AUTENTICADAS.
-   Comparte paleta y tokens con auth.css pero define el
-   layout de shell: sidebar + navbar + main-content.
-   SIN JavaScript. CSS puro.
    ========================================================= */
 
-/* ── 1. Variables de diseño (espejo de auth.css + extras) ── */
+/* ── 1. Variables de diseño ──────────────────────────────── */
 :root {
     /* Superficie y fondo */
     --clr-bg:              #0d0d0d;
@@ -70,7 +67,12 @@
     --shadow-card:         0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
     --shadow-red:          0 4px 20px rgba(230, 48, 39, 0.35);
 
-    /* Layout */
+    /* ── Layout ──────────────────────────────────────────────
+       sidebar-width:     ancho COMPLETO con etiquetas (240px)
+       sidebar-collapsed: ancho SOLO ÍCONOS (68px)
+       El colapso ocurre solo a ≤ 1100px (tablets / ventanas pequeñas).
+       A ≤ 768px el sidebar se oculta por completo con un toggle.
+    ─────────────────────────────────────────────────────────── */
     --sidebar-width:       240px;
     --sidebar-collapsed:   68px;
     --navbar-height:       60px;
@@ -136,21 +138,7 @@ ul, ol {
     list-style: none;
 }
 
-/* ── 3. Shell Layout (sidebar + content) ─────────────────── */
-
-/*
-   Estructura esperada en los JSP:
-   <div class="app-shell">
-     <%@ include file="/WEB-INF/views/includes/sidebar.jsp" %>
-     <div class="app-main">
-       <%@ include file="/WEB-INF/views/includes/navbar.jsp" %>
-       <div class="page-content">
-         ... contenido del módulo ...
-       </div>
-     </div>
-   </div>
-*/
-
+/* ── 3. Shell Layout ──────────────────────────────────────── */
 .app-shell {
     display: flex;
     min-height: 100vh;
@@ -207,8 +195,7 @@ ul, ol {
     width: 100%;
 }
 
-/* ── 4. Cabecera de página (título + breadcrumb + acciones) ─ */
-
+/* ── 4. Cabecera de página ────────────────────────────────── */
 .page-header {
     display: flex;
     align-items: flex-start;
@@ -267,7 +254,6 @@ ul, ol {
 }
 
 /* ── 5. Cards ─────────────────────────────────────────────── */
-
 .card {
     background: var(--clr-card);
     border: 1px solid var(--clr-card-border);
@@ -320,7 +306,6 @@ ul, ol {
 }
 
 /* ── 6. KPI / Stat Cards ──────────────────────────────────── */
-
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -414,7 +399,6 @@ ul, ol {
 .kpi-card__trend.down { color: var(--clr-danger); }
 
 /* ── 7. Tabla de datos ────────────────────────────────────── */
-
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
@@ -470,7 +454,6 @@ ul, ol {
 }
 
 /* ── 8. Badges / Pills de estado ──────────────────────────── */
-
 .badge {
     display: inline-flex;
     align-items: center;
@@ -524,8 +507,6 @@ ul, ol {
 }
 
 /* ── 9. Botones ───────────────────────────────────────────── */
-
-/* Botón primario rojo */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -553,10 +534,9 @@ ul, ol {
     flex-shrink: 0;
 }
 
-.btn:hover { transform: translateY(-1px); }
+.btn:hover  { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
 
-/* Variantes */
 .btn-primary {
     background: var(--clr-red);
     color: #fff;
@@ -614,7 +594,6 @@ ul, ol {
     border-color: var(--clr-success);
 }
 
-/* Tamaños */
 .btn-sm {
     padding: 0.4rem 0.8rem;
     font-size: 0.78rem;
@@ -641,7 +620,6 @@ ul, ol {
 }
 
 /* ── 10. Formularios ──────────────────────────────────────── */
-
 .form-group {
     display: flex;
     flex-direction: column;
@@ -696,7 +674,6 @@ ul, ol {
     cursor: not-allowed;
 }
 
-/* Select con flecha personalizada */
 select.form-control {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2352525a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -751,8 +728,7 @@ textarea.form-control {
     flex-wrap: wrap;
 }
 
-/* ── 11. Alertas flash (successMsg / errorMsg) ────────────── */
-
+/* ── 11. Alertas flash ────────────────────────────────────── */
 .flash-alert {
     display: flex;
     align-items: flex-start;
@@ -804,7 +780,6 @@ textarea.form-control {
 .flash-alert--info .flash-alert__icon { color: var(--clr-info); }
 
 /* ── 12. Empty state ──────────────────────────────────────── */
-
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -845,12 +820,7 @@ textarea.form-control {
     line-height: 1.6;
 }
 
-/* ── 13. Modal / panel lateral de formulario ──────────────── */
-
-/* Sin JS: usamos :target o checkbox para el toggle.
-   En este proyecto se usa action=?form=true → el servidor
-   renderiza el panel directamente; no se necesita JS. */
-
+/* ── 13. Form panel ───────────────────────────────────────── */
 .form-panel {
     background: var(--clr-card);
     border: 1px solid var(--clr-card-border);
@@ -877,8 +847,7 @@ textarea.form-control {
     color: var(--clr-text);
 }
 
-/* ── 14. Barra de búsqueda / filtros ──────────────────────── */
-
+/* ── 14. Search bar ───────────────────────────────────────── */
 .search-bar {
     display: flex;
     align-items: center;
@@ -910,7 +879,6 @@ textarea.form-control {
 }
 
 /* ── 15. Paginación ───────────────────────────────────────── */
-
 .pagination {
     display: flex;
     align-items: center;
@@ -950,16 +918,14 @@ textarea.form-control {
     border-color: var(--clr-red);
 }
 
-/* ── 16. Separador de sección ─────────────────────────────── */
-
+/* ── 16. Separador ────────────────────────────────────────── */
 .section-divider {
     height: 1px;
     background: var(--clr-border-light);
     margin: 1.5rem 0;
 }
 
-/* ── 17. Utilidades de espaciado ──────────────────────────── */
-
+/* ── 17. Utilidades ───────────────────────────────────────── */
 .mt-0  { margin-top: 0; }
 .mt-1  { margin-top: 0.5rem; }
 .mt-2  { margin-top: 1rem; }
@@ -989,8 +955,7 @@ textarea.form-control {
 .text-xs      { font-size: 0.72rem; }
 .font-mono    { font-family: var(--font-mono); }
 
-/* ── 18. Animaciones globales ──────────────────────────────── */
-
+/* ── 18. Animaciones ──────────────────────────────────────── */
 @keyframes fadeSlideUp {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -1015,12 +980,10 @@ textarea.form-control {
     50%       { box-shadow: 0 0 0 8px transparent; }
 }
 
-/* Entrada de .page-content */
 .page-content {
     animation: fadeIn 0.3s ease both;
 }
 
-/* Entrada escalonada de filas de tabla */
 .data-table tbody tr {
     animation: fadeSlideUp 0.3s cubic-bezier(0.4,0,0.2,1) both;
 }
@@ -1034,7 +997,6 @@ textarea.form-control {
 .data-table tbody tr:nth-child(7)  { animation-delay: 0.22s; }
 .data-table tbody tr:nth-child(8)  { animation-delay: 0.25s; }
 
-/* Entrada de KPI cards */
 .kpi-card {
     animation: fadeSlideUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
 }
@@ -1046,29 +1008,25 @@ textarea.form-control {
 .kpi-card:nth-child(5) { animation-delay: 0.25s; }
 .kpi-card:nth-child(6) { animation-delay: 0.30s; }
 
-/* ── 19. Scrollbar personalizado ──────────────────────────── */
+/* ── 19. Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--clr-surface-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--clr-text-dim); }
 
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
+/* ═══════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
+   20. RESPONSIVE
+   ─────────────────────────────────────────────────────────
+   BREAKPOINTS:
+   > 1100px  → sidebar completo (240px) con etiquetas   ← desktop normal
+   ≤ 1100px  → sidebar colapsado (68px) solo íconos     ← laptop / ventana chica
+   ≤  768px  → sidebar SIGUE visible como íconos        ← laptop pequeña (767px)
+               NUNCA se oculta con translateX(-100%)
+   ══════════════════════════════════════════════════════════ */
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--clr-surface-3);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--clr-text-dim);
-}
-
-/* ── 20. Responsive ───────────────────────────────────────── */
-
-@media (max-width: 1024px) {
+/* Laptop / tablet (≤ 1100px): colapsar a solo íconos */
+@media (max-width: 1100px) {
     .app-sidebar {
         width: var(--sidebar-collapsed);
     }
@@ -1083,16 +1041,19 @@ textarea.form-control {
     }
 }
 
+/* Pantalla pequeña / laptop baja resolución (≤ 768px):
+   El sidebar SIEMPRE permanece visible como íconos.
+   Fix específico para viewports de 767x639 (laptops con escala alta). */
 @media (max-width: 768px) {
     .app-sidebar {
-        transform: translateX(-100%);
-        width: var(--sidebar-width);
+        width: var(--sidebar-collapsed); /* íconos siempre visibles */
+        transform: none !important;      /* nunca fuera de pantalla */
     }
     .app-main {
-        margin-left: 0;
+        margin-left: var(--sidebar-collapsed);
     }
     .page-content {
-        padding: 1.25rem 1rem;
+        padding: 1rem 0.85rem;
     }
     .kpi-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1105,8 +1066,12 @@ textarea.form-control {
     }
 }
 
+/* Móvil muy pequeño (≤ 480px): ajustes de contenido */
 @media (max-width: 480px) {
     .kpi-grid {
         grid-template-columns: 1fr;
+    }
+    .page-content {
+        padding: 0.85rem 0.65rem;
     }
 }

@@ -1,0 +1,51 @@
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR RESPONSIVE — reemplaza el bloque @media al final
+   de los <style> dentro de sidebar.jsp
+
+   ANTES era @media (max-width: 1024px) → colapsaba demasiado pronto
+   AHORA es  @media (max-width:  900px) → sidebar completo en desktop
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Modo colapsado (solo íconos) — tablet estrecha ≤ 900px ─ */
+@media (max-width: 900px) {
+    .sidebar-brand__tag,
+    .sidebar-profile__info,
+    .sidebar-nav__label,
+    .sidebar-nav__group-label,
+    .sidebar-footer__version {
+        display: none;
+    }
+
+    .sidebar-brand {
+        align-items: center;
+        padding: 1.1rem 0;
+    }
+
+    .sidebar-brand__wordmark {
+        font-size: 1.1rem;
+    }
+
+    .sidebar-profile {
+        justify-content: center;
+        padding: 0.65rem;
+        margin: 0.5rem 0.4rem;
+    }
+
+    .sidebar-nav {
+        padding: 0.5rem 0.4rem;
+        align-items: center;
+    }
+
+    .sidebar-nav__item {
+        justify-content: center;
+        padding: 0.65rem;
+        width: 40px;
+        height: 40px;
+        gap: 0;
+    }
+
+    .sidebar-nav__item.active::before {
+        left: -1px;
+        height: 50%;
+    }
+}

@@ -1,33 +1,15 @@
 <%-- ============================================================
      sidebar.jsp  —  MaxFit Sistema de Gestión
-     Barra de navegación lateral para todas las vistas autenticadas.
-
-     Uso:
-       <%@ include file="/WEB-INF/views/includes/sidebar.jsp" %>
-       (se coloca DENTRO de .app-shell, antes de .app-main)
-
-     Datos de sesión que usa (inyectados por AuthFilter / LoginController):
-       sessionScope[SESSION_USER_NAME]  → nombre del empleado / email
-       sessionScope[SESSION_USER_ROLE]  → ROL-ADMIN | ROL-RECEP | ROL-TRAINER
-       sessionScope[SESSION_USER_EMAIL] → email del usuario
-
-     Comportamiento:
-       · Links activos: se marcan con la clase CSS "active" comparando
-         la URI del request con el href de cada item.
-       · Visibilidad por rol: cada item usa <c:if> para mostrarse
-         solo al rol correspondiente (nunca depende de JS).
-       · Sin JavaScript: el menú es siempre visible en desktop.
-         En tablet/mobile el shell CSS lo oculta/muestra con media queries.
-
-     Notas:
-       · AppConfig.ROL_ADMIN    = "ROL-ADMIN"
-       · AppConfig.ROL_RECEP    = "ROL-RECEP"
-       · AppConfig.ROL_INSTRUCTOR = "ROL-TRAINER"
+     CORRECCIONES:
+       1. Agregado taglib fn (faltaba — causaba error silencioso)
+       2. Reemplazado currentUri.contains() por fn:contains()
+          (.contains() no existe en EL/JSTL estándar)
+       3. Breakpoint colapsado bajado de 1024px a 900px
      ============================================================ --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<%-- Variables auxiliares: URI actual para marcar el item activo --%>
 <c:set var="currentUri" value="${pageContext.request.requestURI}"/>
 <c:set var="ctx"        value="${pageContext.request.contextPath}"/>
 <c:set var="userRole"   value="${sessionScope.userRole}"/>
@@ -47,10 +29,9 @@
     <%-- ── Perfil compacto del usuario ──────────────────── --%>
     <div class="sidebar-profile">
         <div class="sidebar-profile__avatar" aria-hidden="true">
-            <%-- Inicial del nombre como avatar generado ─%>
             <c:choose>
                 <c:when test="${not empty sessionScope.userName}">
-                    ${fn:substring(sessionScope.userName, 0, 1)}
+                    <c:out value="${fn:substring(sessionScope.userName, 0, 1)}"/>
                 </c:when>
                 <c:otherwise>U</c:otherwise>
             </c:choose>
@@ -73,13 +54,12 @@
     <%-- ── Navegación ────────────────────────────────────── --%>
     <nav class="sidebar-nav" role="navigation">
 
-        <%-- ┌─ GRUPO: Dashboard / Inicio según rol ──────── --%>
+        <%-- GRUPO: Dashboard / Inicio según rol --%>
         <div class="sidebar-nav__group">
 
-            <%-- Admin → /inicio --%>
             <c:if test="${userRole eq 'ROL-ADMIN'}">
                 <a href="${ctx}/inicio"
-                   class="sidebar-nav__item ${currentUri.contains('/inicio') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/inicio') ? 'active' : ''}"
                    aria-label="Inicio administrativo">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -95,10 +75,9 @@
                 </a>
             </c:if>
 
-            <%-- Recepcionista → /dashboard --%>
             <c:if test="${userRole eq 'ROL-RECEP'}">
                 <a href="${ctx}/dashboard"
-                   class="sidebar-nav__item ${currentUri.contains('/dashboard') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/dashboard') ? 'active' : ''}"
                    aria-label="Dashboard de recepción">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -114,10 +93,9 @@
                 </a>
             </c:if>
 
-            <%-- Instructor → /instructor --%>
             <c:if test="${userRole eq 'ROL-TRAINER'}">
                 <a href="${ctx}/instructor"
-                   class="sidebar-nav__item ${currentUri.contains('/instructor') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/instructor') ? 'active' : ''}"
                    aria-label="Panel del instructor">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -133,16 +111,15 @@
                 </a>
             </c:if>
 
-        </div><%-- /grupo dashboard --%>
+        </div>
 
-        <%-- ┌─ GRUPO: Operaciones (Admin + Recep) ─────────── --%>
+        <%-- GRUPO: Operaciones (Admin + Recep) --%>
         <c:if test="${userRole eq 'ROL-ADMIN' or userRole eq 'ROL-RECEP'}">
             <div class="sidebar-nav__group">
                 <span class="sidebar-nav__group-label">Operaciones</span>
 
-                <%-- Clientes --%>
                 <a href="${ctx}/clients"
-                   class="sidebar-nav__item ${currentUri.contains('/clients') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/clients') ? 'active' : ''}"
                    aria-label="Clientes">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -158,9 +135,8 @@
                     <span class="sidebar-nav__label">Clientes</span>
                 </a>
 
-                <%-- Contratos --%>
                 <a href="${ctx}/contracts"
-                   class="sidebar-nav__item ${currentUri.contains('/contracts') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/contracts') ? 'active' : ''}"
                    aria-label="Contratos">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -176,9 +152,8 @@
                     <span class="sidebar-nav__label">Contratos</span>
                 </a>
 
-                <%-- Asistencia / Check-in --%>
                 <a href="${ctx}/attendance"
-                   class="sidebar-nav__item ${currentUri.contains('/attendance') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/attendance') ? 'active' : ''}"
                    aria-label="Control de asistencia">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -190,9 +165,8 @@
                     <span class="sidebar-nav__label">Asistencia</span>
                 </a>
 
-                <%-- Membresías --%>
                 <a href="${ctx}/memberships"
-                   class="sidebar-nav__item ${currentUri.contains('/memberships') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/memberships') ? 'active' : ''}"
                    aria-label="Planes de membresía">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -208,15 +182,14 @@
                 </a>
 
             </div>
-        </c:if><%-- /grupo operaciones --%>
+        </c:if>
 
-        <%-- ┌─ GRUPO: Clases (todos los roles) ────────────── --%>
+        <%-- GRUPO: Clases (todos los roles) --%>
         <div class="sidebar-nav__group">
             <span class="sidebar-nav__group-label">Clases</span>
 
-            <%-- Horarios / Clases --%>
             <a href="${ctx}/schedules"
-               class="sidebar-nav__item ${currentUri.contains('/schedules') ? 'active' : ''}"
+               class="sidebar-nav__item ${fn:contains(currentUri, '/schedules') ? 'active' : ''}"
                aria-label="Gestión de clases y horarios">
                 <span class="sidebar-nav__icon" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -237,9 +210,8 @@
                 <span class="sidebar-nav__label">Horarios</span>
             </a>
 
-            <%-- Calendario --%>
             <a href="${ctx}/calendar"
-               class="sidebar-nav__item ${currentUri.contains('/calendar') ? 'active' : ''}"
+               class="sidebar-nav__item ${fn:contains(currentUri, '/calendar') ? 'active' : ''}"
                aria-label="Vista de calendario semanal">
                 <span class="sidebar-nav__icon" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -260,16 +232,15 @@
                 <span class="sidebar-nav__label">Calendario</span>
             </a>
 
-        </div><%-- /grupo clases --%>
+        </div>
 
-        <%-- ┌─ GRUPO: Administración (solo Admin) ─────────── --%>
+        <%-- GRUPO: Administración (solo Admin) --%>
         <c:if test="${userRole eq 'ROL-ADMIN'}">
             <div class="sidebar-nav__group">
                 <span class="sidebar-nav__group-label">Administración</span>
 
-                <%-- Empleados --%>
                 <a href="${ctx}/employees"
-                   class="sidebar-nav__item ${currentUri.contains('/employees') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/employees') ? 'active' : ''}"
                    aria-label="Gestión de empleados">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -277,21 +248,21 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0
                                      0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944
-                                     11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062
-                                     0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0
-                                     0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058
-                                     2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971
-                                     5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6
-                                     3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25
-                                     2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/>
+                                     11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062
+                                     6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0
+                                     0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0
+                                     0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0
+                                     0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15
+                                     6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1
+                                     1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0
+                                     1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/>
                         </svg>
                     </span>
                     <span class="sidebar-nav__label">Empleados</span>
                 </a>
 
-                <%-- Usuarios del sistema --%>
                 <a href="${ctx}/users"
-                   class="sidebar-nav__item ${currentUri.contains('/users') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/users') ? 'active' : ''}"
                    aria-label="Gestión de usuarios del sistema">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -305,9 +276,8 @@
                     <span class="sidebar-nav__label">Usuarios</span>
                 </a>
 
-                <%-- Métodos de pago --%>
                 <a href="${ctx}/payment-methods"
-                   class="sidebar-nav__item ${currentUri.contains('/payment-methods') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/payment-methods') ? 'active' : ''}"
                    aria-label="Métodos de pago">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -322,9 +292,8 @@
                     <span class="sidebar-nav__label">Métodos de Pago</span>
                 </a>
 
-                <%-- Reportes --%>
                 <a href="${ctx}/reports"
-                   class="sidebar-nav__item ${currentUri.contains('/reports') ? 'active' : ''}"
+                   class="sidebar-nav__item ${fn:contains(currentUri, '/reports') ? 'active' : ''}"
                    aria-label="Reportes del sistema">
                     <span class="sidebar-nav__icon" aria-hidden="true">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -345,21 +314,17 @@
                 </a>
 
             </div>
-        </c:if><%-- /grupo administración --%>
+        </c:if>
 
-    </nav><%-- /sidebar-nav --%>
+    </nav>
 
     <%-- ── Zona inferior: versión ────────────────────────── --%>
     <div class="sidebar-footer">
         <span class="sidebar-footer__version">MaxFit v1.0</span>
     </div>
 
-</aside><%-- /app-sidebar --%>
+</aside>
 
-<%-- ── Estilos del Sidebar ─────────────────────────────────────
-     Se declaran aquí para co-localizar estilos con la estructura.
-     Se cargan después de styles.css (que ya viene en head-common.jsp).
-     ──────────────────────────────────────────────────────────── --%>
 <style>
 /* ── Sidebar Brand ───────────────────────────────────────── */
 .sidebar-brand {
@@ -483,7 +448,6 @@
     padding: 0.65rem 0.6rem 0.3rem;
 }
 
-/* Item de nav */
 .sidebar-nav__item {
     display: flex;
     align-items: center;
@@ -511,7 +475,6 @@
     font-weight: 600;
 }
 
-/* Barra lateral izquierda del item activo */
 .sidebar-nav__item.active::before {
     content: '';
     position: absolute;
@@ -557,11 +520,12 @@
     letter-spacing: 0.06em;
 }
 
-/* ── Modo colapsado (tablet ≤ 1024px) ──────────────────────
-   El sidebar se estrecha a --sidebar-collapsed.
-   Solo se muestran íconos, sin etiquetas.
+/* ── Responsive ─────────────────────────────────────────────
+   > 900px  → sidebar completo con texto
+   ≤ 900px  → solo íconos (colapsado)
+   NUNCA se oculta con translateX — siempre visible
    ────────────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
     .sidebar-brand__tag,
     .sidebar-profile__info,
     .sidebar-nav__label,
