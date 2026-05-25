@@ -1,0 +1,850 @@
+/* =========================================================
+   inicio.css  —  MaxFit Sistema de Gestión
+   Estilos específicos del Dashboard del Administrador.
+   Extiende styles.css. Sin JavaScript.
+   Ruta: /static/css/inicio.css
+   ========================================================= */
+
+/* ── 1. Grid principal del dashboard ──────────────────────── */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 1.25rem;
+}
+
+/* Áreas nombradas del grid */
+.dashboard-grid .area-kpis        { grid-column: 1 / -1; }
+.dashboard-grid .area-checkin      { grid-column: 1 / 3; }
+.dashboard-grid .area-vencimientos { grid-column: 3 / 4; }
+.dashboard-grid .area-clases       { grid-column: 1 / 2; }
+.dashboard-grid .area-asistencias  { grid-column: 2 / 4; }
+
+/* ── 2. KPI Grid superior ──────────────────────────────────── */
+
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+}
+
+/* KPI card extendida para el dashboard admin */
+.kpi-card--admin {
+    background: var(--clr-card);
+    border: 1px solid var(--clr-card-border);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color var(--transition), transform var(--transition),
+                box-shadow var(--transition);
+    cursor: default;
+}
+
+/* Línea superior de color al hover */
+.kpi-card--admin::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--kpi-accent, var(--clr-red));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+.kpi-card--admin:hover::before {
+    transform: scaleX(1);
+}
+
+.kpi-card--admin:hover {
+    border-color: rgba(255,255,255,0.10);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Variantes de color por KPI */
+.kpi-card--admin.kpi--red     { --kpi-accent: var(--clr-red); }
+.kpi-card--admin.kpi--green   { --kpi-accent: var(--clr-success); }
+.kpi-card--admin.kpi--yellow  { --kpi-accent: var(--clr-warning); }
+.kpi-card--admin.kpi--blue    { --kpi-accent: var(--clr-info); }
+.kpi-card--admin.kpi--purple  { --kpi-accent: #a78bfa; }
+.kpi-card--admin.kpi--teal    { --kpi-accent: #2dd4bf; }
+
+/* Ícono del KPI — arriba derecha */
+.kpi-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.kpi-card__badge {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--kpi-accent, var(--clr-red)) 12%, transparent);
+}
+
+.kpi-card__badge svg {
+    width: 16px;
+    height: 16px;
+    color: var(--kpi-accent, var(--clr-red));
+}
+
+.kpi-card__label-top {
+    font-size: 0.70rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    line-height: 1.2;
+    padding-top: 0.1rem;
+}
+
+/* Valor principal */
+.kpi-card__num {
+    font-family: var(--font-display);
+    font-size: 1.95rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--clr-text);
+    letter-spacing: 0.01em;
+    margin-top: 0.1rem;
+}
+
+.kpi-card__num.is-money::before {
+    content: 'S/ ';
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--clr-text-muted);
+    vertical-align: baseline;
+    letter-spacing: 0;
+}
+
+/* Subtítulo / meta debajo del número */
+.kpi-card__meta {
+    font-size: 0.75rem;
+    color: var(--clr-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    line-height: 1.3;
+}
+
+.kpi-card__meta svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+/* ── 3. Sección Encabezado ─────────────────────────────────── */
+
+.dashboard-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+}
+
+.dashboard-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--clr-border-light);
+}
+
+.dashboard-section-title svg {
+    width: 15px;
+    height: 15px;
+    color: var(--clr-red);
+    flex-shrink: 0;
+}
+
+/* ── 4. Widget: Contratos próximos a vencer ────────────────── */
+
+.vencimiento-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.vencimiento-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1.1rem;
+    border-bottom: 1px solid var(--clr-border-light);
+    transition: background var(--transition);
+}
+
+.vencimiento-item:last-child {
+    border-bottom: none;
+}
+
+.vencimiento-item:hover {
+    background: rgba(255,255,255,0.025);
+}
+
+/* Avatar circular con inicial */
+.vencimiento-avatar {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    background: var(--clr-surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+    border: 1px solid var(--clr-border-light);
+}
+
+/* Estado urgente: vence en ≤ 3 días */
+.vencimiento-avatar.urgent {
+    background: var(--clr-danger-subtle);
+    color: var(--clr-red);
+    border-color: rgba(230,48,39,0.25);
+    animation: pulse-red 2.5s ease-in-out infinite;
+}
+
+.vencimiento-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vencimiento-nombre {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--clr-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.vencimiento-membresia {
+    font-size: 0.72rem;
+    color: var(--clr-text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vencimiento-fecha {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.vencimiento-dias {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--clr-warning);
+}
+
+.vencimiento-dias.urgent { color: var(--clr-red); }
+.vencimiento-dias.safe   { color: var(--clr-success); }
+
+.vencimiento-label-dias {
+    font-size: 0.62rem;
+    color: var(--clr-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ── 5. Widget: Asistencias recientes ──────────────────────── */
+
+.asistencia-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.asistencia-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.65rem 1.1rem;
+    border-bottom: 1px solid var(--clr-border-light);
+    transition: background var(--transition);
+}
+
+.asistencia-row:last-child {
+    border-bottom: none;
+}
+
+.asistencia-row:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* Dot de estado */
+.asistencia-dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--clr-success);
+}
+
+.asistencia-dot.pendiente {
+    background: var(--clr-warning);
+}
+
+.asistencia-dot.falto {
+    background: var(--clr-text-dim);
+}
+
+.asistencia-nombre {
+    flex: 1;
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: var(--clr-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asistencia-membresia {
+    font-size: 0.72rem;
+    color: var(--clr-text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asistencia-hora {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--clr-text-muted);
+    min-width: 42px;
+    text-align: right;
+}
+
+/* ── 6. Widget: Clases del día ─────────────────────────────── */
+
+.clases-hoy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.1rem;
+}
+
+.clase-hoy-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border-light);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.clase-hoy-item:hover {
+    border-color: rgba(230,48,39,0.20);
+    background: var(--clr-surface-2);
+}
+
+/* Franja de hora — indicador lateral */
+.clase-hoy-hora {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 48px;
+    gap: 0;
+}
+
+.clase-hoy-hora__inicio {
+    font-family: var(--font-display);
+    font-size: 1.0rem;
+    font-weight: 700;
+    color: var(--clr-text);
+    line-height: 1;
+}
+
+.clase-hoy-hora__fin {
+    font-size: 0.68rem;
+    color: var(--clr-text-dim);
+    letter-spacing: 0.02em;
+}
+
+/* Separador vertical entre hora e info */
+.clase-hoy-sep {
+    flex-shrink: 0;
+    width: 1px;
+    height: 30px;
+    background: var(--clr-border);
+}
+
+.clase-hoy-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.clase-hoy-nombre {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--clr-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.clase-hoy-instructor {
+    font-size: 0.70rem;
+    color: var(--clr-text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Día de semana: badge del día */
+.clase-hoy-dia {
+    flex-shrink: 0;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-full);
+    background: var(--clr-red-subtle);
+    color: var(--clr-red);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(230,48,39,0.20);
+}
+
+/* ── 7. Card header con contador ───────────────────────────── */
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--clr-border);
+    gap: 0.75rem;
+}
+
+.widget-header__left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.widget-header__icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--clr-red-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.widget-header__icon svg {
+    width: 14px;
+    height: 14px;
+    color: var(--clr-red);
+}
+
+.widget-header__title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--clr-text);
+    letter-spacing: 0.01em;
+}
+
+.widget-header__count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-full);
+    background: var(--clr-surface-2);
+    color: var(--clr-text-muted);
+    border: 1px solid var(--clr-border);
+    font-family: var(--font-mono);
+    line-height: 1.4;
+}
+
+.widget-header__count.alert {
+    background: var(--clr-danger-subtle);
+    color: var(--clr-red);
+    border-color: rgba(230,48,39,0.25);
+}
+
+/* Enlace "Ver todos" en header */
+.widget-header__link {
+    font-size: 0.75rem;
+    color: var(--clr-text-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color var(--transition), gap var(--transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.widget-header__link svg {
+    width: 12px;
+    height: 12px;
+    transition: transform var(--transition);
+}
+
+.widget-header__link:hover {
+    color: var(--clr-red);
+    gap: 0.45rem;
+}
+
+.widget-header__link:hover svg {
+    transform: translateX(2px);
+}
+
+/* ── 8. Bienvenida / greeting strip ───────────────────────── */
+
+.greeting-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.1rem 1.4rem;
+    background: var(--clr-card);
+    border: 1px solid var(--clr-card-border);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Destello rojo en la esquina */
+.greeting-strip::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 160px;
+    height: 160px;
+    background: radial-gradient(circle, rgba(230,48,39,0.12) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.greeting-strip::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--clr-red);
+    border-radius: 0 2px 2px 0;
+}
+
+.greeting__left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding-left: 0.5rem;
+}
+
+.greeting__saludo {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--clr-text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.greeting__nombre {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--clr-text);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+
+.greeting__nombre span {
+    color: var(--clr-red);
+}
+
+.greeting__fecha {
+    font-size: 0.78rem;
+    color: var(--clr-text-muted);
+    margin-top: 0.15rem;
+}
+
+.greeting__right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Acciones rápidas en la franja de bienvenida */
+.quick-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-md);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition);
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.quick-action svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.quick-action--primary {
+    background: var(--clr-red);
+    color: #fff;
+    border-color: var(--clr-red);
+    box-shadow: 0 2px 12px rgba(230,48,39,0.3);
+}
+
+.quick-action--primary:hover {
+    background: var(--clr-red-hover);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(230,48,39,0.45);
+}
+
+.quick-action--secondary {
+    background: var(--clr-surface-2);
+    color: var(--clr-text-muted);
+    border-color: var(--clr-border);
+}
+
+.quick-action--secondary:hover {
+    background: var(--clr-surface-3);
+    color: var(--clr-text);
+    border-color: rgba(255,255,255,0.12);
+    transform: translateY(-1px);
+}
+
+/* ── 9. Ingresos del mes — card especial ───────────────────── */
+
+.ingresos-card {
+    background: linear-gradient(
+        135deg,
+        #161618 0%,
+        #1c1416 50%,
+        #1a1212 100%
+    );
+    border: 1px solid rgba(230,48,39,0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.ingresos-card::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    right: -40px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(230,48,39,0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.ingresos-card .kpi-card__num {
+    color: var(--clr-red);
+    font-size: 1.6rem;
+}
+
+.ingresos-card .kpi-card__num.is-money::before {
+    color: rgba(230,48,39,0.6);
+}
+
+/* ── 10. Estado vacío dentro de widgets ────────────────────── */
+
+.widget-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.5rem;
+    gap: 0.6rem;
+    text-align: center;
+}
+
+.widget-empty svg {
+    width: 36px;
+    height: 36px;
+    color: var(--clr-text-dim);
+    opacity: 0.5;
+}
+
+.widget-empty__text {
+    font-size: 0.82rem;
+    color: var(--clr-text-dim);
+    line-height: 1.5;
+}
+
+/* ── 11. Footer de widget con totales ──────────────────────── */
+
+.widget-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--clr-border-light);
+    background: rgba(255,255,255,0.015);
+}
+
+.widget-footer__stat {
+    font-size: 0.75rem;
+    color: var(--clr-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.widget-footer__stat strong {
+    color: var(--clr-text-muted);
+    font-weight: 600;
+}
+
+/* ── 12. Alerta de contratos próximos ──────────────────────── */
+
+.alerta-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.1rem;
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.20);
+    border-radius: var(--radius-md);
+    margin: 0.5rem 1.1rem 0;
+}
+
+.alerta-banner svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--clr-warning);
+}
+
+.alerta-banner__text {
+    font-size: 0.78rem;
+    color: var(--clr-warning);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.alerta-banner__text strong {
+    font-weight: 700;
+}
+
+/* ── 13. Animaciones de entrada ────────────────────────────── */
+
+/* Escalonado de KPI cards */
+.kpi-row .kpi-card--admin:nth-child(1) { animation-delay: 0.04s; }
+.kpi-row .kpi-card--admin:nth-child(2) { animation-delay: 0.08s; }
+.kpi-row .kpi-card--admin:nth-child(3) { animation-delay: 0.12s; }
+.kpi-row .kpi-card--admin:nth-child(4) { animation-delay: 0.16s; }
+.kpi-row .kpi-card--admin:nth-child(5) { animation-delay: 0.20s; }
+.kpi-row .kpi-card--admin:nth-child(6) { animation-delay: 0.24s; }
+
+.kpi-card--admin {
+    animation: fadeSlideUp 0.45s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.greeting-strip {
+    animation: fadeSlideUp 0.4s cubic-bezier(0.4,0,0.2,1) both 0.02s;
+}
+
+.vencimiento-item {
+    animation: fadeSlideUp 0.35s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.vencimiento-item:nth-child(1) { animation-delay: 0.06s; }
+.vencimiento-item:nth-child(2) { animation-delay: 0.10s; }
+.vencimiento-item:nth-child(3) { animation-delay: 0.14s; }
+.vencimiento-item:nth-child(4) { animation-delay: 0.18s; }
+.vencimiento-item:nth-child(5) { animation-delay: 0.22s; }
+
+/* ── 14. Responsive ────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+    .kpi-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .dashboard-grid .area-checkin { grid-column: 1 / -1; }
+    .dashboard-grid .area-vencimientos { grid-column: 1 / -1; }
+    .dashboard-grid .area-clases { grid-column: 1 / 2; }
+    .dashboard-grid .area-asistencias { grid-column: 2 / 4; }
+}
+
+@media (max-width: 1024px) {
+    .kpi-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .dashboard-grid .area-clases      { grid-column: 1 / 2; }
+    .dashboard-grid .area-asistencias { grid-column: 2 / 3; }
+    .dashboard-grid .area-vencimientos { grid-column: 1 / -1; }
+}
+
+@media (max-width: 768px) {
+    .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-grid > * {
+        grid-column: 1 / -1 !important;
+    }
+    .greeting-strip {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .greeting__right {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .kpi-card__num {
+        font-size: 1.6rem;
+    }
+}
