@@ -123,8 +123,8 @@
               novalidate
               autocomplete="on">
 
-            <%-- Token CSRF: Tomcat + JSTL no incluye CSRF nativo,
-                 pero dejamos el patrón preparado para cuando se implemente --%>
+            <%-- Protección CSRF: token generado por CsrfFilter en el GET --%>
+            <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
 
             <%-- ── Campo: Correo electrónico ─────────────────── --%>
             <div class="form-field">

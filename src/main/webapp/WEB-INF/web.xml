@@ -34,6 +34,20 @@
     </filter-mapping>
 
     <!-- ═══════════════════════════════════════
+     FILTRO CSRF — protección contra Cross-Site Request Forgery
+     Valida el token _csrf en cada POST.
+     Genera el token en cada GET y lo expone como ${csrfToken}.
+     ════════════════════════════════════════ -->
+     <filter>
+     <filter-name>CsrfFilter</filter-name>
+     <filter-class>com.mycompany.herramientas.filter.CsrfFilter</filter-class>
+     </filter>
+     <filter-mapping>
+     <filter-name>CsrfFilter</filter-name>
+     <url-pattern>/*</url-pattern>
+     </filter-mapping>
+
+    <!-- ═══════════════════════════════════════
          SERVLETS
     ════════════════════════════════════════ -->
     <servlet>
