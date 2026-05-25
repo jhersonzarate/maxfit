@@ -1068,7 +1068,7 @@ textarea.form-control {
 
 /* ── 20. Responsive ───────────────────────────────────────── */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .app-sidebar {
         width: var(--sidebar-collapsed);
     }
@@ -1083,7 +1083,7 @@ textarea.form-control {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .app-sidebar {
         transform: translateX(-100%);
         width: var(--sidebar-width);
@@ -1103,6 +1103,9 @@ textarea.form-control {
     .form-grid--3 {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 480px) {
     .kpi-grid {
         grid-template-columns: 1fr;
     }
