@@ -1,0 +1,1039 @@
+/* =========================================================
+   dashboard.css  —  MaxFit Sistema de Gestión
+   Estilos específicos del Dashboard del Recepcionista.
+   Extiende styles.css. Sin JavaScript.
+   Ruta: /static/css/dashboard.css
+   ========================================================= */
+
+/* ── 1. Grid principal del dashboard ──────────────────────── */
+
+.dashboard-recep-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+}
+
+/* Áreas nombradas */
+.dashboard-recep-grid .area-checkin      { grid-column: 1 / 2; grid-row: 1 / 3; }
+.dashboard-recep-grid .area-kpis-recep   { grid-column: 2 / 4; grid-row: 1 / 2; }
+.dashboard-recep-grid .area-actividad    { grid-column: 2 / 4; grid-row: 2 / 3; }
+.dashboard-recep-grid .area-clases-hoy   { grid-column: 1 / 3; grid-row: 3 / 4; }
+.dashboard-recep-grid .area-vence-recep  { grid-column: 3 / 4; grid-row: 3 / 4; }
+
+/* ── 2. KPI Strip horizontal del recepcionista ─────────────── */
+
+.kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    height: 100%;
+}
+
+.kpi-strip-card {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.kpi-strip-card:hover {
+    border-color: rgba(255,255,255,0.10);
+    transform: translateY(-2px);
+}
+
+/* Franja lateral de color */
+.kpi-strip-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 2px 0 0 2px;
+    background: var(--strip-accent, var(--clr-red));
+}
+
+.kpi-strip-card.strip--red    { --strip-accent: var(--clr-red); }
+.kpi-strip-card.strip--green  { --strip-accent: var(--clr-success); }
+.kpi-strip-card.strip--blue   { --strip-accent: var(--clr-info); }
+
+.kpi-strip-card__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--strip-accent, var(--clr-red)) 12%, transparent);
+}
+
+.kpi-strip-card__icon svg {
+    width: 18px;
+    height: 18px;
+    color: var(--strip-accent, var(--clr-red));
+}
+
+.kpi-strip-card__body {
+    min-width: 0;
+    flex: 1;
+}
+
+.kpi-strip-card__value {
+    font-family: var(--font-display);
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--clr-text);
+    letter-spacing: 0.02em;
+}
+
+.kpi-strip-card__label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--clr-text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+}
+
+/* ── 3. Panel de Check-in rápido ───────────────────────────── */
+
+.checkin-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.checkin-panel__header {
+    padding: 1rem 1.25rem 0.85rem;
+    border-bottom: 1px solid var(--clr-border);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.checkin-panel__icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--clr-red-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkin-panel__icon svg {
+    width: 15px;
+    height: 15px;
+    color: var(--clr-red);
+}
+
+.checkin-panel__title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--clr-text);
+}
+
+/* Área del formulario de check-in */
+.checkin-form-area {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+/* Etiqueta instructiva */
+.checkin-instruction {
+    font-size: 0.78rem;
+    color: var(--clr-text-muted);
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.checkin-instruction svg {
+    width: 14px;
+    height: 14px;
+    color: var(--clr-text-dim);
+    flex-shrink: 0;
+}
+
+/* Input documento — estilo destacado */
+.checkin-input-wrapper {
+    position: relative;
+}
+
+.checkin-input-wrapper__icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--clr-text-dim);
+    pointer-events: none;
+    transition: color var(--transition);
+}
+
+.checkin-input {
+    width: 100%;
+    padding: 0.9rem 1rem 0.9rem 2.85rem;
+    background: var(--clr-surface);
+    border: 1.5px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    color: var(--clr-text);
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    outline: none;
+    transition: border-color var(--transition), background var(--transition),
+                box-shadow var(--transition);
+    -webkit-appearance: none;
+}
+
+.checkin-input::placeholder {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.88rem;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--clr-text-dim);
+}
+
+.checkin-input:focus {
+    border-color: var(--clr-red);
+    background: var(--clr-surface-2);
+    box-shadow: 0 0 0 3px var(--clr-red-glow);
+}
+
+.checkin-input:focus ~ .checkin-input-wrapper__icon {
+    color: var(--clr-red);
+}
+
+/* Botón registrar ingreso */
+.checkin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.9rem 1.25rem;
+    background: var(--clr-red);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    box-shadow: 0 3px 16px rgba(230, 48, 39, 0.4);
+    transition: background var(--transition), box-shadow var(--transition),
+                transform var(--transition);
+}
+
+.checkin-btn svg {
+    width: 17px;
+    height: 17px;
+    transition: transform var(--transition);
+}
+
+.checkin-btn:hover {
+    background: var(--clr-red-hover);
+    box-shadow: 0 5px 24px rgba(230, 48, 39, 0.55);
+    transform: translateY(-1px);
+}
+
+.checkin-btn:hover svg {
+    transform: scale(1.15);
+}
+
+.checkin-btn:active {
+    transform: translateY(0);
+}
+
+/* ── Resultado de check-in (flash dentro del panel) ─────── */
+
+.checkin-result {
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    animation: flashIn 0.35s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.checkin-result__icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkin-result__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.checkin-result__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.checkin-result__nombre {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--clr-text);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.checkin-result__membresia {
+    font-size: 0.75rem;
+    color: var(--clr-text-muted);
+    margin-top: 0.1rem;
+}
+
+.checkin-result__msg {
+    font-size: 0.78rem;
+    margin-top: 0.2rem;
+    line-height: 1.4;
+}
+
+/* Variantes del resultado */
+.checkin-result--ok {
+    background: var(--clr-success-subtle);
+    border: 1px solid rgba(34, 197, 94, 0.22);
+}
+.checkin-result--ok .checkin-result__icon {
+    background: rgba(34, 197, 94, 0.15);
+}
+.checkin-result--ok .checkin-result__icon svg { color: var(--clr-success); }
+.checkin-result--ok .checkin-result__msg      { color: #86efac; }
+
+.checkin-result--warn {
+    background: var(--clr-warning-subtle);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+}
+.checkin-result--warn .checkin-result__icon {
+    background: rgba(245, 158, 11, 0.15);
+}
+.checkin-result--warn .checkin-result__icon svg { color: var(--clr-warning); }
+.checkin-result--warn .checkin-result__msg      { color: #fcd34d; }
+
+.checkin-result--error {
+    background: var(--clr-danger-subtle);
+    border: 1px solid rgba(230, 48, 39, 0.22);
+}
+.checkin-result--error .checkin-result__icon {
+    background: rgba(230, 48, 39, 0.12);
+}
+.checkin-result--error .checkin-result__icon svg { color: var(--clr-red); }
+.checkin-result--error .checkin-result__msg      { color: #fca5a5; }
+
+/* ── Divider  decorativo ─────────────────────────────────── */
+
+.checkin-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0.25rem 0;
+}
+
+.checkin-divider::before,
+.checkin-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--clr-border-light);
+}
+
+.checkin-divider__text {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--clr-text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Accesos rápidos dentro del panel check-in */
+.checkin-quick-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.25rem;
+}
+
+.checkin-quick-link {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--clr-text-muted);
+    text-decoration: none;
+    transition: all var(--transition);
+}
+
+.checkin-quick-link svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.checkin-quick-link:hover {
+    background: var(--clr-surface-2);
+    border-color: rgba(255,255,255,0.12);
+    color: var(--clr-text);
+    transform: translateY(-1px);
+}
+
+/* ── 4. Feed de asistencias del día ────────────────────────── */
+
+.actividad-feed {
+    display: flex;
+    flex-direction: column;
+}
+
+.actividad-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem 1.1rem;
+    border-bottom: 1px solid var(--clr-border-light);
+    transition: background var(--transition);
+}
+
+.actividad-row:last-child {
+    border-bottom: none;
+}
+
+.actividad-row:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* Número de orden / posición */
+.actividad-row__num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-sm);
+    background: var(--clr-surface-2);
+    border: 1px solid var(--clr-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--clr-text-dim);
+}
+
+/* Dot de estado */
+.actividad-dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--clr-success);
+}
+.actividad-dot.pendiente { background: var(--clr-warning); }
+.actividad-dot.falto     { background: var(--clr-text-dim); }
+
+.actividad-nombre {
+    flex: 1;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--clr-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actividad-membresia {
+    font-size: 0.70rem;
+    color: var(--clr-text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actividad-hora {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.70rem;
+    color: var(--clr-text-muted);
+    min-width: 42px;
+    text-align: right;
+    background: var(--clr-surface);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--clr-border-light);
+}
+
+/* ── 5. Lista de clases del día ────────────────────────────── */
+
+.clases-recep-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1rem 1.1rem;
+}
+
+.clase-recep-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border-light);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.clase-recep-item:hover {
+    border-color: rgba(230,48,39,0.18);
+    background: var(--clr-surface-2);
+}
+
+/* Columna de hora */
+.clase-recep-hora {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 50px;
+    padding: 0.2rem 0.5rem;
+    background: var(--clr-surface-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--clr-border-light);
+}
+
+.clase-recep-hora__ini {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--clr-text);
+    line-height: 1;
+}
+
+.clase-recep-hora__fin {
+    font-size: 0.65rem;
+    color: var(--clr-text-dim);
+}
+
+/* Barra de color tipo "categoría" */
+.clase-recep-bar {
+    flex-shrink: 0;
+    width: 3px;
+    height: 36px;
+    border-radius: 2px;
+    background: var(--clr-red);
+    opacity: 0.7;
+}
+
+.clase-recep-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.clase-recep-nombre {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--clr-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clase-recep-instructor {
+    font-size: 0.70rem;
+    color: var(--clr-text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badge de capacidad */
+.clase-recep-badge {
+    flex-shrink: 0;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-full);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: var(--clr-red-subtle);
+    color: var(--clr-red);
+    border: 1px solid rgba(230,48,39,0.20);
+}
+
+/* ── 6. Widget: Próximos a vencer (versión compacta) ───────── */
+
+.vence-compact-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.vence-compact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 1.1rem;
+    border-bottom: 1px solid var(--clr-border-light);
+    transition: background var(--transition);
+}
+
+.vence-compact-item:last-child {
+    border-bottom: none;
+}
+
+.vence-compact-item:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* Avatar inicial */
+.vence-compact-avatar {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--clr-surface-2);
+    border: 1px solid var(--clr-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--clr-text-muted);
+    text-transform: uppercase;
+}
+
+.vence-compact-avatar.urgent {
+    background: var(--clr-danger-subtle);
+    color: var(--clr-red);
+    border-color: rgba(230,48,39,0.25);
+}
+
+.vence-compact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vence-compact-nombre {
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: var(--clr-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.vence-compact-fecha {
+    font-size: 0.68rem;
+    color: var(--clr-text-dim);
+}
+
+.vence-compact-fecha.urgent { color: var(--clr-red); font-weight: 600; }
+
+/* ── 7. Bienvenida del recepcionista ───────────────────────── */
+
+.recep-greeting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.4rem;
+    background: var(--clr-card);
+    border: 1px solid var(--clr-card-border);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.recep-greeting::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--clr-success);
+    border-radius: 0 2px 2px 0;
+}
+
+.recep-greeting::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.recep-greeting__left {
+    padding-left: 0.5rem;
+}
+
+.recep-greeting__rol {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--clr-success);
+    line-height: 1;
+}
+
+.recep-greeting__nombre {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--clr-text);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-top: 0.15rem;
+    line-height: 1.1;
+}
+
+.recep-greeting__nombre span { color: var(--clr-success); }
+
+.recep-greeting__fecha {
+    font-size: 0.75rem;
+    color: var(--clr-text-muted);
+    margin-top: 0.2rem;
+}
+
+.recep-greeting__right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+/* Acciones rápidas del greeting */
+.recep-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.48rem 0.85rem;
+    border-radius: var(--radius-md);
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition);
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.recep-action svg { width: 13px; height: 13px; }
+
+.recep-action--green {
+    background: var(--clr-success-subtle);
+    color: var(--clr-success);
+    border-color: rgba(34,197,94,0.22);
+}
+.recep-action--green:hover {
+    background: var(--clr-success);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.recep-action--ghost {
+    background: var(--clr-surface-2);
+    color: var(--clr-text-muted);
+    border-color: var(--clr-border);
+}
+.recep-action--ghost:hover {
+    background: var(--clr-surface-3);
+    color: var(--clr-text);
+    transform: translateY(-1px);
+}
+
+/* ── 8. Widget header compartido ────────────────────────────── */
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--clr-border);
+    gap: 0.75rem;
+}
+
+.widget-header__left {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.widget-header__icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-xs);
+    background: var(--clr-red-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.widget-header__icon svg {
+    width: 13px;
+    height: 13px;
+    color: var(--clr-red);
+}
+
+.widget-header__icon.green-icon {
+    background: var(--clr-success-subtle);
+}
+.widget-header__icon.green-icon svg { color: var(--clr-success); }
+
+.widget-header__icon.blue-icon {
+    background: var(--clr-info-subtle);
+}
+.widget-header__icon.blue-icon svg { color: var(--clr-info); }
+
+.widget-header__title {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--clr-text);
+}
+
+.widget-header__count {
+    font-size: 0.70rem;
+    font-weight: 700;
+    padding: 0.13rem 0.5rem;
+    border-radius: var(--radius-full);
+    background: var(--clr-surface-2);
+    color: var(--clr-text-muted);
+    border: 1px solid var(--clr-border);
+    font-family: var(--font-mono);
+    line-height: 1.4;
+}
+
+.widget-header__count.count--alert {
+    background: var(--clr-danger-subtle);
+    color: var(--clr-red);
+    border-color: rgba(230,48,39,0.22);
+}
+
+.widget-header__link {
+    font-size: 0.73rem;
+    color: var(--clr-text-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.28rem;
+    transition: color var(--transition), gap var(--transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.widget-header__link svg {
+    width: 11px;
+    height: 11px;
+    transition: transform var(--transition);
+}
+.widget-header__link:hover {
+    color: var(--clr-red);
+    gap: 0.42rem;
+}
+.widget-header__link:hover svg { transform: translateX(2px); }
+
+/* ── 9. Widget footer ────────────────────────────────────────── */
+
+.widget-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1.1rem;
+    border-top: 1px solid var(--clr-border-light);
+    background: rgba(255,255,255,0.012);
+}
+
+.widget-footer__stat {
+    font-size: 0.72rem;
+    color: var(--clr-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.widget-footer__stat strong { color: var(--clr-text-muted); font-weight: 600; }
+
+/* ── 10. Empty state dentro de widgets ──────────────────────── */
+
+.widget-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.25rem 1.5rem;
+    gap: 0.55rem;
+    text-align: center;
+}
+
+.widget-empty svg {
+    width: 32px;
+    height: 32px;
+    color: var(--clr-text-dim);
+    opacity: 0.45;
+}
+
+.widget-empty__text {
+    font-size: 0.80rem;
+    color: var(--clr-text-dim);
+    line-height: 1.55;
+}
+
+.widget-empty__text a {
+    color: var(--clr-red);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* ── 11. Estado de turno / indicador live ───────────────────── */
+
+.turno-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.22rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--clr-success-subtle);
+    color: var(--clr-success);
+    border: 1px solid rgba(34,197,94,0.22);
+}
+
+/* Punto pulsante "live" */
+.turno-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--clr-success);
+    animation: pulse-green 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50%       { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* ── 12. Animaciones de entrada ─────────────────────────────── */
+
+.recep-greeting {
+    animation: fadeSlideUp 0.38s cubic-bezier(0.4,0,0.2,1) both 0.02s;
+}
+
+.kpi-strip-card {
+    animation: fadeSlideUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.kpi-strip-card:nth-child(1) { animation-delay: 0.06s; }
+.kpi-strip-card:nth-child(2) { animation-delay: 0.11s; }
+.kpi-strip-card:nth-child(3) { animation-delay: 0.16s; }
+
+.checkin-panel {
+    animation: fadeSlideUp 0.42s cubic-bezier(0.4,0,0.2,1) both 0.08s;
+}
+
+.actividad-row {
+    animation: fadeSlideUp 0.32s cubic-bezier(0.4,0,0.2,1) both;
+}
+.actividad-row:nth-child(1) { animation-delay: 0.06s; }
+.actividad-row:nth-child(2) { animation-delay: 0.09s; }
+.actividad-row:nth-child(3) { animation-delay: 0.12s; }
+.actividad-row:nth-child(4) { animation-delay: 0.15s; }
+.actividad-row:nth-child(5) { animation-delay: 0.18s; }
+.actividad-row:nth-child(6) { animation-delay: 0.21s; }
+.actividad-row:nth-child(7) { animation-delay: 0.24s; }
+.actividad-row:nth-child(8) { animation-delay: 0.27s; }
+.actividad-row:nth-child(9) { animation-delay: 0.30s; }
+.actividad-row:nth-child(10){ animation-delay: 0.33s; }
+
+/* ── 13. Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+    .dashboard-recep-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .dashboard-recep-grid .area-checkin      { grid-column: 1 / 2; grid-row: 1 / 3; }
+    .dashboard-recep-grid .area-kpis-recep   { grid-column: 2 / 3; grid-row: 1 / 2; }
+    .dashboard-recep-grid .area-actividad    { grid-column: 2 / 3; grid-row: 2 / 3; }
+    .dashboard-recep-grid .area-clases-hoy   { grid-column: 1 / 2; grid-row: 3 / 4; }
+    .dashboard-recep-grid .area-vence-recep  { grid-column: 2 / 3; grid-row: 3 / 4; }
+    .kpi-strip {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .dashboard-recep-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .dashboard-recep-grid .area-checkin     { grid-column: 1 / -1; grid-row: auto; }
+    .dashboard-recep-grid .area-kpis-recep  { grid-column: 1 / -1; grid-row: auto; }
+    .dashboard-recep-grid .area-actividad   { grid-column: 1 / -1; grid-row: auto; }
+    .dashboard-recep-grid .area-clases-hoy  { grid-column: 1 / 2;  grid-row: auto; }
+    .dashboard-recep-grid .area-vence-recep { grid-column: 2 / 3;  grid-row: auto; }
+    .kpi-strip {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-recep-grid {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-recep-grid > * {
+        grid-column: 1 / -1 !important;
+        grid-row: auto !important;
+    }
+    .kpi-strip {
+        grid-template-columns: 1fr;
+    }
+    .recep-greeting {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .recep-greeting__right {
+        flex-wrap: wrap;
+    }
+    .checkin-quick-links {
+        grid-template-columns: 1fr;
+    }
+}
