@@ -13,4 +13,3 @@ Verificar la generación de IDs en todas las entidades del proyecto. Revisar el 
 
 También se recomienda revisar y optimizar el código general del proyecto, manteniendo buenas prácticas de desarrollo, organización y estructura tanto en Java Web JSP como en la base de datos.
 
- Y TAMBIEN VERIFIQUEN AL CREAR UN NUEVO CLIENTE SI EL DB SE GAURDA LA FECH AD ENACIMIENTO, SINO SE EGUARDA CORRIJAN
