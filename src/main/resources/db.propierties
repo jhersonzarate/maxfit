@@ -1,3 +1,0 @@
-jdbc.url=jdbc:sqlserver://localhost:1433;databaseName=gimnasio_db;encrypt=true;trustServerCertificate=true;loginTimeout=10
-jdbc.user=coloquenSuUser
-jdbc.password=ColoquenSuContraseña
