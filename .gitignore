@@ -6,9 +6,6 @@ target/
 *.ear
 *.jar
 
-# ─── Credenciales — NUNCA subir ───
-db.properties
-*.properties.local
 
 # ─── NetBeans ───
 nbproject/private/
