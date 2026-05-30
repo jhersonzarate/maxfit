@@ -42,6 +42,8 @@ public class DashboardController extends AbstractController {
             throws ServletException, IOException {
 
         transferirFlashMessages(req);
+        // transferir mensajes de check-in al request (claves separadas del flash global)
+        transferirMensajesCheckIn(req);
 
         // actualizar contratos vencidos antes de cargar KPIs
         contratoService.actualizarVencidos();

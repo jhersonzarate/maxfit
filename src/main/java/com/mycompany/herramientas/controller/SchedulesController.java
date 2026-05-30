@@ -583,7 +583,8 @@ public class SchedulesController extends AbstractController {
                                           String errorMsg)
             throws ServletException, IOException {
 
-        req.setAttribute("errorMsg",    errorMsg);
+        // formError: exclusivo para errores inline — el navbar no lo renderiza
+        req.setAttribute("formError",    errorMsg);
         req.setAttribute("modoEdicion", !esNuevo);
 
         try {

@@ -171,7 +171,7 @@
                                  successMsg → ingreso OK
                                  errorMsg   → error (sin contrato, ya registrado, etc.)
                                  ──────────────────────────────────────────────── --%>
-                            <c:if test="${not empty successMsg}">
+                            <c:if test="${not empty checkInSuccessMsg}">
                                 <div class="checkin-result checkin-result--ok">
                                     <div class="checkin-result__icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -192,7 +192,7 @@
                                             </p>
                                         </c:if>
                                         <p class="checkin-result__msg">
-                                            <c:out value="${successMsg}"/>
+                                            <c:out value="${checkInSuccessMsg}"/>
                                         </p>
                                     </div>
                                 </div>
@@ -201,7 +201,7 @@
                                 <c:remove var="checkInMembresia" scope="session"/>
                             </c:if>
 
-                            <c:if test="${not empty errorMsg}">
+                            <c:if test="${not empty checkInErrorMsg}">
                                 <%-- Determinar estilo según tipo de error --%>
                                 <c:set var="errorClass" value="checkin-result--error"/>
                                 <c:if test="${sessionScope.checkInTipo eq 'YA_REGISTRADO_HOY'}">
@@ -233,7 +233,7 @@
                                     </div>
                                     <div class="checkin-result__body">
                                         <p class="checkin-result__msg">
-                                            <c:out value="${errorMsg}"/>
+                                            <c:out value="${checkInErrorMsg}"/>
                                         </p>
                                     </div>
                                 </div>

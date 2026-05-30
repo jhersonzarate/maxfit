@@ -228,6 +228,30 @@ public abstract class AbstractController extends HttpServlet {
         }
     }
 
+    // transferir mensajes específicos de check-in (separados del flash global)
+    // evita que el navbar muestre los mismos mensajes que el panel de resultado
+    protected void transferirMensajesCheckIn(HttpServletRequest req) {
+
+        HttpSession s = req.getSession(false);
+
+        if (s == null) {
+            return;
+        }
+
+        String ok  = (String) s.getAttribute("checkInSuccessMsg");
+        String err = (String) s.getAttribute("checkInErrorMsg");
+
+        if (ok != null) {
+            req.setAttribute("checkInSuccessMsg", ok);
+            s.removeAttribute("checkInSuccessMsg");
+        }
+
+        if (err != null) {
+            req.setAttribute("checkInErrorMsg", err);
+            s.removeAttribute("checkInErrorMsg");
+        }
+    }
+
     // ─── helpers json ──────────────────────────────────────────
 
     // responder json simple para peticiones ajax

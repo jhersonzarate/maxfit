@@ -35,6 +35,8 @@ public class AttendanceController extends AbstractController {
             throws ServletException, IOException {
 
         transferirFlashMessages(req);
+        // transferir mensajes de check-in al request (claves separadas del flash global)
+        transferirMensajesCheckIn(req);
 
         String action = getAction(req);
 
@@ -162,10 +164,15 @@ public class AttendanceController extends AbstractController {
         AsistenciaService.ResultadoCheckIn resultado =
                 asistenciaService.registrarCheckIn(numeroDocumento);
 
-        // guardar resultado después del redirect
+        // se usan claves exclusivas (checkInSuccessMsg / checkInErrorMsg) para
+        // que solo el panel de resultado las renderice — el navbar usa
+        // successMsg / errorMsg y NO mostrara estos mensajes, evitando duplicacion
         if (resultado.isExitoso()) {
 
-            mensajeExito(req, resultado.getMensaje());
+            req.getSession(true).setAttribute(
+                    "checkInSuccessMsg",
+                    resultado.getMensaje()
+            );
 
             // guardar nombre del cliente para el widget
             req.getSession(true).setAttribute(
@@ -176,7 +183,7 @@ public class AttendanceController extends AbstractController {
                             : ""
             );
 
-            // guardar membresía del cliente
+            // guardar membresia del cliente
             req.getSession(true).setAttribute(
                     "checkInMembresia",
 
@@ -198,7 +205,10 @@ public class AttendanceController extends AbstractController {
                     resultado.getTipo().name()
             );
 
-            mensajeError(req, resultado.getMensaje());
+            req.getSession(true).setAttribute(
+                    "checkInErrorMsg",
+                    resultado.getMensaje()
+            );
         }
 
         redirigirA("/attendance", req, resp);

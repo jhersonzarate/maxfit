@@ -560,7 +560,9 @@ public class ClientsController extends AbstractController {
                                     String errorMsg)
             throws ServletException, IOException {
 
-        req.setAttribute("errorMsg", errorMsg);
+        // formError: atributo exclusivo para errores inline en el formulario
+        // (no lo renderiza el navbar, evita la duplicación del mensaje)
+        req.setAttribute("formError", errorMsg);
 
         req.setAttribute("modoEdicion", !esNuevo);
 

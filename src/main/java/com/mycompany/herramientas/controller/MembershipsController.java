@@ -551,8 +551,9 @@ public class MembershipsController extends AbstractController {
                                     String errorMsg)
             throws ServletException, IOException {
 
+        // formError: exclusivo para errores inline — el navbar no lo renderiza
         req.setAttribute(
-                "errorMsg",
+                "formError",
                 errorMsg
         );
 

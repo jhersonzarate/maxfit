@@ -564,7 +564,9 @@ public class ContractsController extends AbstractController {
             );
         }
 
-        req.setAttribute("errorMsg", errorMsg);
+        // formError: atributo exclusivo para errores inline en el formulario
+        // (no lo renderiza el navbar, evita la duplicación del mensaje)
+        req.setAttribute("formError", errorMsg);
 
         irA(
                 ViewRoutes.CONTRACTS_INDEX + "?form=true",

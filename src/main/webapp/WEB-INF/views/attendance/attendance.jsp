@@ -1157,7 +1157,7 @@
                                 </div>
 
                                 <%-- ── Resultado del último check-in (PRG) ─── --%>
-                                <c:if test="${not empty successMsg}">
+                                <c:if test="${not empty checkInSuccessMsg}">
                                     <div class="att-result att-result--ok" role="status">
                                         <div class="att-result__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -1178,7 +1178,7 @@
                                                 </p>
                                             </c:if>
                                             <p class="att-result__msg">
-                                                <c:out value="${successMsg}"/>
+                                                <c:out value="${checkInSuccessMsg}"/>
                                             </p>
                                         </div>
                                     </div>
@@ -1186,7 +1186,7 @@
                                     <c:remove var="checkInMembresia" scope="session"/>
                                 </c:if>
 
-                                <c:if test="${not empty errorMsg}">
+                                <c:if test="${not empty checkInErrorMsg}">
                                     <c:set var="resClass" value="att-result--error"/>
                                     <c:if test="${sessionScope.checkInTipo eq 'YA_REGISTRADO_HOY'}">
                                         <c:set var="resClass" value="att-result--warn"/>
@@ -1216,7 +1216,7 @@
                                         </div>
                                         <div class="att-result__body">
                                             <p class="att-result__msg">
-                                                <c:out value="${errorMsg}"/>
+                                                <c:out value="${checkInErrorMsg}"/>
                                             </p>
                                         </div>
                                     </div>

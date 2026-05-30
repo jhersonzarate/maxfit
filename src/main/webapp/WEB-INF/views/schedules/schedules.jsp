@@ -965,7 +965,7 @@
                     </div>
 
                     <%-- Alerta de error --%>
-                    <c:if test="${not empty errorMsg}">
+                    <c:if test="${not empty formError}">
                         <div class="module-alert module-alert--error" role="alert">
                             <svg class="module-alert__icon" xmlns="http://www.w3.org/2000/svg"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -976,7 +976,7 @@
                             </svg>
                             <div class="module-alert__body">
                                 <p class="module-alert__title">Error de validación</p>
-                                <p class="module-alert__text"><c:out value="${errorMsg}"/></p>
+                                <p class="module-alert__text"><c:out value="${formError}"/></p>
                             </div>
                         </div>
                     </c:if>
@@ -1239,7 +1239,7 @@
                     </div>
 
                     <%-- Alertas flash --%>
-                    <c:if test="${not empty errorMsg}">
+                    <c:if test="${not empty formError}">
                         <div class="module-alert module-alert--error" role="alert">
                             <svg class="module-alert__icon" xmlns="http://www.w3.org/2000/svg"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1249,7 +1249,7 @@
                                          0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
                             </svg>
                             <div class="module-alert__body">
-                                <p class="module-alert__text"><c:out value="${errorMsg}"/></p>
+                                <p class="module-alert__text"><c:out value="${formError}"/></p>
                             </div>
                         </div>
                     </c:if>
