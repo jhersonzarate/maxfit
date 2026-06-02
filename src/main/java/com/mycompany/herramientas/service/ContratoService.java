@@ -86,6 +86,7 @@ public class ContratoService {
         LocalDate fechaFin = contrato.getFechaInicio()
                 .plusMonths(mem.getDuracionMeses());
 
+        contrato.setId(com.mycompany.herramientas.dao.IdGenerator.parContrato());
         contrato.setFechaFin(fechaFin);
 
         // guardar contrato (transacción)

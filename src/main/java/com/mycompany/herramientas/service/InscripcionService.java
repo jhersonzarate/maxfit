@@ -136,6 +136,7 @@ public class InscripcionService {
             }
 
             InscripcionClase inscripcion = new InscripcionClase();
+            inscripcion.setId(com.mycompany.herramientas.dao.IdGenerator.parInscripcion());
             inscripcion.setCliente(cliente);
             inscripcion.setClase(clase);
 

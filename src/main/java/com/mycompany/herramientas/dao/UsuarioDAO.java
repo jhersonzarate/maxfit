@@ -15,56 +15,48 @@ import java.util.logging.Logger;
 // DAO del módulo de usuarios
 public class UsuarioDAO {
 
-    private static final Logger LOGGER =
-            Logger.getLogger(UsuarioDAO.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(UsuarioDAO.class.getName());
 
     // ─── SQL ───────────────────────────────────────────────────
 
     // select completo con joins
-    private static final String SQL_SELECT_BASE =
-        "SELECT u.id, u.email, u.passwordUsuario, u.estado, " +
-        "       r.id AS rol_id, r.nombre_rol, r.descripcion AS rol_desc, " +
-        "       e.id AS emp_id, e.nombre AS emp_nombre, e.apellido AS emp_apellido, " +
-        "       e.numeroDocumento AS emp_doc, e.email AS emp_email, " +
-        "       e.telefono AS emp_tel, " +
-        "       td.id AS td_id, td.nombre_documento, td.abreviado, " +
-        "       td.tamañoMax, td.tamañoMin, td.esAlfanumerico, " +
-        "       c.id AS cargo_id, c.nombre AS cargo_nombre " +
-        "FROM Usuarios u " +
-        "INNER JOIN Roles r          ON u.id_rol      = r.id " +
-        "LEFT  JOIN Empleados e      ON u.id_empleado  = e.id " +
-        "LEFT  JOIN TipoDocumentos td ON e.id_TipoDocumento = td.id " +
-        "LEFT  JOIN Cargos c         ON e.id_Cargo     = c.id ";
+    private static final String SQL_SELECT_BASE = "SELECT u.id, u.email, u.passwordUsuario, u.estado, " +
+            "       r.id AS rol_id, r.nombre_rol, r.descripcion AS rol_desc, " +
+            "       e.id AS emp_id, e.nombre AS emp_nombre, e.apellido AS emp_apellido, " +
+            "       e.numeroDocumento AS emp_doc, e.email AS emp_email, " +
+            "       e.telefono AS emp_tel, " +
+            "       td.id AS td_id, td.nombre_documento, td.abreviado, " +
+            "       td.tamañoMax, td.tamañoMin, td.esAlfanumerico, " +
+            "       c.id AS cargo_id, c.nombre AS cargo_nombre " +
+            "FROM Usuarios u " +
+            "INNER JOIN Roles r          ON u.id_rol      = r.id " +
+            "LEFT  JOIN Empleados e      ON u.id_empleado  = e.id " +
+            "LEFT  JOIN TipoDocumentos td ON e.id_TipoDocumento = td.id " +
+            "LEFT  JOIN Cargos c         ON e.id_Cargo     = c.id ";
 
     // buscar usuario por email
-    private static final String SQL_FIND_BY_EMAIL =
-        SQL_SELECT_BASE + "WHERE u.email = ?";
+    private static final String SQL_FIND_BY_EMAIL = SQL_SELECT_BASE + "WHERE u.email = ?";
 
     // buscar usuario por ID
-    private static final String SQL_FIND_BY_ID =
-        SQL_SELECT_BASE + "WHERE u.id = ?";
+    private static final String SQL_FIND_BY_ID = SQL_SELECT_BASE + "WHERE u.id = ?";
 
     // listar todos los usuarios
-    private static final String SQL_FIND_ALL =
-        SQL_SELECT_BASE + "ORDER BY u.email";
+    private static final String SQL_FIND_ALL = SQL_SELECT_BASE + "ORDER BY c.id DESC";
 
     // registrar usuario
-    private static final String SQL_INSERT =
-        "INSERT INTO Usuarios (id, email, passwordUsuario, id_rol, id_empleado, estado) " +
-        "VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Usuarios (id, email, passwordUsuario, id_rol, id_empleado, estado) "
+            +
+            "VALUES (?, ?, ?, ?, ?, ?)";
 
     // actualizar usuario
-    private static final String SQL_UPDATE =
-        "UPDATE Usuarios SET email = ?, id_rol = ?, id_empleado = ?, estado = ? " +
-        "WHERE id = ?";
+    private static final String SQL_UPDATE = "UPDATE Usuarios SET email = ?, id_rol = ?, id_empleado = ?, estado = ? " +
+            "WHERE id = ?";
 
     // actualizar contraseña
-    private static final String SQL_UPDATE_PASSWORD =
-        "UPDATE Usuarios SET passwordUsuario = ? WHERE id = ?";
+    private static final String SQL_UPDATE_PASSWORD = "UPDATE Usuarios SET passwordUsuario = ? WHERE id = ?";
 
     // contar usuarios
-    private static final String SQL_COUNT_ALL =
-        "SELECT COUNT(*) FROM Usuarios";
+    private static final String SQL_COUNT_ALL = "SELECT COUNT(*) FROM Usuarios";
 
     // ─── métodos públicos ──────────────────────────────────────
 
@@ -72,8 +64,7 @@ public class UsuarioDAO {
     public Usuario findByEmail(String email) throws SQLException {
 
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps =
-                     con.prepareStatement(SQL_FIND_BY_EMAIL)) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_EMAIL)) {
 
             ps.setString(1, email.trim().toLowerCase());
 
@@ -92,8 +83,7 @@ public class UsuarioDAO {
     public Usuario findById(String id) throws SQLException {
 
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps =
-                     con.prepareStatement(SQL_FIND_BY_ID)) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
 
             ps.setString(1, id);
 
@@ -114,9 +104,8 @@ public class UsuarioDAO {
         List<Usuario> lista = new ArrayList<>();
 
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps =
-                     con.prepareStatement(SQL_FIND_ALL);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 lista.add(mapRow(rs));
@@ -130,8 +119,7 @@ public class UsuarioDAO {
     public void save(Usuario usuario) throws SQLException {
 
         // validar si ya existe
-        boolean existe =
-                findById(usuario.getId()) != null;
+        boolean existe = findById(usuario.getId()) != null;
 
         try (Connection con = DatabaseConnection.getConnection()) {
 
@@ -151,12 +139,10 @@ public class UsuarioDAO {
     // actualizar contraseña del usuario
     public void actualizarPassword(
             String id,
-            String nuevoHash
-    ) throws SQLException {
+            String nuevoHash) throws SQLException {
 
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps =
-                     con.prepareStatement(SQL_UPDATE_PASSWORD)) {
+                PreparedStatement ps = con.prepareStatement(SQL_UPDATE_PASSWORD)) {
 
             ps.setString(1, nuevoHash);
             ps.setString(2, id);
@@ -169,9 +155,8 @@ public class UsuarioDAO {
     public int count() throws SQLException {
 
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps =
-                     con.prepareStatement(SQL_COUNT_ALL);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = con.prepareStatement(SQL_COUNT_ALL);
+                ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) {
                 return rs.getInt(1);
@@ -187,16 +172,14 @@ public class UsuarioDAO {
     private void insert(Connection con, Usuario u)
             throws SQLException {
 
-        try (PreparedStatement ps =
-                     con.prepareStatement(SQL_INSERT)) {
+        try (PreparedStatement ps = con.prepareStatement(SQL_INSERT)) {
 
             ps.setString(1, u.getId());
 
             // normalizar email
             ps.setString(
                     2,
-                    u.getEmail().trim().toLowerCase()
-            );
+                    u.getEmail().trim().toLowerCase());
 
             // password ya viene hasheada
             ps.setString(3, u.getPasswordUsuario());
@@ -220,8 +203,7 @@ public class UsuarioDAO {
 
             LOGGER.info(
                     "Usuario insertado: "
-                            + u.getEmail()
-            );
+                            + u.getEmail());
         }
     }
 
@@ -229,14 +211,12 @@ public class UsuarioDAO {
     private void update(Connection con, Usuario u)
             throws SQLException {
 
-        try (PreparedStatement ps =
-                     con.prepareStatement(SQL_UPDATE)) {
+        try (PreparedStatement ps = con.prepareStatement(SQL_UPDATE)) {
 
             // normalizar email
             ps.setString(
                     1,
-                    u.getEmail().trim().toLowerCase()
-            );
+                    u.getEmail().trim().toLowerCase());
 
             ps.setString(2, u.getRol().getId());
 
@@ -258,8 +238,7 @@ public class UsuarioDAO {
 
             LOGGER.info(
                     "Usuario actualizado: "
-                            + u.getEmail()
-            );
+                            + u.getEmail());
         }
     }
 
@@ -310,8 +289,7 @@ public class UsuarioDAO {
 
                 td.setId(tdId);
                 td.setNombreDocumento(
-                        rs.getString("nombre_documento")
-                );
+                        rs.getString("nombre_documento"));
 
                 td.setAbreviado(rs.getString("abreviado"));
 
@@ -319,8 +297,7 @@ public class UsuarioDAO {
                 td.setTamañoMin(rs.getInt("tamañoMin"));
 
                 td.setEsAlfanumerico(
-                        rs.getBoolean("esAlfanumerico")
-                );
+                        rs.getBoolean("esAlfanumerico"));
 
                 emp.setTipoDocumento(td);
             }
@@ -336,8 +313,7 @@ public class UsuarioDAO {
 
                 cargo.setId(cargoId);
                 cargo.setNombre(
-                        rs.getString("cargo_nombre")
-                );
+                        rs.getString("cargo_nombre"));
 
                 emp.setCargo(cargo);
             }

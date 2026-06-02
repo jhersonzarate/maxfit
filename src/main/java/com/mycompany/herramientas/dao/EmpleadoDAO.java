@@ -19,72 +19,68 @@ public class EmpleadoDAO {
 
     // ─── SQL ───────────────────────────────────────────────────
 
-    private static final String SQL_SELECT_BASE =
-        "SELECT e.id, e.nombre, e.apellido, e.numeroDocumento, " +
-        "       e.email, e.telefono, " +
-        "       td.id AS td_id, td.nombre_documento, td.abreviado, " +
-        "       td.tamañoMax, td.tamañoMin, td.esAlfanumerico, " +
-        "       c.id AS cargo_id, c.nombre AS cargo_nombre " +
-        "FROM Empleados e " +
-        "INNER JOIN TipoDocumentos td ON e.id_TipoDocumento = td.id " +
-        "INNER JOIN Cargos c          ON e.id_Cargo         = c.id ";
+    private static final String SQL_SELECT_BASE = "SELECT e.id, e.nombre, e.apellido, e.numeroDocumento, " +
+            "       e.email, e.telefono, " +
+            "       td.id AS td_id, td.nombre_documento, td.abreviado, " +
+            "       td.tamañoMax, td.tamañoMin, td.esAlfanumerico, " +
+            "       c.id AS cargo_id, c.nombre AS cargo_nombre " +
+            "FROM Empleados e " +
+            "INNER JOIN TipoDocumentos td ON e.id_TipoDocumento = td.id " +
+            "INNER JOIN Cargos c          ON e.id_Cargo         = c.id ";
 
-    private static final String SQL_FIND_ALL =
-        SQL_SELECT_BASE + "ORDER BY e.apellido, e.nombre";
+    private static final String SQL_FIND_ALL = SQL_SELECT_BASE + "ORDER BY c.id DESC";
 
-    private static final String SQL_FIND_BY_ID =
-        SQL_SELECT_BASE + "WHERE e.id = ?";
+    private static final String SQL_FIND_BY_ID = SQL_SELECT_BASE + "WHERE e.id = ?";
 
-    private static final String SQL_FIND_BY_CARGO =
-        SQL_SELECT_BASE + "WHERE c.id = ? ORDER BY e.apellido, e.nombre";
+    private static final String SQL_FIND_BY_CARGO = SQL_SELECT_BASE + "WHERE c.id = ? ORDER BY e.id DESC";
 
-    private static final String SQL_INSERT =
-        "INSERT INTO Empleados " +
-        "(id, nombre, apellido, id_TipoDocumento, numeroDocumento, email, telefono, id_Cargo) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Empleados " +
+            "(id, nombre, apellido, id_TipoDocumento, numeroDocumento, email, telefono, id_Cargo) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    private static final String SQL_UPDATE =
-        "UPDATE Empleados SET nombre = ?, apellido = ?, id_TipoDocumento = ?, " +
-        "numeroDocumento = ?, email = ?, telefono = ?, id_Cargo = ? " +
-        "WHERE id = ?";
+    private static final String SQL_UPDATE = "UPDATE Empleados SET nombre = ?, apellido = ?, id_TipoDocumento = ?, " +
+            "numeroDocumento = ?, email = ?, telefono = ?, id_Cargo = ? " +
+            "WHERE id = ?";
 
-    private static final String SQL_DELETE =
-        "DELETE FROM Empleados WHERE id = ?";
+    private static final String SQL_DELETE = "DELETE FROM Empleados WHERE id = ?";
 
-    private static final String SQL_COUNT =
-        "SELECT COUNT(*) FROM Empleados";
+    private static final String SQL_COUNT = "SELECT COUNT(*) FROM Empleados";
 
     // ─── métodos públicos ──────────────────────────────────────
 
     public List<Empleado> findAll() throws SQLException {
         List<Empleado> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                lista.add(mapRow(rs));
         }
         return lista;
     }
 
     public Empleado findById(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
             ps.setString(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
+                if (rs.next())
+                    return mapRow(rs);
             }
         }
         return null;
     }
 
-    // filtra empleados por cargo — útil para obtener solo entrenadores (CARGO-TRAINER)
+    // filtra empleados por cargo — útil para obtener solo entrenadores
+    // (CARGO-TRAINER)
     public List<Empleado> findByCargo(String cargoId) throws SQLException {
         List<Empleado> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_CARGO)) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_CARGO)) {
             ps.setString(1, cargoId);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next())
+                    lista.add(mapRow(rs));
             }
         }
         return lista;
@@ -95,15 +91,18 @@ public class EmpleadoDAO {
         boolean existe = empleado.getId() != null
                 && findById(empleado.getId()) != null;
         try (Connection con = DatabaseConnection.getConnection()) {
-            if (!existe) insert(con, empleado);
-            else         update(con, empleado);
+            if (!existe)
+                insert(con, empleado);
+            else
+                update(con, empleado);
         }
     }
 
-    // elimina un empleado — la BD lanza SQLException si tiene contratos o clases asignadas
+    // elimina un empleado — la BD lanza SQLException si tiene contratos o clases
+    // asignadas
     public boolean delete(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
+                PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
             ps.setString(1, id);
             return ps.executeUpdate() > 0;
         }
@@ -111,9 +110,10 @@ public class EmpleadoDAO {
 
     public int count() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_COUNT);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getInt(1);
+                PreparedStatement ps = con.prepareStatement(SQL_COUNT);
+                ResultSet rs = ps.executeQuery()) {
+            if (rs.next())
+                return rs.getInt(1);
         }
         return 0;
     }

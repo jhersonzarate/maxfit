@@ -19,46 +19,37 @@ public class ClienteDAO {
 
     // ─── SQL ───────────────────────────────────────────────────
 
-    private static final String SQL_SELECT_BASE =
-        "SELECT c.id, c.nombre, c.apellido, c.numero_documento, " +
-        "       c.email, c.telefono, c.fecha_nacimiento, c.genero, " +
-        "       td.id AS td_id, td.nombre_documento, td.abreviado, " +
-        "       td.tamañoMax, td.tamañoMin, td.esAlfanumerico " +
-        "FROM Clientes c " +
-        "INNER JOIN TipoDocumentos td ON c.id_TipoDocumento = td.id ";
+    private static final String SQL_SELECT_BASE = "SELECT c.id, c.nombre, c.apellido, c.numero_documento, " +
+            "       c.email, c.telefono, c.fecha_nacimiento, c.genero, " +
+            "       td.id AS td_id, td.nombre_documento, td.abreviado, " +
+            "       td.tamañoMax, td.tamañoMin, td.esAlfanumerico " +
+            "FROM Clientes c " +
+            "INNER JOIN TipoDocumentos td ON c.id_TipoDocumento = td.id ";
 
-    private static final String SQL_FIND_ALL =
-        SQL_SELECT_BASE + "ORDER BY c.apellido, c.nombre";
+    private static final String SQL_FIND_ALL = SQL_SELECT_BASE + "ORDER BY c.id DESC";
 
-    private static final String SQL_FIND_BY_ID =
-        SQL_SELECT_BASE + "WHERE c.id = ?";
+    private static final String SQL_FIND_BY_ID = SQL_SELECT_BASE + "WHERE c.id = ?";
 
-    private static final String SQL_FIND_BY_DOCUMENT =
-        SQL_SELECT_BASE + "WHERE c.numero_documento = ?";
+    private static final String SQL_FIND_BY_DOCUMENT = SQL_SELECT_BASE + "WHERE c.numero_documento = ?";
 
     // búsqueda libre por nombre, apellido o documento (para el buscador)
-    private static final String SQL_SEARCH =
-        SQL_SELECT_BASE +
-        "WHERE c.nombre LIKE ? OR c.apellido LIKE ? OR c.numero_documento LIKE ? " +
-        "ORDER BY c.apellido, c.nombre";
+    private static final String SQL_SEARCH = SQL_SELECT_BASE +
+            "WHERE c.nombre LIKE ? OR c.apellido LIKE ? OR c.numero_documento LIKE ? " +
+            "ORDER BY c.id DESC";
 
-    private static final String SQL_INSERT =
-        "INSERT INTO Clientes " +
-        "(id, nombre, apellido, id_TipoDocumento, numero_documento, " +
-        " email, telefono, fecha_nacimiento, genero) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO Clientes " +
+            "(id, nombre, apellido, id_TipoDocumento, numero_documento, " +
+            " email, telefono, fecha_nacimiento, genero) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    private static final String SQL_UPDATE =
-        "UPDATE Clientes SET nombre = ?, apellido = ?, id_TipoDocumento = ?, " +
-        "numero_documento = ?, email = ?, telefono = ?, " +
-        "fecha_nacimiento = ?, genero = ? " +
-        "WHERE id = ?";
+    private static final String SQL_UPDATE = "UPDATE Clientes SET nombre = ?, apellido = ?, id_TipoDocumento = ?, " +
+            "numero_documento = ?, email = ?, telefono = ?, " +
+            "fecha_nacimiento = ?, genero = ? " +
+            "WHERE id = ?";
 
-    private static final String SQL_DELETE =
-        "DELETE FROM Clientes WHERE id = ?";
+    private static final String SQL_DELETE = "DELETE FROM Clientes WHERE id = ?";
 
-    private static final String SQL_COUNT =
-        "SELECT COUNT(*) FROM Clientes";
+    private static final String SQL_COUNT = "SELECT COUNT(*) FROM Clientes";
 
     // ─── métodos públicos ──────────────────────────────────────
 
@@ -66,9 +57,10 @@ public class ClienteDAO {
     public List<Cliente> findAll() throws SQLException {
         List<Cliente> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                lista.add(mapRow(rs));
         }
         return lista;
     }
@@ -76,10 +68,11 @@ public class ClienteDAO {
     // busca un cliente por id — devuelve null si no existe
     public Cliente findById(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_ID)) {
             ps.setString(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
+                if (rs.next())
+                    return mapRow(rs);
             }
         }
         return null;
@@ -89,10 +82,11 @@ public class ClienteDAO {
     // devuelve null si no existe
     public Cliente findByDocument(String numeroDocumento) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_DOCUMENT)) {
+                PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_DOCUMENT)) {
             ps.setString(1, numeroDocumento.trim());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
+                if (rs.next())
+                    return mapRow(rs);
             }
         }
         return null;
@@ -101,17 +95,19 @@ public class ClienteDAO {
     // búsqueda libre por nombre, apellido o documento con LIKE parcial
     // si query es null o vacío devuelve todos los clientes
     public List<Cliente> search(String query) throws SQLException {
-        if (query == null || query.trim().isEmpty()) return findAll();
+        if (query == null || query.trim().isEmpty())
+            return findAll();
 
         String patron = "%" + query.trim() + "%";
         List<Cliente> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_SEARCH)) {
+                PreparedStatement ps = con.prepareStatement(SQL_SEARCH)) {
             ps.setString(1, patron);
             ps.setString(2, patron);
             ps.setString(3, patron);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next())
+                    lista.add(mapRow(rs));
             }
         }
         return lista;
@@ -131,11 +127,12 @@ public class ClienteDAO {
         }
     }
 
-    // elimina un cliente por id — la BD lanza SQLException si tiene contratos/inscripciones
+    // elimina un cliente por id — la BD lanza SQLException si tiene
+    // contratos/inscripciones
     // devuelve true si se eliminó, false si no existía
     public boolean delete(String id) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
+                PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
             ps.setString(1, id);
             int filas = ps.executeUpdate();
             return filas > 0;
@@ -145,9 +142,10 @@ public class ClienteDAO {
     // total de clientes registrados para el dashboard
     public int count() throws SQLException {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_COUNT);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getInt(1);
+                PreparedStatement ps = con.prepareStatement(SQL_COUNT);
+                ResultSet rs = ps.executeQuery()) {
+            if (rs.next())
+                return rs.getInt(1);
         }
         return 0;
     }
@@ -186,7 +184,8 @@ public class ClienteDAO {
         }
     }
 
-    // mapea una fila a Cliente con su TipoDocumento — usa wasNull() para columnas NULL-able
+    // mapea una fila a Cliente con su TipoDocumento — usa wasNull() para columnas
+    // NULL-able
     private Cliente mapRow(ResultSet rs) throws SQLException {
         TipoDocumento td = new TipoDocumento();
         td.setId(rs.getString("td_id"));

@@ -137,6 +137,7 @@ public class AsistenciaService {
 
             // registrar asistencia
             Asistencia asistencia = new Asistencia();
+            asistencia.setId(com.mycompany.herramientas.dao.IdGenerator.parAsistencia());
             asistencia.setContrato(contrato);
             asistencia.setFecha(LocalDate.now());
             asistencia.setEstado(AppConfig.ASISTENCIA_ASISTIO);
