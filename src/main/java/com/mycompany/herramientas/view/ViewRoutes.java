@@ -8,14 +8,14 @@ public final class ViewRoutes {
     private static final String BASE = "/WEB-INF/views/";
 
     // ─── AUTENTICACIÓN ────────────────────────────────────────
-    public static final String AUTH_LOGIN = BASE + "auth/login.jsp";
+    public static final String AUTH_LOGIN           = BASE + "auth/login.jsp";
     public static final String AUTH_FORGOT_PASSWORD = BASE + "auth/forgot-password.jsp";
 
     // ─── HOME POR ROL ─────────────────────────────────────────
-    public static final String HOME_INDEX = BASE + "home/index.jsp";
-    public static final String INICIO_ADMIN = BASE + "inicio/inicio.jsp";
-    public static final String DASHBOARD_RECEP = BASE + "dashboard/dashboard.jsp";
-    public static final String DASHBOARD_INSTR = BASE + "instructor/instructor.jsp";
+    public static final String HOME_INDEX       = BASE + "home/index.jsp";
+    public static final String INICIO_ADMIN     = BASE + "inicio/inicio.jsp";
+    public static final String DASHBOARD_RECEP  = BASE + "dashboard/dashboard.jsp";
+    public static final String DASHBOARD_INSTR  = BASE + "instructor/instructor.jsp";
 
     // ─── CLIENTES ─────────────────────────────────────────────
     public static final String CLIENTS_INDEX = BASE + "clients/clients.jsp";
@@ -31,7 +31,7 @@ public final class ViewRoutes {
     public static final String ATTENDANCE_INDEX = BASE + "attendance/attendance.jsp";
 
     // ─── HORARIOS ─────────────────────────────────────────────
-    public static final String SCHEDULES_INDEX = BASE + "schedules/schedules.jsp";
+    public static final String SCHEDULES_INDEX    = BASE + "schedules/schedules.jsp";
     public static final String SCHEDULES_CALENDAR = BASE + "schedules/calendar.jsp";
 
     // ─── EMPLEADOS ────────────────────────────────────────────
@@ -40,9 +40,15 @@ public final class ViewRoutes {
     // ─── USUARIOS ─────────────────────────────────────────────
     public static final String USERS_INDEX = BASE + "users/users.jsp";
 
-    // ─── PAGOS ────────────────────────────────────────────────
-    public static final String PAYMENT_METHODS_INDEX = BASE + "payment-methods/payment-methods.jsp";
+    // ─── MÉTODOS DE PAGO ──────────────────────────────────────
+    public static final String PAYMENT_METHODS_INDEX =
+            BASE + "payment-methods/payment-methods.jsp";
 
     // ─── REPORTES ─────────────────────────────────────────────
     public static final String REPORTS_INDEX = BASE + "reports/reports.jsp";
+
+    // ─── CATÁLOGOS (TipoDocumento, TipoClase, Cargos) ────────
+    public static final String TIPODOCUMENTO_INDEX = BASE + "catalogo/tipodocumento.jsp";
+    public static final String TIPOCLASE_INDEX = BASE + "catalogo/tipoclase.jsp";
+    public static final String CARGO_INDEX = BASE + "catalogo/cargo.jsp";
 }

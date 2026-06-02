@@ -26,6 +26,7 @@ public class RoleFilter implements Filter {
         allow("/users",           AppConfig.ROL_ADMIN);
         allow("/payment-methods", AppConfig.ROL_ADMIN);
         allow("/reports",         AppConfig.ROL_ADMIN);
+        allow("/catalogo",        AppConfig.ROL_ADMIN); // ← nuevo
 
         // solo recepcionista
         allow("/dashboard",       AppConfig.ROL_RECEP);
@@ -62,29 +63,18 @@ public class RoleFilter implements Filter {
                 AppConfig.ROL_INSTRUCTOR);
     }
 
-    // helper para registrar permisos de forma limpia
     private static void allow(String ruta, String... roles) {
-
         Set<String> set = new HashSet<>();
-
-        for (String rol : roles) {
-            set.add(rol);
-        }
-
+        for (String rol : roles) set.add(rol);
         ACCESOS.put(ruta, set);
     }
 
-    // ─── init ────────────────────────────────────────────────
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {}
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // no se necesita configuración inicial
-    }
-
-    // ─── filtro principal ────────────────────────────────────
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response,
+    public void doFilter(ServletRequest request,
+                         ServletResponse response,
                          FilterChain chain)
             throws IOException, ServletException {
 
@@ -93,57 +83,37 @@ public class RoleFilter implements Filter {
 
         String contextPath = req.getContextPath();
         String requestURI  = req.getRequestURI();
+        String path        = requestURI.substring(contextPath.length());
 
-        // ruta sin el context path
-        String path = requestURI.substring(contextPath.length());
-
-        // si la ruta no tiene restricciones -> dejar pasar
         if (!ACCESOS.containsKey(path)) {
-
             chain.doFilter(request, response);
             return;
         }
 
-        // obtener sesión actual
         HttpSession session = req.getSession(false);
 
-        // seguridad extra por si AuthFilter no interceptó
         if (session == null) {
-
             resp.sendRedirect(contextPath + "/login");
             return;
         }
 
-        // rol guardado en sesión
         String rolUsuario = (String)
                 session.getAttribute(AppConfig.SESSION_USER_ROLE);
 
-        // roles permitidos para la ruta
         Set<String> rolesPermitidos = ACCESOS.get(path);
 
-        // validar acceso
         if (rolesPermitidos != null
                 && rolesPermitidos.contains(rolUsuario)) {
-
-            // acceso permitido
             chain.doFilter(request, response);
-
         } else {
-
-            // acceso denegado
             resp.sendError(
                     HttpServletResponse.SC_FORBIDDEN,
-
                     "No tienes permiso para acceder a esta sección. "
                     + "Contacta al administrador si crees que es un error."
             );
         }
     }
 
-    // ─── destroy ─────────────────────────────────────────────
-
     @Override
-    public void destroy() {
-        // no hay recursos que liberar
-    }
+    public void destroy() {}
 }

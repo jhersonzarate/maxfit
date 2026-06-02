@@ -13,7 +13,7 @@
     </welcome-file-list>
 
     <!-- ═══════════════════════════════════════
-         FILTROS — van ANTES que los servlets
+         FILTROS
     ════════════════════════════════════════ -->
     <filter>
         <filter-name>AuthFilter</filter-name>
@@ -33,19 +33,14 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
-    <!-- ═══════════════════════════════════════
-     FILTRO CSRF — protección contra Cross-Site Request Forgery
-     Valida el token _csrf en cada POST.
-     Genera el token en cada GET y lo expone como ${csrfToken}.
-     ════════════════════════════════════════ -->
-     <filter>
-     <filter-name>CsrfFilter</filter-name>
-     <filter-class>com.mycompany.herramientas.filter.CsrfFilter</filter-class>
-     </filter>
-     <filter-mapping>
-     <filter-name>CsrfFilter</filter-name>
-     <url-pattern>/*</url-pattern>
-     </filter-mapping>
+    <filter>
+        <filter-name>CsrfFilter</filter-name>
+        <filter-class>com.mycompany.herramientas.filter.CsrfFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CsrfFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <!-- ═══════════════════════════════════════
          SERVLETS
@@ -196,6 +191,34 @@
     <servlet-mapping>
         <servlet-name>PaymentMethodsController</servlet-name>
         <url-pattern>/payment-methods</url-pattern>
+    </servlet-mapping>
+
+    <!-- ── CATÁLOGOS: Cargos, TipoClase, TipoDocumento ── -->
+    <servlet>
+        <servlet-name>CargoController</servlet-name>
+        <servlet-class>com.mycompany.herramientas.controller.CargoController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CargoController</servlet-name>
+        <url-pattern>/cargo</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>TipoClaseController</servlet-name>
+        <servlet-class>com.mycompany.herramientas.controller.TipoClaseController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TipoClaseController</servlet-name>
+        <url-pattern>/tipoclase</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>TipoDocumentoController</servlet-name>
+        <servlet-class>com.mycompany.herramientas.controller.TipoDocumentoController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TipoDocumentoController</servlet-name>
+        <url-pattern>/tipodocumento</url-pattern>
     </servlet-mapping>
 
     <!-- ═══════════════════════════════════════
