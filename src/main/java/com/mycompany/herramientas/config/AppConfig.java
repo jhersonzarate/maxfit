@@ -107,6 +107,9 @@ public class AppConfig implements ServletContextListener {
     // prefijo usuarios
     public static final String PREFIX_USUARIO = "USR";
 
+    // prefijo metodos de pago
+    public static final String PREFIX_METODO_PAGO = "PAY";
+
     // ─── claves de sesión ─────────────────────────────────────
 
     public static final String SESSION_USER_ID    = "userId";

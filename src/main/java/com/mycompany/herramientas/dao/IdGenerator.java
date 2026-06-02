@@ -35,6 +35,7 @@ public final class IdGenerator {
         tablas.add("Inscripcion_Clases");
         tablas.add("Usuarios");
         tablas.add("Membresias");
+        tablas.add("MetodosPago");
 
         TABLAS_VALIDAS = Collections.unmodifiableSet(tablas);
     }
@@ -165,5 +166,10 @@ public final class IdGenerator {
     // genera ID para usuario
     public static String parUsuario() {
         return generar(AppConfig.PREFIX_USUARIO, "Usuarios");
+    }
+
+    // genera ID para metodo de pago
+    public static String parMetodoPago() {
+        return generar(AppConfig.PREFIX_METODO_PAGO, "MetodosPago");
     }
 }

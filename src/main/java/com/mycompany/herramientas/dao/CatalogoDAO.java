@@ -265,7 +265,7 @@ public class CatalogoDAO {
         List<MetodoPago> lista = new ArrayList<>();
         String sql =
             "SELECT id, nombre_metodo, estado " +
-            "FROM MetodosPago ORDER BY nombre_metodo";
+            "FROM MetodosPago ORDER BY id";
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -290,7 +290,7 @@ public class CatalogoDAO {
         String sql =
             "SELECT id, nombre_metodo, estado " +
             "FROM MetodosPago WHERE estado = 'activo' " +
-            "ORDER BY nombre_metodo";
+            "ORDER BY id";
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -389,6 +389,16 @@ public class CatalogoDAO {
             boolean ok = ps.executeUpdate() > 0;
             if (ok) LOGGER.info("MetodoPago " + id + " → " + estado);
             return ok;
+        }
+    }
+
+    // elimina físicamente un método de pago
+    public boolean deleteMetodoPago(String id) throws SQLException {
+        String sql = "DELETE FROM MetodosPago WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, id);
+            return ps.executeUpdate() > 0;
         }
     }
 
