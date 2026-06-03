@@ -123,6 +123,11 @@ public class InscripcionService {
                 return Resultado.yaInscrito(cliente, clase);
             }
 
+            InscripcionClase inscripcion = new InscripcionClase();
+            inscripcion.setId(com.mycompany.herramientas.dao.IdGenerator.parInscripcion());
+            inscripcion.setCliente(cliente);
+            inscripcion.setClase(clase);
+
             // transacción
             DatabaseConnection.beginTransaction();
             Connection txCon = DatabaseConnection.getConnection();
@@ -134,11 +139,6 @@ public class InscripcionService {
                 DatabaseConnection.rollback();
                 return Resultado.sinCupo(clase);
             }
-
-            InscripcionClase inscripcion = new InscripcionClase();
-            inscripcion.setId(com.mycompany.herramientas.dao.IdGenerator.parInscripcion());
-            inscripcion.setCliente(cliente);
-            inscripcion.setClase(clase);
 
             inscripcionDAO.save(txCon, inscripcion);
 
