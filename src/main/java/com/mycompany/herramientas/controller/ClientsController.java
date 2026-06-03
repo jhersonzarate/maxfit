@@ -409,12 +409,24 @@ public class ClientsController extends AbstractController {
             if (fechaNacStr != null && !fechaNacStr.isBlank()) {
 
                 try {
+                    LocalDate fechaNacimiento = LocalDate.parse(fechaNacStr);
+                    
+                    // Regla de negocio: Fecha no puede ser futura
+                    if (fechaNacimiento.isAfter(LocalDate.now())) {
+                        volverAlFormulario(req, resp, esNuevo, id, "La fecha de nacimiento no puede estar en el futuro.");
+                        return;
+                    }
 
-                    cliente.setFechaNacimiento(
-                            LocalDate.parse(fechaNacStr)
-                    );
+                    // Regla de negocio: Mayoría de edad (18 años)
+                    long edad = java.time.temporal.ChronoUnit.YEARS.between(fechaNacimiento, LocalDate.now());
+                    if (edad < 18) {
+                        volverAlFormulario(req, resp, esNuevo, id, "El cliente debe ser mayor de edad (18 años o más).");
+                        return;
+                    }
 
-                } catch (DateTimeParseException e) {
+                    cliente.setFechaNacimiento(fechaNacimiento);
+
+                } catch (java.time.format.DateTimeParseException e) {
 
                     volverAlFormulario(
                             req,
@@ -424,6 +436,15 @@ public class ClientsController extends AbstractController {
                             "El formato de fecha no es válido."
                     );
 
+                    return;
+                }
+            }
+
+            // Regla de negocio: Duplicidad de DNI
+            if (esNuevo) {
+                Cliente clienteExistente = clienteDAO.findByDocument(numeroDoc);
+                if (clienteExistente != null) {
+                    volverAlFormulario(req, resp, esNuevo, id, "El documento ingresado ya está registrado para otro cliente.");
                     return;
                 }
             }
