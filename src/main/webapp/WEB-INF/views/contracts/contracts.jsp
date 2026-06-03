@@ -56,8 +56,56 @@
     </c:choose>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/modules.css">
 
+    <%-- TomSelect para buscador de clientes --%>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+
     <%-- ── Estilos específicos del módulo de contratos ──────── --%>
     <style>
+        /* Ajustes de TomSelect para combinar con el tema oscuro */
+        .ts-wrapper {
+            margin-bottom: 0;
+        }
+        .ts-control, .ts-wrapper.focus .ts-control {
+            background-color: var(--clr-surface) !important;
+            border: 1px solid var(--clr-border) !important;
+            color: var(--clr-text) !important;
+            border-radius: var(--radius-sm) !important;
+            padding: 0.65rem 1rem !important;
+            font-family: inherit;
+            box-shadow: none !important;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+        }
+        .ts-control.focus, .ts-wrapper.focus .ts-control {
+            border-color: rgba(255, 255, 255, 0.3) !important; /* un leve resaltado al hacer click */
+        }
+        .ts-control > input, .ts-control.focus > input {
+            color: var(--clr-text) !important;
+            background-color: transparent !important;
+            font-family: inherit !important;
+            font-size: 0.9rem !important;
+        }
+        .ts-control > input::placeholder {
+            color: var(--clr-text-muted) !important;
+        }
+        .ts-dropdown {
+            background-color: var(--clr-surface) !important;
+            border: 1px solid var(--clr-border) !important;
+            color: var(--clr-text) !important;
+            border-radius: var(--radius-sm) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+            margin-top: 4px;
+        }
+        .ts-dropdown .option {
+            padding: 0.65rem 1rem;
+            font-size: 0.9rem;
+            color: var(--clr-text) !important;
+        }
+        .ts-dropdown .option.active, .ts-dropdown .option:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: var(--clr-text) !important;
+        }
         /* ── Tarjeta de resumen de membresía en el formulario ── */
         .membresia-preview {
             background: var(--clr-surface);
@@ -997,7 +1045,7 @@
                                                 required>
                                             <option value="">— Seleccionar plan —</option>
                                             <c:forEach var="mem" items="${membresias}">
-                                                <option value="<c:out value='${mem.id}'/>">
+                                                <option value="<c:out value='${mem.id}'/>" data-precio="<c:out value='${mem.precio}'/>">
                                                     <c:out value="${mem.nombreMembresia}"/>
                                                     — S/ <fmt:formatNumber value="${mem.precio}" pattern="#,##0.00"/>
                                                     (<c:out value="${mem.duracionMeses}"/> mes(es))
@@ -1399,5 +1447,37 @@
     </div><%-- /app-main --%>
 </div><%-- /app-shell --%>
 
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Inicializar buscador avanzado para cliente
+        const clienteSelect = document.getElementById('clienteId');
+        if (clienteSelect) {
+            new TomSelect(clienteSelect, {
+                create: false,
+                sortField: { field: "text", direction: "asc" },
+                placeholder: 'Escribe para buscar un cliente...'
+            });
+        }
+
+        const selectMembresia = document.getElementById('membresiaId');
+        const inputMonto = document.getElementById('montoPagado');
+
+        if (selectMembresia && inputMonto) {
+            selectMembresia.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const precio = selectedOption.getAttribute('data-precio');
+                
+                if (precio) {
+                    // Autocompletamos con 2 decimales
+                    inputMonto.value = parseFloat(precio).toFixed(2);
+                } else {
+                    inputMonto.value = '';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

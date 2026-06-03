@@ -238,51 +238,53 @@
                                     </div>
                                 </div>
 
-                                <%-- Sección: Documento de identidad --%>
-                                <div class="form-section-divider">
-                                    <span class="form-section-divider__label">Documento de identidad</span>
-                                </div>
-
-                                <div class="form-row">
-                                    <%-- Tipo de documento --%>
-                                    <div class="form-field">
-                                        <label for="idTipoDocumento">
-                                            Tipo de documento <span class="required-star">*</span>
-                                        </label>
-                                        <select id="idTipoDocumento"
-                                                name="idTipoDocumento"
-                                                class="form-control"
-                                                required>
-                                            <option value="">— Seleccionar —</option>
-                                            <c:forEach var="td" items="${tiposDocumento}">
-                                                <option value="<c:out value='${td.id}'/>"
-                                                    ${cliente.tipoDocumento != null and cliente.tipoDocumento.id eq td.id ? 'selected' : ''}>
-                                                    <c:out value="${td.abreviado}"/> —
-                                                    <c:out value="${td.nombreDocumento}"/>
-                                                </option>
-                                            </c:forEach>
-                                        </select>
+                                <c:if test="${not modoEdicion}">
+                                    <%-- Sección: Documento de identidad --%>
+                                    <div class="form-section-divider">
+                                        <span class="form-section-divider__label">Documento de identidad</span>
                                     </div>
 
-                                    <%-- Número de documento --%>
-                                    <div class="form-field">
-                                        <label for="numeroDocumento">
-                                            Número de documento <span class="required-star">*</span>
-                                        </label>
-                                        <input type="text"
-                                               id="numeroDocumento"
-                                               name="numeroDocumento"
-                                               class="form-control"
-                                               placeholder="Ej: 12345678"
-                                               maxlength="20"
-                                               required
-                                               autocomplete="off"
-                                               value="<c:out value='${cliente.numeroDocumento}'/>">
-                                        <span class="form-field__hint">
-                                            Revisa el tipo de documento para el formato correcto
-                                        </span>
+                                    <div class="form-row">
+                                        <%-- Tipo de documento --%>
+                                        <div class="form-field">
+                                            <label for="idTipoDocumento">
+                                                Tipo de documento <span class="required-star">*</span>
+                                            </label>
+                                            <select id="idTipoDocumento"
+                                                    name="idTipoDocumento"
+                                                    class="form-control"
+                                                    required>
+                                                <option value="">— Seleccionar —</option>
+                                                <c:forEach var="td" items="${tiposDocumento}">
+                                                    <option value="<c:out value='${td.id}'/>"
+                                                        ${cliente.tipoDocumento != null and cliente.tipoDocumento.id eq td.id ? 'selected' : ''}>
+                                                        <c:out value="${td.abreviado}"/> —
+                                                        <c:out value="${td.nombreDocumento}"/>
+                                                    </option>
+                                                </c:forEach>
+                                            </select>
+                                        </div>
+
+                                        <%-- Número de documento --%>
+                                        <div class="form-field">
+                                            <label for="numeroDocumento">
+                                                Número de documento <span class="required-star">*</span>
+                                            </label>
+                                            <input type="text"
+                                                   id="numeroDocumento"
+                                                   name="numeroDocumento"
+                                                   class="form-control"
+                                                   placeholder="Ej: 12345678"
+                                                   maxlength="20"
+                                                   required
+                                                   autocomplete="off"
+                                                   value="<c:out value='${cliente.numeroDocumento}'/>">
+                                            <span class="form-field__hint">
+                                                Revisa el tipo de documento para el formato correcto
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
+                                </c:if>
 
                                 <%-- Sección: Contacto --%>
                                 <div class="form-section-divider">

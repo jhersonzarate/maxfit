@@ -328,54 +328,53 @@ public class ClientsController extends AbstractController {
             return;
         }
 
-        // validar documento
-        if (idTipoDoc == null || numeroDoc == null) {
-
-            volverAlFormulario(
-                    req,
-                    resp,
-                    esNuevo,
-                    id,
-                    "Debe seleccionar un tipo de documento e ingresar el número."
-            );
-
-            return;
+        // validar documento SOLO si es nuevo
+        if (esNuevo) {
+            if (idTipoDoc == null || numeroDoc == null || idTipoDoc.isBlank() || numeroDoc.isBlank()) {
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        "Debe seleccionar un tipo de documento e ingresar el número."
+                );
+                return;
+            }
         }
 
         try {
 
-            TipoDocumento tipoDoc =
-                    catalogoDAO.findTipoDocumentoById(idTipoDoc);
+            TipoDocumento tipoDoc = null;
 
-            // si el tipo de documento no existe
-            if (tipoDoc == null) {
+            if (esNuevo) {
+                tipoDoc = catalogoDAO.findTipoDocumentoById(idTipoDoc);
 
-                volverAlFormulario(
-                        req,
-                        resp,
-                        esNuevo,
-                        id,
-                        "El tipo de documento seleccionado no es válido."
-                );
+                // si el tipo de documento no existe
+                if (tipoDoc == null) {
+                    volverAlFormulario(
+                            req,
+                            resp,
+                            esNuevo,
+                            id,
+                            "El tipo de documento seleccionado no es válido."
+                    );
+                    return;
+                }
 
-                return;
-            }
+                DocumentoValidator.ResultadoValidacion validacion =
+                        DocumentoValidator.validar(tipoDoc, numeroDoc);
 
-            DocumentoValidator.ResultadoValidacion validacion =
-                    DocumentoValidator.validar(tipoDoc, numeroDoc);
-
-            // si el documento no cumple formato
-            if (!validacion.isValido()) {
-
-                volverAlFormulario(
-                        req,
-                        resp,
-                        esNuevo,
-                        id,
-                        validacion.getMensaje()
-                );
-
-                return;
+                // si el documento no cumple formato
+                if (!validacion.isValido()) {
+                    volverAlFormulario(
+                            req,
+                            resp,
+                            esNuevo,
+                            id,
+                            validacion.getMensaje()
+                    );
+                    return;
+                }
             }
 
             // construyo el objeto cliente
@@ -383,14 +382,20 @@ public class ClientsController extends AbstractController {
 
             if (esNuevo) {
                 cliente.setId(IdGenerator.parCliente());
+                cliente.setTipoDocumento(tipoDoc);
+                cliente.setNumeroDocumento(numeroDoc);
             } else {
                 cliente.setId(id);
+                // Por seguridad, recuperamos el documento original de la base de datos
+                Cliente clienteOriginal = clienteDAO.findById(id);
+                if (clienteOriginal != null) {
+                    cliente.setTipoDocumento(clienteOriginal.getTipoDocumento());
+                    cliente.setNumeroDocumento(clienteOriginal.getNumeroDocumento());
+                }
             }
 
             cliente.setNombre(nombre);
             cliente.setApellido(apellido);
-            cliente.setTipoDocumento(tipoDoc);
-            cliente.setNumeroDocumento(numeroDoc);
             cliente.setEmail(email);
             cliente.setTelefono(telefono);
 
