@@ -799,19 +799,13 @@
 
                                     <%-- Filtro por cliente --%>
                                     <div class="form-field">
-                                        <label for="fClienteId">Cliente</label>
-                                        <select id="fClienteId"
-                                                name="clienteId"
-                                                class="form-control">
-                                            <option value="">— Todos los clientes —</option>
-                                            <c:forEach var="cli" items="${clientes}">
-                                                <option value="<c:out value='${cli.id}'/>"
-                                                    ${clienteId eq cli.id ? 'selected' : ''}>
-                                                    <c:out value="${cli.apellido}"/>,
-                                                    <c:out value="${cli.nombre}"/>
-                                                </option>
-                                            </c:forEach>
-                                        </select>
+                                        <label for="fClienteBusqueda">Cliente</label>
+                                        <input type="text"
+                                               id="fClienteBusqueda"
+                                               name="clienteBusqueda"
+                                               class="form-control"
+                                               placeholder="Buscar por nombre..."
+                                               value="<c:out value='${clienteBusqueda}'/>">
                                     </div>
 
                                     <%-- Filtro desde --%>
@@ -851,7 +845,7 @@
                                 </div>
 
                                 <%-- Limpiar filtros --%>
-                                <c:if test="${not empty clienteId or not empty desde or not empty hasta}">
+                                <c:if test="${not empty clienteBusqueda or not empty desde or not empty hasta}">
                                     <div style="margin-top:0.65rem;">
                                         <a href="${pageContext.request.contextPath}/attendance?action=hist"
                                            class="btn btn-ghost btn-sm">
@@ -906,7 +900,7 @@
                     </c:if>
 
                     <%-- Banner de filtros activos --%>
-                    <c:if test="${not empty clienteId or not empty desde or not empty hasta}">
+                    <c:if test="${not empty clienteBusqueda or not empty desde or not empty hasta}">
                         <div class="hist-filter-banner">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -920,8 +914,8 @@
                             </svg>
                             <span class="hist-filter-banner__text">
                                 Filtros activos:
-                                <c:if test="${not empty clienteId}">
-                                    <strong>cliente</strong>
+                                <c:if test="${not empty clienteBusqueda}">
+                                    <strong><c:out value="${clienteBusqueda}"/></strong>
                                 </c:if>
                                 <c:if test="${not empty desde}">
                                     &nbsp;· desde <strong><c:out value="${desde}"/></strong>

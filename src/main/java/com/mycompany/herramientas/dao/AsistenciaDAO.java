@@ -45,7 +45,7 @@ public class AsistenciaDAO {
     // filtro combinado para RF-05: parámetros opcionales pasados como NULL
     private static final String SQL_FILTER =
         SQL_SELECT_BASE +
-        "WHERE (? IS NULL OR con.id_cliente = ?) " +
+        "WHERE (? IS NULL OR cli.nombre LIKE ? OR cli.apellido LIKE ?) " +
         "AND   (? IS NULL OR a.fecha >= ?) " +
         "AND   (? IS NULL OR a.fecha <= ?) " +
         "ORDER BY a.fecha DESC, a.hora_ingreso DESC";
@@ -105,36 +105,39 @@ public class AsistenciaDAO {
     }
 
     // filtro combinado para RF-05 — cualquier parámetro puede ser null para ignorarlo
-    public List<Asistencia> filter(String clienteId,
+    public List<Asistencia> filter(String clienteBusqueda,
                                     LocalDate desde,
                                     LocalDate hasta) throws SQLException {
         List<Asistencia> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FILTER)) {
 
-            // clienteId aparece dos veces en el WHERE
-            if (clienteId != null) {
-                ps.setString(1, clienteId);
-                ps.setString(2, clienteId);
+            // clienteBusqueda aparece tres veces en el WHERE
+            if (clienteBusqueda != null && !clienteBusqueda.trim().isEmpty()) {
+                String term = clienteBusqueda.trim() + "%";
+                ps.setString(1, term);
+                ps.setString(2, term);
+                ps.setString(3, term);
             } else {
                 ps.setNull(1, Types.VARCHAR);
                 ps.setNull(2, Types.VARCHAR);
+                ps.setNull(3, Types.VARCHAR);
             }
             // límite inferior del rango de fechas
             if (desde != null) {
-                ps.setDate(3, Date.valueOf(desde));
                 ps.setDate(4, Date.valueOf(desde));
+                ps.setDate(5, Date.valueOf(desde));
             } else {
-                ps.setNull(3, Types.DATE);
                 ps.setNull(4, Types.DATE);
+                ps.setNull(5, Types.DATE);
             }
             // límite superior del rango de fechas
             if (hasta != null) {
-                ps.setDate(5, Date.valueOf(hasta));
                 ps.setDate(6, Date.valueOf(hasta));
+                ps.setDate(7, Date.valueOf(hasta));
             } else {
-                ps.setNull(5, Types.DATE);
                 ps.setNull(6, Types.DATE);
+                ps.setNull(7, Types.DATE);
             }
 
             try (ResultSet rs = ps.executeQuery()) {

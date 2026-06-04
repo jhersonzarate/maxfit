@@ -18,24 +18,24 @@ public class MembresiaDAO {
 
     // listar todas las membresías
     private static final String SQL_FIND_ALL =
-        "SELECT id, nombre_membresia, precio, duracion_meses, descripcion " +
+        "SELECT id, nombre_membresia, precio, duracion_meses, descripcion, estado " +
         "FROM Membresias " +
         "ORDER BY duracion_meses ASC, precio ASC";
 
     // buscar membresía por ID
     private static final String SQL_FIND_BY_ID =
-        "SELECT id, nombre_membresia, precio, duracion_meses, descripcion " +
+        "SELECT id, nombre_membresia, precio, duracion_meses, descripcion, estado " +
         "FROM Membresias WHERE id = ?";
 
     // registrar membresía
     private static final String SQL_INSERT =
-        "INSERT INTO Membresias (id, nombre_membresia, precio, duracion_meses, descripcion) " +
-        "VALUES (?, ?, ?, ?, ?)";
+        "INSERT INTO Membresias (id, nombre_membresia, precio, duracion_meses, descripcion, estado) " +
+        "VALUES (?, ?, ?, ?, ?, ?)";
 
     // actualizar membresía
     private static final String SQL_UPDATE =
         "UPDATE Membresias " +
-        "SET nombre_membresia = ?, precio = ?, duracion_meses = ?, descripcion = ? " +
+        "SET nombre_membresia = ?, precio = ?, duracion_meses = ?, descripcion = ?, estado = ? " +
         "WHERE id = ?";
 
     // eliminar membresía
@@ -46,6 +46,12 @@ public class MembresiaDAO {
     private static final String SQL_COUNT =
         "SELECT COUNT(*) FROM Membresias";
 
+    // buscar membresías activas
+    private static final String SQL_FIND_ACTIVES =
+        "SELECT id, nombre_membresia, precio, duracion_meses, descripcion, estado " +
+        "FROM Membresias WHERE estado = 'activo' " +
+        "ORDER BY duracion_meses ASC, precio ASC";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     // obtener todas las membresías
@@ -55,6 +61,23 @@ public class MembresiaDAO {
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
+        }
+
+        return lista;
+    }
+
+    // obtener todas las membresías activas
+    public List<Membresia> findActivas() throws SQLException {
+
+        List<Membresia> lista = new ArrayList<>();
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_ACTIVES);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -155,6 +178,7 @@ public class MembresiaDAO {
 
             // descripción puede ser null
             setNullableString(ps, 5, m.getDescripcion());
+            ps.setString(6, m.getEstado());
 
             ps.executeUpdate();
 
@@ -178,8 +202,9 @@ public class MembresiaDAO {
             ps.setInt(3, m.getDuracionMeses());
 
             setNullableString(ps, 4, m.getDescripcion());
+            ps.setString(5, m.getEstado());
 
-            ps.setString(5, m.getId());
+            ps.setString(6, m.getId());
 
             ps.executeUpdate();
 
@@ -204,6 +229,9 @@ public class MembresiaDAO {
 
         // descripción nullable
         m.setDescripcion(rs.wasNull() ? null : desc);
+        
+        String est = rs.getString("estado");
+        m.setEstado(est != null ? est : "activo");
 
         return m;
     }

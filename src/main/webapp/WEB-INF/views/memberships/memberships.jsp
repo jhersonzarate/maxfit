@@ -716,6 +716,9 @@
                                         <div class="plan-card__header">
                                             <h2 class="plan-card__nombre">
                                                 <c:out value="${mem.nombreMembresia}"/>
+                                                <c:if test="${mem.estado eq 'inactivo'}">
+                                                    <span style="font-size: 0.6rem; color: var(--clr-red); border: 1px solid var(--clr-red); border-radius: 4px; padding: 2px 4px; vertical-align: middle; margin-left: 4px;">INACTIVO</span>
+                                                </c:if>
                                             </h2>
                                             <span class="plan-card__id-badge">
                                                 <c:out value="${mem.id}"/>
@@ -853,6 +856,41 @@
                                                                      18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
                                                         </svg>
                                                     </a>
+
+                                                    <%-- Desactivar/Activar --%>
+                                                    <form action="${pageContext.request.contextPath}/memberships"
+                                                          method="post"
+                                                          style="display:inline;">
+                                                        <input type="hidden" name="action" value="toggleStatus">
+                                                        <input type="hidden" name="id"     value="<c:out value='${mem.id}'/>">
+                                                        <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
+                                                        <c:choose>
+                                                            <c:when test="${mem.estado eq 'activo' or empty mem.estado}">
+                                                                <button type="submit"
+                                                                        class="btn btn-ghost btn-sm btn-icon"
+                                                                        title="Desactivar plan ${mem.nombreMembresia}"
+                                                                        style="color: var(--clr-orange);">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                                    </svg>
+                                                                </button>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <button type="submit"
+                                                                        class="btn btn-ghost btn-sm btn-icon"
+                                                                        title="Activar plan ${mem.nombreMembresia}"
+                                                                        style="color: var(--clr-success);">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                </button>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </form>
 
                                                     <%-- Eliminar --%>
                                                     <form action="${pageContext.request.contextPath}/memberships"

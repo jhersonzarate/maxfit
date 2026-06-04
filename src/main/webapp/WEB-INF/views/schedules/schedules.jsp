@@ -1838,6 +1838,40 @@
                                         <span class="horario-form-header__title">Inscribir alumno</span>
                                     </div>
 
+                                    <%-- Formulario de búsqueda avanzada con AJAX --%>
+                                    <div class="horario-form-body" style="padding-bottom: 0; border-bottom: 1px solid var(--clr-border-light);">
+                                        <div class="form-field" style="margin-bottom:0;">
+                                            <label for="inputBusquedaAjax">Filtro de búsqueda avanzada</label>
+                                            <div style="display:flex; gap:0.5rem;">
+                                                <input type="text" id="inputBusquedaAjax" class="form-control" 
+                                                       placeholder="Buscar nombre o doc..." 
+                                                       style="flex:1;">
+                                                <button type="button" class="btn btn-secondary btn-sm" title="Filtrar" onclick="buscarClientesAjax()">
+                                                    Filtrar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <script>
+                                        function buscarClientesAjax() {
+                                            const query = document.getElementById('inputBusquedaAjax').value;
+                                            fetch('${pageContext.request.contextPath}/schedules?action=buscarClientesAjax&q=' + encodeURIComponent(query))
+                                                .then(res => res.text())
+                                                .then(html => {
+                                                    document.getElementById('clienteId').innerHTML = html;
+                                                })
+                                                .catch(err => console.error('Error al buscar clientes:', err));
+                                        }
+
+                                        // Búsqueda mientras se escribe (debounce)
+                                        let timeoutBusquedaAjax;
+                                        document.getElementById('inputBusquedaAjax')?.addEventListener('input', function() {
+                                            clearTimeout(timeoutBusquedaAjax);
+                                            timeoutBusquedaAjax = setTimeout(() => buscarClientesAjax(), 400);
+                                        });
+                                    </script>
+
                                     <form action="${pageContext.request.contextPath}/schedules"
                                           method="post"
                                           novalidate>
