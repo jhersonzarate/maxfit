@@ -123,8 +123,10 @@ public class InscripcionService {
                 return Resultado.yaInscrito(cliente, clase);
             }
 
-            // generar ID ANTES de la transacción para no cerrar la conexión
-            String nuevoId = com.mycompany.herramientas.dao.IdGenerator.parInscripcion();
+            InscripcionClase inscripcion = new InscripcionClase();
+            inscripcion.setId(com.mycompany.herramientas.dao.IdGenerator.parInscripcion());
+            inscripcion.setCliente(cliente);
+            inscripcion.setClase(clase);
 
             // transacción
             DatabaseConnection.beginTransaction();
@@ -137,11 +139,6 @@ public class InscripcionService {
                 DatabaseConnection.rollback();
                 return Resultado.sinCupo(clase);
             }
-
-            InscripcionClase inscripcion = new InscripcionClase();
-            inscripcion.setId(nuevoId);
-            inscripcion.setCliente(cliente);
-            inscripcion.setClase(clase);
 
             inscripcionDAO.save(txCon, inscripcion);
 
