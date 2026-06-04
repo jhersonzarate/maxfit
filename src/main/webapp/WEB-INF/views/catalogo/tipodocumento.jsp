@@ -106,14 +106,6 @@
             color: var(--clr-text-muted);
             border: 1px solid var(--clr-border);
         }
-        .cat-form-panel {
-            background: var(--clr-card);
-            border: 1px solid var(--clr-card-border);
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            max-width: 720px;
-            animation: fadeSlideUp 0.42s cubic-bezier(0.4,0,0.2,1) both 0.05s;
-        }
         .estado-pill {
             display: inline-flex;
             align-items: center;
@@ -158,6 +150,44 @@
             .cat-kpi { border-right: none; border-bottom: 1px solid var(--clr-border-light); }
             .cat-kpi:last-child { border-bottom: none; }
         }
+        /* Modal Styles */
+        .pm-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .pm-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+        .pm-modal {
+            background: var(--clr-card); width: 100%; max-width: 520px;
+            border-radius: var(--radius-xl); border: 1px solid var(--clr-card-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pm-modal-overlay.is-open .pm-modal { transform: translateY(0); }
+        .pm-modal__header {
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--clr-border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
+        }
+        .pm-modal__close {
+            background: none; border: none; color: var(--clr-text-muted);
+            cursor: pointer; padding: 0.5rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .pm-modal__close:hover { background: rgba(255,255,255,0.05); color: var(--clr-text); }
+        
+        .form-row-custom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 480px) {
+            .form-row-custom { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -180,175 +210,29 @@
                 </div>
             </div>
 
-            <%-- KPI strip + Tabla: solo en modo lista --%>
-            <c:if test="${!modoForm}">
-                <c:set var="tdActivos"   value="0"/>
-                <c:set var="tdInactivos" value="0"/>
-                <c:forEach var="td" items="${tiposDocumento}">
-                    <c:if test="${td.activo}">  <c:set var="tdActivos"   value="${tdActivos + 1}"/></c:if>
-                    <c:if test="${!td.activo}"> <c:set var="tdInactivos" value="${tdInactivos + 1}"/></c:if>
-                </c:forEach>
-                <div class="cat-kpi-strip">
-                    <div class="cat-kpi">
-                        <span class="cat-kpi__num">${fn:length(tiposDocumento)}</span>
-                        <span class="cat-kpi__label">Total tipos</span>
-                    </div>
-                    <div class="cat-kpi">
-                        <span class="cat-kpi__num green">${tdActivos}</span>
-                        <span class="cat-kpi__label">Activos</span>
-                    </div>
-                    <div class="cat-kpi">
-                        <span class="cat-kpi__num dim">${tdInactivos}</span>
-                        <span class="cat-kpi__label">Inactivos</span>
-                    </div>
+            <%-- KPI strip --%>
+            <c:set var="tdActivos"   value="0"/>
+            <c:set var="tdInactivos" value="0"/>
+            <c:forEach var="td" items="${tiposDocumento}">
+                <c:if test="${td.activo}">  <c:set var="tdActivos"   value="${tdActivos + 1}"/></c:if>
+                <c:if test="${!td.activo}"> <c:set var="tdInactivos" value="${tdInactivos + 1}"/></c:if>
+            </c:forEach>
+            <div class="cat-kpi-strip">
+                <div class="cat-kpi">
+                    <span class="cat-kpi__num">${fn:length(tiposDocumento)}</span>
+                    <span class="cat-kpi__label">Total tipos</span>
                 </div>
-            </c:if>
-
-            <%-- Formulario nuevo / edición --%>
-            <c:if test="${modoForm}">
-                <div class="cat-form-panel" style="margin-bottom:1.5rem;">
-                    <div class="form-card__header">
-                        <div class="form-card__header-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0
-                                         1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9ZM12 6.375a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="form-card__header-title">
-                                ${modoEdicion ? 'Editar Tipo de Documento' : 'Nuevo Tipo de Documento'}
-                            </p>
-                            <p class="form-card__header-sub">
-                                <c:if test="${modoEdicion}">ID: <c:out value="${entidad.id}"/></c:if>
-                                <c:if test="${!modoEdicion}">El ID se genera automáticamente del abreviado</c:if>
-                            </p>
-                        </div>
-                    </div>
-
-                    <c:if test="${not empty errorMsg}">
-                        <div class="module-alert module-alert--error" style="margin:1rem 1.5rem 0;">
-                            <svg class="module-alert__icon" xmlns="http://www.w3.org/2000/svg"
-                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
-                                         0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
-                                         0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
-                            </svg>
-                            <div class="module-alert__body">
-                                <p class="module-alert__text"><c:out value="${errorMsg}"/></p>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <form action="${pageContext.request.contextPath}/tipodocumento"
-                          method="post" novalidate autocomplete="off">
-                        <input type="hidden" name="action" value="save">
-                        <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
-                        <c:if test="${modoEdicion}">
-                            <input type="hidden" name="id" value="<c:out value='${entidad.id}'/>">
-                        </c:if>
-
-                        <div style="padding:1.35rem 1.5rem; display:flex; flex-direction:column; gap:1rem;">
-                            <div class="form-section-divider">
-                                <span class="form-section-divider__label">Datos del tipo de documento</span>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-field">
-                                    <label for="nombreDocumento">
-                                        Nombre completo <span class="required-star">*</span>
-                                    </label>
-                                    <input type="text" id="nombreDocumento" name="nombreDocumento"
-                                           class="form-control"
-                                           placeholder="Ej: Documento Nacional de Identidad"
-                                           maxlength="100" required
-                                           value="<c:out value='${entidad.nombreDocumento}'/>">
-                                </div>
-                                <div class="form-field">
-                                    <label for="abreviado">
-                                        Abreviado <span class="required-star">*</span>
-                                    </label>
-                                    <input type="text" id="abreviado" name="abreviado"
-                                           class="form-control"
-                                           placeholder="Ej: DNI"
-                                           maxlength="10" required
-                                           style="text-transform:uppercase;"
-                                           value="<c:out value='${entidad.abreviado}'/>">
-                                    <span class="form-field__hint">
-                                        Se usará como prefijo del ID (TDOC-ABREVIADO)
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-field">
-                                    <label for="tamañoMin">
-                                        Longitud mínima <span class="required-star">*</span>
-                                    </label>
-                                    <input type="number" id="tamañoMin" name="tamañoMin"
-                                           class="form-control" placeholder="Ej: 8"
-                                           min="1" max="50" required
-                                           value="${entidad.tamañoMin > 0 ? entidad.tamañoMin : ''}">
-                                </div>
-                                <div class="form-field">
-                                    <label for="tamañoMax">
-                                        Longitud máxima <span class="required-star">*</span>
-                                    </label>
-                                    <input type="number" id="tamañoMax" name="tamañoMax"
-                                           class="form-control" placeholder="Ej: 8"
-                                           min="1" max="50" required
-                                           value="${entidad.tamañoMax > 0 ? entidad.tamañoMax : ''}">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-field">
-                                    <label for="estado-td">Estado</label>
-                                    <select id="estado-td" name="estado" class="form-control">
-                                        <option value="activo"
-                                            ${empty entidad.estado or entidad.estado eq 'activo' ? 'selected' : ''}>
-                                            Activo
-                                        </option>
-                                        <option value="inactivo"
-                                            ${entidad.estado eq 'inactivo' ? 'selected' : ''}>
-                                            Inactivo
-                                        </option>
-                                    </select>
-                                </div>
-                                <div class="form-field" style="justify-content:flex-end; padding-top:1.5rem;">
-                                    <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer;">
-                                        <input type="checkbox" name="esAlfanumerico" value="on"
-                                               ${entidad.esAlfanumerico ? 'checked' : ''}
-                                               style="width:16px;height:16px;accent-color:var(--clr-red);cursor:pointer;">
-                                        <span style="font-size:0.83rem; font-weight:500; color:var(--clr-text);">
-                                            Permite letras y números (alfanumérico)
-                                        </span>
-                                    </label>
-                                    <span class="form-field__hint" style="margin-top:0.25rem;">
-                                        Si está desmarcado, solo acepta dígitos numéricos
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-card__footer">
-                            <button type="submit" class="btn btn-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                </svg>
-                                ${modoEdicion ? 'Guardar cambios' : 'Crear tipo de documento'}
-                            </button>
-                            <a href="${pageContext.request.contextPath}/tipodocumento"
-                               class="btn btn-ghost">Cancelar</a>
-                        </div>
-                    </form>
+                <div class="cat-kpi">
+                    <span class="cat-kpi__num green">${tdActivos}</span>
+                    <span class="cat-kpi__label">Activos</span>
                 </div>
-            </c:if>
+                <div class="cat-kpi">
+                    <span class="cat-kpi__num dim">${tdInactivos}</span>
+                    <span class="cat-kpi__label">Inactivos</span>
+                </div>
+            </div>
 
-            <%-- Tabla: solo en modo lista --%>
-            <c:if test="${!modoForm}">
-                <div class="cat-table-wrapper">
+            <div class="cat-table-wrapper">
                     <div style="display:flex; align-items:center; justify-content:space-between;
                                 padding:0.9rem 1.35rem; border-bottom:1px solid var(--clr-border);
                                 background:var(--clr-surface);">
@@ -356,14 +240,14 @@
                                      text-transform:uppercase; color:var(--clr-text-muted);">
                             Tipos de Documento registrados
                         </span>
-                        <a href="${pageContext.request.contextPath}/tipodocumento?action=new"
+                        <button type="button" onclick="openTipoDocModal()"
                            class="btn btn-primary btn-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                             </svg>
                             Nuevo tipo
-                        </a>
+                        </button>
                     </div>
 
                     <c:choose>
@@ -385,37 +269,40 @@
                                         <tr>
                                             <td><span class="cell-id"><c:out value="${td.id}"/></span></td>
                                             <td>
-                                                <span style="font-weight:500; color:var(--clr-text); font-size:0.875rem;">
+                                                <span style="font-weight:500; color:var(--clr-text);">
                                                     <c:out value="${td.nombreDocumento}"/>
                                                 </span>
                                             </td>
                                             <td>
-                                                <span style="font-family:var(--font-display); font-weight:700;
-                                                             font-size:0.92rem; letter-spacing:0.05em; color:var(--clr-text);">
+                                                <span style="font-family:var(--font-mono); font-size:0.8rem; font-weight:700; color:var(--clr-text-dim);">
                                                     <c:out value="${td.abreviado}"/>
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="size-badge">
-                                                    <c:choose>
-                                                        <c:when test="${td.tamañoMin eq td.tamañoMax}">
-                                                            <c:out value="${td.tamañoMin}"/> dígitos
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <c:out value="${td.tamañoMin}"/>–<c:out value="${td.tamañoMax}"/>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </span>
+                                                <div style="display:inline-flex; align-items:center; gap:0.4rem;">
+                                                    <span class="size-badge" title="Mínimo"><c:out value="${td.tamañoMin}"/></span>
+                                                    <span style="color:var(--clr-border);">—</span>
+                                                    <span class="size-badge" title="Máximo"><c:out value="${td.tamañoMax}"/></span>
+                                                </div>
                                             </td>
                                             <td>
-                                                <c:choose>
-                                                    <c:when test="${td.esAlfanumerico}">
-                                                        <span class="alfa-badge alfa">Alfanumérico</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="alfa-badge num">Solo números</span>
-                                                    </c:otherwise>
-                                                </c:choose>
+                                                <span class="alfa-badge ${td.esAlfanumerico ? 'alfa' : 'num'}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                                                         style="width:0.8rem; height:0.8rem;">
+                                                        <c:choose>
+                                                            <c:when test="${td.esAlfanumerico}">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12"/>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V18Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z"/>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </svg>
+                                                    ${td.esAlfanumerico ? 'Alfa/Num' : 'Solo Num'}
+                                                </span>
                                             </td>
                                             <td>
                                                 <span class="estado-pill ${td.activo ? 'activo' : 'inactivo'}">
@@ -424,20 +311,30 @@
                                             </td>
                                             <td>
                                                 <div class="cell-actions">
-                                                    <a href="${pageContext.request.contextPath}/tipodocumento?action=edit&id=<c:out value='${td.id}'/>"
-                                                       class="btn btn-ghost btn-sm btn-icon" title="Editar tipo de documento">
+                                                    <button type="button"
+                                                       onclick="openTipoDocModal({
+                                                            id: '<c:out value='${td.id}'/>',
+                                                            nombreDocumento: '<c:out value='${fn:escapeXml(td.nombreDocumento)}'/>',
+                                                            abreviado: '<c:out value='${fn:escapeXml(td.abreviado)}'/>',
+                                                            tamañoMin: '${td.tamañoMin}',
+                                                            tamañoMax: '${td.tamañoMax}',
+                                                            esAlfanumerico: ${td.esAlfanumerico},
+                                                            estado: '${td.activo ? 'activo' : 'inactivo'}'
+                                                       })"
+                                                       class="btn btn-ghost btn-sm btn-icon" title="Editar">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                   d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/>
                                                         </svg>
-                                                    </a>
+                                                    </button>
                                                     <form action="${pageContext.request.contextPath}/tipodocumento"
                                                           method="post" class="toggle-estado-form">
                                                         <input type="hidden" name="action" value="toggle">
                                                         <input type="hidden" name="id"     value="<c:out value='${td.id}'/>">
                                                         <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
-                                                        <button type="submit"
+                                                        <button type="button"
+                                                                onclick="openActionModal(event, '${td.activo ? 'deactivate' : 'activate'}', '${fn:escapeXml(td.nombreDocumento)}')"
                                                                 class="btn ${td.activo ? 'btn-danger' : 'btn-success'} btn-sm btn-icon"
                                                                 title="${td.activo ? 'Desactivar' : 'Activar'}">
                                                             <c:choose>
@@ -454,6 +351,31 @@
                                                             </c:choose>
                                                         </button>
                                                     </form>
+                                                    <%-- Eliminar --%>
+                                                    <form action="${pageContext.request.contextPath}/tipodocumento"
+                                                          method="post"
+                                                          style="display:inline;">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="id"     value="<c:out value='${td.id}'/>">
+                                                        <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
+                                                        <button type="button"
+                                                                onclick="openActionModal(event, 'delete', '${fn:escapeXml(td.nombreDocumento)}')"
+                                                                class="btn btn-danger btn-sm btn-icon"
+                                                                title="Eliminar ${fn:escapeXml(td.nombreDocumento)}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107
+                                                                         1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0
+                                                                         1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772
+                                                                         5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12
+                                                                         .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0
+                                                                         0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964
+                                                                         51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09
+                                                                         2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>
@@ -464,7 +386,7 @@
                                         background:rgba(255,255,255,0.012);
                                         font-size:0.74rem; color:var(--clr-text-dim);">
                                 <strong style="color:var(--clr-text-muted);">${fn:length(tiposDocumento)}</strong>
-                                tipo(s) de documento registrados
+                                tipo(s) registrados
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -473,26 +395,245 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                          viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125
-                                                 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0
-                                                 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125
-                                                 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0
-                                                 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
+                                              d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0
+                                                 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9ZM12 6.375a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                                     </svg>
                                 </div>
-                                <p class="table-empty__title">Sin tipos de documento</p>
-                                <p class="table-empty__desc">Crea el primer tipo de documento para el sistema.</p>
-                                <a href="${pageContext.request.contextPath}/tipodocumento?action=new"
+                                <p class="table-empty__title">Sin tipos de documento registrados</p>
+                                <p class="table-empty__desc">Crea el primer tipo de documento.</p>
+                                <button type="button" onclick="openTipoDocModal()"
                                    class="btn btn-primary btn-sm" style="margin-top:0.5rem;">
-                                    Crear tipo de documento
-                                </a>
+                                    Crear tipo
+                                </button>
                             </div>
                         </c:otherwise>
                     </c:choose>
                 </div>
-            </c:if>
 
         </div><%-- /page-content --%>
+
+        <%-- ── Modal de Formulario ────────────────────────────────── --%>
+        <div id="tipoDocModal" class="pm-modal-overlay">
+            <div class="pm-modal">
+                <div class="pm-modal__header">
+                    <span id="tipoDocModalTitle">Nuevo Tipo de Documento</span>
+                    <button class="pm-modal__close" type="button" onclick="closeTipoDocModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form action="${pageContext.request.contextPath}/tipodocumento" method="post" autocomplete="off">
+                    <input type="hidden" name="action" value="save">
+                    <input type="hidden" name="id" id="tipoDocModalId" value="">
+                    <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+
+                    <div style="padding: 1.5rem;">
+                        
+                        <div id="tipoDocModalIdContainer" style="display:none; margin-bottom: 1.25rem;">
+                            <label style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                ID (Generado automáticamente)
+                            </label>
+                            <div id="tipoDocModalIdDisplay" style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-text-muted); background:var(--clr-surface); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--clr-border);">
+                            </div>
+                        </div>
+
+                        <div class="form-row-custom">
+                            <div>
+                                <label for="tipoDocModalNombre" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                    Nombre completo <span class="required-star">*</span>
+                                </label>
+                                <input type="text" id="tipoDocModalNombre" name="nombreDocumento" class="form-control"
+                                       placeholder="Ej: Documento Nacional..."
+                                       required maxlength="100"
+                                       style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                            </div>
+                            <div>
+                                <label for="tipoDocModalAbrev" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                    Abreviado <span class="required-star">*</span>
+                                </label>
+                                <input type="text" id="tipoDocModalAbrev" name="abreviado" class="form-control"
+                                       placeholder="Ej: DNI" required maxlength="10"
+                                       style="text-transform:uppercase; width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                            </div>
+                        </div>
+
+                        <div class="form-row-custom">
+                            <div>
+                                <label for="tipoDocModalMin" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                    Longitud mínima <span class="required-star">*</span>
+                                </label>
+                                <input type="number" id="tipoDocModalMin" name="tamañoMin" class="form-control"
+                                       placeholder="Ej: 8" required min="1" max="50"
+                                       style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                            </div>
+                            <div>
+                                <label for="tipoDocModalMax" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                    Longitud máxima <span class="required-star">*</span>
+                                </label>
+                                <input type="number" id="tipoDocModalMax" name="tamañoMax" class="form-control"
+                                       placeholder="Ej: 8" required min="1" max="50"
+                                       style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                            </div>
+                        </div>
+
+                        <div class="form-row-custom" style="margin-bottom: 1.75rem; align-items: flex-end;">
+                            <div>
+                                <label for="tipoDocModalEstado" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                    Estado
+                                </label>
+                                <select id="tipoDocModalEstado" name="estado" class="form-control" style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                                    <option value="activo">Activo</option>
+                                    <option value="inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div style="padding-bottom: 0.6rem;">
+                                <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer;">
+                                    <input type="checkbox" id="tipoDocModalAlfa" name="esAlfanumerico" value="on"
+                                           style="width:16px;height:16px;accent-color:var(--clr-red);cursor:pointer;">
+                                    <span style="font-size:0.83rem; font-weight:500; color:var(--clr-text);">
+                                        Permite letras y números
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--clr-border); display: flex; gap: 0.75rem; justify-content: flex-end; background: rgba(0,0,0,0.1);">
+                        <button type="button" class="btn btn-secondary" onclick="closeTipoDocModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openTipoDocModal(tipo) {
+                const modal = document.getElementById('tipoDocModal');
+                const title = document.getElementById('tipoDocModalTitle');
+                const idInput = document.getElementById('tipoDocModalId');
+                const idContainer = document.getElementById('tipoDocModalIdContainer');
+                const idDisplay = document.getElementById('tipoDocModalIdDisplay');
+                
+                const nombreInput = document.getElementById('tipoDocModalNombre');
+                const abrevInput = document.getElementById('tipoDocModalAbrev');
+                const minInput = document.getElementById('tipoDocModalMin');
+                const maxInput = document.getElementById('tipoDocModalMax');
+                const alfaInput = document.getElementById('tipoDocModalAlfa');
+                const estadoSelect = document.getElementById('tipoDocModalEstado');
+
+                if (tipo) {
+                    title.textContent = 'Editar Tipo de Documento';
+                    idInput.value = tipo.id;
+                    idContainer.style.display = 'block';
+                    idDisplay.textContent = tipo.id;
+                    
+                    nombreInput.value = tipo.nombreDocumento;
+                    abrevInput.value = tipo.abreviado;
+                    minInput.value = tipo.tamañoMin;
+                    maxInput.value = tipo.tamañoMax;
+                    alfaInput.checked = tipo.esAlfanumerico;
+                    estadoSelect.value = tipo.estado;
+                } else {
+                    title.textContent = 'Nuevo Tipo de Documento';
+                    idInput.value = '';
+                    idContainer.style.display = 'none';
+                    idDisplay.textContent = '';
+                    
+                    nombreInput.value = '';
+                    abrevInput.value = '';
+                    minInput.value = '';
+                    maxInput.value = '';
+                    alfaInput.checked = false;
+                    estadoSelect.value = 'activo';
+                }
+
+                modal.classList.add('is-open');
+                setTimeout(() => nombreInput.focus(), 100);
+            }
+
+            function closeTipoDocModal() {
+                document.getElementById('tipoDocModal').classList.remove('is-open');
+            }
+
+            // --- Confirm Modal Actions ---
+            let formToSubmit = null;
+
+            function openActionModal(event, type, methodName) {
+                event.preventDefault();
+                formToSubmit = event.currentTarget.closest('form');
+
+                const iconContainer = document.getElementById('actionModalIconContainer');
+                const icon = document.getElementById('actionModalIcon');
+                const text = document.getElementById('actionModalText');
+                const btn = document.getElementById('btnConfirmAction');
+
+                if (type === 'delete') {
+                    iconContainer.style.borderColor = '#f87171'; // red
+                    iconContainer.style.background = 'rgba(248,113,113,0.1)';
+                    icon.style.color = '#f87171';
+                    icon.textContent = '!';
+                    text.innerHTML = `Se eliminará de forma permanente <br><strong><span style="color: var(--clr-text-muted);">` + methodName + `</span></strong><br><br><span style="font-size:0.8rem">Solo se permite si no está en uso por clientes o empleados.</span>`;
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Sí, eliminar!';
+                } else if (type === 'deactivate') {
+                    iconContainer.style.borderColor = '#fbbf24'; // warning yellow
+                    iconContainer.style.background = 'rgba(251,191,36,0.1)';
+                    icon.style.color = '#fbbf24';
+                    icon.textContent = '!';
+                    text.innerHTML = `Se desactivará <br><strong><span style="color: var(--clr-text-muted);">` + methodName + `</span></strong>`;
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Sí, desactivar!';
+                } else if (type === 'activate') {
+                    iconContainer.style.borderColor = '#34d399'; // success green
+                    iconContainer.style.background = 'rgba(52,211,153,0.1)';
+                    icon.style.color = '#34d399';
+                    icon.textContent = '?';
+                    text.innerHTML = `Se activará <br><strong><span style="color: var(--clr-text-muted);">` + methodName + `</span></strong>`;
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Sí, activar!';
+                }
+
+                document.getElementById('actionModal').classList.add('is-open');
+            }
+
+            function closeActionModal() {
+                formToSubmit = null;
+                document.getElementById('actionModal').classList.remove('is-open');
+            }
+
+            function confirmAction() {
+                if (formToSubmit) {
+                    formToSubmit.submit();
+                }
+            }
+        </script>
+
+        <%-- ── Modal de Confirmación de Acción ─────────────────────── --%>
+        <div id="actionModal" class="pm-modal-overlay">
+            <div class="pm-modal" style="max-width: 400px; text-align: center; padding: 2rem 1.5rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <div id="actionModalIconContainer" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <span id="actionModalIcon" style="font-size: 3.5rem; line-height: 1; font-family: var(--font-display); padding-bottom: 0.5rem;"></span>
+                    </div>
+                </div>
+                <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--clr-text); margin-bottom: 0.75rem;">
+                    ¿Estás seguro?
+                </h2>
+                <p id="actionModalText" style="color: var(--clr-text-dim); font-size: 0.95rem; margin-bottom: 1.75rem; line-height: 1.5;">
+                </p>
+                <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                    <button type="button" class="btn" id="btnConfirmAction" onclick="confirmAction()" style="min-width: 120px; font-weight: bold;">
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeActionModal()" style="min-width: 120px; font-weight: bold; background: #473f3f; border-color: #473f3f;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div><%-- /app-main --%>
 </div><%-- /app-shell --%>
 </body>

@@ -47,6 +47,7 @@ public class CargoController extends AbstractController {
         switch (getAction(req)) {
             case "save":   guardar(req, resp);      break;
             case "toggle": toggleEstado(req, resp); break;
+            case "delete": delete(req, resp);       break;
             default:       redirigirA("/cargo", req, resp);
         }
     }
@@ -109,6 +110,24 @@ public class CargoController extends AbstractController {
         if (nombre == null || nombre.isBlank()) {
             mensajeError(req, "El nombre del cargo es obligatorio.");
             mostrarForm(req, resp, esNuevo ? null : id);
+            return;
+        }
+
+        try {
+            // Verificar que no exista otro cargo con el mismo nombre
+            for (Cargo c : catalogoDAO.findAllCargos()) {
+                if (c.getNombre().equalsIgnoreCase(nombre.trim())) {
+                    if (esNuevo || !c.getId().equals(id)) {
+                        mensajeError(req, "Ya existe un cargo registrado con ese nombre.");
+                        redirigirA("/cargo", req, resp);
+                        return;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al validar nombre de Cargo", e);
+            mensajeError(req, "Error al validar el cargo.");
+            redirigirA("/cargo", req, resp);
             return;
         }
 
@@ -184,6 +203,39 @@ public class CargoController extends AbstractController {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al cambiar estado Cargo: " + id, e);
             mensajeError(req, "Error al cambiar estado.");
+        }
+
+        redirigirA("/cargo", req, resp);
+    }
+
+    // ── Eliminar ───────────────────────────────────────────────
+    private void delete(HttpServletRequest req,
+                        HttpServletResponse resp)
+            throws ServletException, IOException {
+        String id = param(req, "id");
+        if (id == null) {
+            mensajeError(req, "ID no especificado.");
+            redirigirA("/cargo", req, resp);
+            return;
+        }
+
+        try {
+            com.mycompany.herramientas.dao.EmpleadoDAO empDAO = new com.mycompany.herramientas.dao.EmpleadoDAO();
+            if (!empDAO.findByCargo(id).isEmpty()) {
+                mensajeError(req, "No se puede eliminar: hay empleados asignados a este cargo.");
+                redirigirA("/cargo", req, resp);
+                return;
+            }
+
+            if (catalogoDAO.deleteCargo(id)) {
+                LOGGER.info("Cargo eliminado: " + id);
+                mensajeExito(req, "Cargo eliminado correctamente.");
+            } else {
+                mensajeError(req, "No se encontró el cargo a eliminar.");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al eliminar Cargo: " + id, e);
+            mensajeError(req, "Error al eliminar. Puede que esté en uso.");
         }
 
         redirigirA("/cargo", req, resp);
