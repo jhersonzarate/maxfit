@@ -61,6 +61,12 @@ public class ClientsController extends AbstractController {
                 mostrarDetalle(req, resp);
                 break;
 
+                /*
+         //para agregar buscador dinamico....
+            case "search":
+                buscarJson(req, resp);
+                break;
+               */
             default:
                 mostrarLista(req, resp);
         }
@@ -327,6 +333,21 @@ public class ClientsController extends AbstractController {
 
             return;
         }
+
+        //validacion para evitar Numeros en nombreApellido
+        if (!contieneSoloLetras(nombre)|| !contieneSoloLetras(apellido)) {
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El nombre y apellido no pueden contener números."
+            );
+
+            return;
+        }
+
 
         // validar documento
         if (idTipoDoc == null || numeroDoc == null) {
@@ -636,4 +657,6 @@ public class ClientsController extends AbstractController {
                 || "Femenino".equals(genero)
                 || "Otro".equals(genero);
     }
+
+
 }

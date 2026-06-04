@@ -289,6 +289,19 @@ public class EmployeesController extends AbstractController {
             return;
         }
 
+        //valida que no exista letras en los campos de nombre y apellido.
+        if (!contieneSoloLetras(nombre)|| !contieneSoloLetras(apellido))
+        {
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El nombre y apellido solo deben contener letras."
+            );
+            return;
+        }
+
         if (email == null) {
 
             volverAlFormulario(

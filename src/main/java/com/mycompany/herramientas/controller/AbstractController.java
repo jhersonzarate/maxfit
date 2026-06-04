@@ -12,6 +12,8 @@ import java.io.IOException;
 // controlador base con helpers reutilizables
 public abstract class AbstractController extends HttpServlet {
 
+
+
     // ─── helpers de sesión ─────────────────────────────────────
 
     // obtener id del usuario autenticado
@@ -102,6 +104,11 @@ public abstract class AbstractController extends HttpServlet {
         return (val != null && !val.trim().isEmpty())
                 ? val.trim()
                 : null;
+    }
+    protected boolean contieneSoloLetras(String texto) {
+        if (texto == null || texto.trim().isEmpty()) return false;
+        // Es una expresion regular para que acepte caracteres especiales y no numeros.
+        return texto.matches("^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\\s'-]+$");
     }
 
     // leer parámetro con valor por defecto

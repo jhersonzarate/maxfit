@@ -135,6 +135,7 @@
                     <%-- ── FORMULARIO PRINCIPAL ─────────────── --%>
                     <form action="${pageContext.request.contextPath}/clients"
                           method="post"
+                          accept-charset="UTF-8"
                           novalidate
                           autocomplete="off">
 
