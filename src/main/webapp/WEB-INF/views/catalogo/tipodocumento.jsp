@@ -447,7 +447,7 @@
                                 </label>
                                 <input type="text" id="tipoDocModalNombre" name="nombreDocumento" class="form-control"
                                        placeholder="Ej: Documento Nacional..."
-                                       required maxlength="100"
+                                       required maxlength="100" pattern="^[^0-9]+$" title="No se permiten números"
                                        style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
                             </div>
                             <div>
@@ -455,7 +455,7 @@
                                     Abreviado <span class="required-star">*</span>
                                 </label>
                                 <input type="text" id="tipoDocModalAbrev" name="abreviado" class="form-control"
-                                       placeholder="Ej: DNI" required maxlength="10"
+                                       placeholder="Ej: DNI" required maxlength="3" pattern="^[^0-9]+$" title="Máximo 3 letras, sin números"
                                        style="text-transform:uppercase; width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
                             </div>
                         </div>

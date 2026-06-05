@@ -236,13 +236,14 @@
                                                                                                                     <label
                                                                                                                         for="fechaNacimiento">Fecha
                                                                                                                         de
-                                                                                                                        nacimiento</label>
+                                                                                                                        nacimiento <span class="required-star">*</span></label>
                                                                                                                     <input
                                                                                                                         type="date"
                                                                                                                         id="fechaNacimiento"
                                                                                                                         name="fechaNacimiento"
                                                                                                                         class="form-control"
-                                                                                                                        max="<%= java.time.LocalDate.now().minusYears(5).toString() %>"
+                                                                                                                        required
+                                                                                                                        max="<%= java.time.LocalDate.now().minusYears(18).toString() %>"
                                                                                                                         value="<c:out value='${cliente.fechaNacimiento}'/>">
                                                                                                                 </div>
                                                                                                     </div>

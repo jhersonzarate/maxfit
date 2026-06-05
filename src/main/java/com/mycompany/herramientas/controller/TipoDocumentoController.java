@@ -100,6 +100,18 @@ public class TipoDocumentoController extends AbstractController {
             return;
         }
 
+        if (nombre.matches(".*\\d.*") || abreviado.matches(".*\\d.*")) {
+            mensajeError(req, "El nombre y abreviado no pueden contener números.");
+            redirigirA("/tipodocumento", req, resp);
+            return;
+        }
+
+        if (abreviado.trim().length() > 3) {
+            mensajeError(req, "El abreviado no puede tener más de 3 caracteres.");
+            redirigirA("/tipodocumento", req, resp);
+            return;
+        }
+
         int tamMax, tamMin;
         try {
             tamMax = Integer.parseInt(tamMaxStr != null ? tamMaxStr.trim() : "");
