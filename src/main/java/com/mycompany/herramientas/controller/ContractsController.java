@@ -531,7 +531,7 @@ public class ContractsController extends AbstractController {
 
         req.setAttribute(
                 "membresias",
-                membresiaDAO.findAll()
+                membresiaDAO.findActivas()
         );
 
         req.setAttribute(

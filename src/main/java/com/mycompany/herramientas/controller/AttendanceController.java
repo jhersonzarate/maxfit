@@ -108,7 +108,7 @@ public class AttendanceController extends AbstractController {
     private void mostrarHistorial(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String clienteId = param(req, "clienteId");
+        String clienteBusqueda = param(req, "clienteBusqueda");
         String desdeStr  = param(req, "desde");
         String hastaStr  = param(req, "hasta");
 
@@ -118,12 +118,11 @@ public class AttendanceController extends AbstractController {
         try {
 
             List<Asistencia> historial =
-                    asistenciaDAO.filter(clienteId, desde, hasta);
+                    asistenciaDAO.filter(clienteBusqueda, desde, hasta);
 
             // datos para la tabla y filtros
-            req.setAttribute("clientes", clienteDAO.findAll());
             req.setAttribute("historial", historial);
-            req.setAttribute("clienteId", clienteId);
+            req.setAttribute("clienteBusqueda", clienteBusqueda);
             req.setAttribute("desde", desdeStr);
             req.setAttribute("hasta", hastaStr);
             req.setAttribute("totalFiltro", historial.size());

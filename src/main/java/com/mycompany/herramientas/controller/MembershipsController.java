@@ -79,6 +79,10 @@ public class MembershipsController extends AbstractController {
                 eliminarMembresia(req, resp);
                 break;
 
+            case "toggleStatus":
+                toggleStatusMembresia(req, resp);
+                break;
+
             default:
                 redirigirA("/memberships", req, resp);
         }
@@ -539,6 +543,40 @@ public class MembershipsController extends AbstractController {
                 req,
                 resp
         );
+    }
+
+    // ───────────────── cambiar estado de membresía ────────
+    
+    private void toggleStatusMembresia(HttpServletRequest req,
+                                       HttpServletResponse resp)
+            throws IOException {
+            
+        String id = param(req, "id");
+        
+        if (id == null) {
+            mensajeError(req, "ID de plan no especificado.");
+            redirigirA("/memberships", req, resp);
+            return;
+        }
+        
+        try {
+            Membresia membresia = membresiaDAO.findById(id);
+            if (membresia != null) {
+                String nuevoEstado = "activo".equalsIgnoreCase(membresia.getEstado()) ? "inactivo" : "activo";
+                membresia.setEstado(nuevoEstado);
+                membresiaDAO.save(membresia);
+                
+                LOGGER.info("Estado de membresía " + id + " cambiado a " + nuevoEstado);
+                mensajeExito(req, "El plan ahora está " + nuevoEstado + ".");
+            } else {
+                mensajeError(req, "No se encontró el plan.");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al cambiar estado de membresía: " + id, e);
+            mensajeError(req, "Error al cambiar el estado del plan.");
+        }
+        
+        redirigirA("/memberships", req, resp);
     }
 
     // ───────────────── helpers privados ───────────────

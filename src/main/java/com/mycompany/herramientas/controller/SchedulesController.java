@@ -73,6 +73,11 @@ public class SchedulesController extends AbstractController {
                 mostrarInscritos(req, resp);
                 break;
 
+            // busqueda ajax de clientes
+            case "buscarClientesAjax":
+                buscarClientesAjax(req, resp);
+                break;
+
             // lista de todas las clases
             default:
                 mostrarListaClases(req, resp);
@@ -244,12 +249,20 @@ public class SchedulesController extends AbstractController {
             List<InscripcionClase> inscritos = inscripcionDAO.findByClaseId(claseId);
             int[] cupos = inscripcionService.cuposInfo(claseId);
 
+            String clienteBusqueda = param(req, "clienteBusqueda");
+            List<Cliente> clientesList;
+            if (clienteBusqueda != null && !clienteBusqueda.trim().isEmpty()) {
+                clientesList = clienteDAO.search(clienteBusqueda);
+            } else {
+                clientesList = clienteDAO.findAll();
+            }
+
             req.setAttribute("clase",         clase);
             req.setAttribute("inscritos",      inscritos);
             req.setAttribute("cuposOcupados",  cupos[0]);
             req.setAttribute("cuposTotal",     cupos[1]);
             req.setAttribute("cuposLibres",    cupos[1] - cupos[0]);
-            req.setAttribute("clientes",       clienteDAO.findAll());
+            req.setAttribute("clientes",       clientesList);
 
             irA(ViewRoutes.SCHEDULES_INDEX + "?inscritos=true", req, resp);
 
@@ -257,6 +270,39 @@ public class SchedulesController extends AbstractController {
             LOGGER.log(Level.SEVERE, "Error al cargar inscritos de clase: " + claseId, e);
             mensajeError(req, "Error al cargar los inscritos.");
             redirigirA("/schedules", req, resp);
+        }
+    }
+
+    // ─── búsqueda ajax de clientes ─────────────────────────────
+
+    private void buscarClientesAjax(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        String query = param(req, "q");
+        try {
+            List<Cliente> clientes;
+            if (query != null && !query.trim().isEmpty()) {
+                clientes = clienteDAO.search(query);
+            } else {
+                clientes = clienteDAO.findAll();
+            }
+
+            resp.setContentType("text/html;charset=UTF-8");
+            StringBuilder sb = new StringBuilder();
+            sb.append("<option value=\"\">— Buscar cliente —</option>");
+            for (Cliente cli : clientes) {
+                sb.append("<option value=\"").append(cli.getId()).append("\">");
+                sb.append(cli.getApellido()).append(", ").append(cli.getNombre());
+                sb.append(" — ");
+                if (cli.getTipoDocumento() != null) {
+                    sb.append(cli.getTipoDocumento().getAbreviado()).append(":");
+                }
+                sb.append(cli.getNumeroDocumento());
+                sb.append("</option>");
+            }
+            resp.getWriter().write(sb.toString());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error en buscarClientesAjax", e);
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
