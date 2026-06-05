@@ -249,7 +249,7 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
             display: flex; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; pointer-events: none;
+            z-index: 1000; opacity: 0; pointer-events: none;
             transition: opacity 0.3s ease;
         }
         .pm-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
@@ -923,7 +923,8 @@
                                                         </a>
 
                                                         <%-- Editar --%>
-                                                        <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Editar ${emp.nombre}" onclick="openEmployeeModal('edit', '${emp.id}', '${emp.nombre}', '${emp.apellido}', '${emp.tipoDocumento.id}', '${emp.numeroDocumento}', '${emp.email}', '${emp.telefono}', '${emp.cargo.id}')">
+                                                        <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Editar ${emp.nombre}"
+                                                                onclick="openEmployeeModal('edit', '<c:out value="${emp.id}"/>', '<c:out value="${fn:escapeXml(emp.nombre)}"/>', '<c:out value="${fn:escapeXml(emp.apellido)}"/>', '${emp.tipoDocumento != null ? emp.tipoDocumento.id : ""}', '<c:out value="${emp.numeroDocumento}"/>', '<c:out value="${emp.email}"/>', '<c:out value="${emp.telefono}"/>', '${emp.cargo != null ? emp.cargo.id : ""}')">
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -931,19 +932,19 @@
                                                                          2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6
                                                                          18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
                                                             </svg>
-                                                        </a>
+                                                        </button>
 
                                                         <%-- Eliminar --%>
                                                         <form action="${pageContext.request.contextPath}/employees"
                                                               method="post"
-                                                              style="display:inline;"
-                                                              onsubmit="return confirm('¿Eliminar a ${emp.nombre} ${emp.apellido}? Esta acción no se puede deshacer.');">
+                                                              style="display:inline;">
                                                             <input type="hidden" name="action" value="delete">
                                                             <input type="hidden" name="id"     value="<c:out value='${emp.id}'/>">
                                                             <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
-                                                            <button type="submit"
+                                                            <button type="button"
+                                                                    onclick="openActionModal(event, 'delete', '<c:out value="${fn:escapeXml(emp.nombre)} ${fn:escapeXml(emp.apellido)}"/>')"
                                                                     class="btn btn-danger btn-sm btn-icon"
-                                                                    title="Eliminar ${emp.nombre}">
+                                                                    title="Eliminar ${fn:escapeXml(emp.nombre)}">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -1226,7 +1227,65 @@
         document.body.style.overflow = '';
     }
 
+    // --- Confirm Modal ---
+    let formToSubmit = null;
+
+    function openActionModal(event, type, empName) {
+        event.preventDefault();
+        formToSubmit = event.currentTarget.closest('form');
+
+        const iconContainer = document.getElementById('actionModalIconContainer');
+        const icon = document.getElementById('actionModalIcon');
+        const text = document.getElementById('actionModalText');
+        const btn = document.getElementById('btnConfirmAction');
+
+        iconContainer.style.borderColor = '#f87171';
+        iconContainer.style.background = 'rgba(248,113,113,0.1)';
+        icon.style.color = '#f87171';
+        icon.textContent = '!';
+        text.innerHTML = `Se eliminará de forma permanente al empleado<br><strong><span style="color:var(--clr-text-muted);">${empName}</span></strong><br><br><span style="font-size:0.8rem">Esta acción no se puede deshacer.</span>`;
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Sí, eliminar';
+
+        document.getElementById('actionModal').classList.add('is-open');
+    }
+
+    function closeActionModal() {
+        formToSubmit = null;
+        document.getElementById('actionModal').classList.remove('is-open');
+    }
+
+    function confirmAction() {
+        if (formToSubmit) formToSubmit.submit();
+    }
 </script>
+
+<%-- ── Modal de Confirmación ────────────────────────────────── --%>
+<div id="actionModal" class="pm-modal-overlay">
+    <div class="pm-modal" style="max-width:400px; text-align:center; padding:2rem 1.5rem;">
+        <div style="margin-bottom:1.5rem;">
+            <div id="actionModalIconContainer" style="width:80px;height:80px;border-radius:50%;border:3px solid;
+                 display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                <span id="actionModalIcon" style="font-size:3.5rem;line-height:1;
+                      font-family:var(--font-display);padding-bottom:0.5rem;"></span>
+            </div>
+        </div>
+        <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;
+                   color:var(--clr-text);margin-bottom:0.75rem;">¿Estás seguro?</h2>
+        <p id="actionModalText" style="color:var(--clr-text-dim);font-size:0.95rem;
+           margin-bottom:1.75rem;line-height:1.5;"></p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button type="button" class="btn" id="btnConfirmAction"
+                    onclick="confirmAction()" style="min-width:120px;font-weight:bold;">
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="closeActionModal()"
+                    style="min-width:120px;font-weight:bold;background:#473f3f;border-color:#473f3f;">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
 </body>
 
 </html>

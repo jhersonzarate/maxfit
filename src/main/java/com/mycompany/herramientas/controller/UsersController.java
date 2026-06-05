@@ -83,6 +83,11 @@ public class UsersController extends AbstractController {
                 resetearContrasena(req, resp);
                 break;
 
+            // eliminar usuario
+            case "delete":
+                eliminarUsuario(req, resp);
+                break;
+
             default:
                 redirigirA("/users", req, resp);
         }
@@ -97,6 +102,8 @@ public class UsersController extends AbstractController {
             List<Usuario> usuarios = usuarioDAO.findAll();
             req.setAttribute("usuarios",      usuarios);
             req.setAttribute("totalUsuarios", usuarios.size());
+            // cargar catálogos para el modal de nuevo usuario
+            cargarCatalogosFormulario(req);
             irA(ViewRoutes.USERS_INDEX, req, resp);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al listar usuarios", e);
@@ -335,6 +342,50 @@ public class UsersController extends AbstractController {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al resetear contraseña del usuario: " + id, e);
             mensajeError(req, "Error al actualizar la contraseña. Intenta nuevamente.");
+        }
+
+        redirigirA("/users", req, resp);
+    }
+
+    // ─── eliminar usuario ──────────────────────────────────────
+
+    // elimina el usuario solo si no tiene transacciones vinculadas
+    private void eliminarUsuario(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        String id = param(req, "id");
+        if (id == null) {
+            mensajeError(req, "ID de usuario no especificado.");
+            redirigirA("/users", req, resp);
+            return;
+        }
+
+        // no puede eliminarse a sí mismo
+        String miId = getSessionUserId(req);
+        if (id.equals(miId)) {
+            mensajeError(req, "No puedes eliminar tu propia cuenta.");
+            redirigirA("/users", req, resp);
+            return;
+        }
+
+        try {
+            // verificar si tiene transacciones
+            if (usuarioDAO.hasTransacciones(id)) {
+                mensajeError(req, "Error: No puede ser eliminado porque tiene registros relacionados con contratos, clientes u horarios. Solo puede ser eliminado si no está relacionado con nada.");
+                redirigirA("/users", req, resp);
+                return;
+            }
+
+            Usuario usuario = usuarioDAO.findById(id);
+            String emailRef = (usuario != null) ? usuario.getEmail() : id;
+            usuarioDAO.delete(id);
+
+            LOGGER.info("Usuario eliminado: " + emailRef);
+            mensajeExito(req, "Usuario " + emailRef + " eliminado correctamente.");
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al eliminar usuario: " + id, e);
+            mensajeError(req, "Error al eliminar el usuario. Intenta nuevamente.");
         }
 
         redirigirA("/users", req, resp);
