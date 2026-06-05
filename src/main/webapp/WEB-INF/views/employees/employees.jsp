@@ -40,9 +40,7 @@
 <head>
     <%@ include file="/WEB-INF/views/includes/head-common.jsp" %>
     <c:choose>
-        <c:when test="${param.form   eq 'true'}">
-            <c:set var="pageTitle" value="${modoEdicion ? 'Editar Empleado' : 'Nuevo Empleado'}" scope="request"/>
-        </c:when>
+        
         <c:when test="${param.detail eq 'true'}">
             <c:set var="pageTitle" value="Perfil de Empleado" scope="request"/>
         </c:when>
@@ -245,6 +243,46 @@
             }
             .emp-stat:last-child { border-bottom: none; }
         }
+
+        /* ── Modal de empleado ────────────────────────────── */
+        .pm-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .pm-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+        .pm-modal {
+            background: var(--clr-card); width: 100%; max-width: 700px;
+            border-radius: var(--radius-xl); border: 1px solid var(--clr-card-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .pm-modal-overlay.is-open .pm-modal { transform: translateY(0); }
+        .pm-modal__header {
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--clr-border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
+        }
+        .pm-modal__close {
+            background: none; border: none; color: var(--clr-text-muted);
+            cursor: pointer; padding: 0.5rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .pm-modal__close:hover { background: rgba(255,255,255,0.05); color: var(--clr-text); }
+
+        .form-row-custom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 480px) {
+            .form-row-custom { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -256,10 +294,7 @@
 
         <%-- Títulos para el navbar --%>
         <c:choose>
-            <c:when test="${param.form eq 'true'}">
-                <c:set var="pageTitle"    value="${modoEdicion ? 'Editar Empleado' : 'Nuevo Empleado'}" scope="request"/>
-                <c:set var="pageSubtitle" value="Módulo de Empleados" scope="request"/>
-            </c:when>
+            
             <c:when test="${param.detail eq 'true'}">
                 <c:set var="pageTitle"    value="Perfil de Empleado"  scope="request"/>
                 <c:set var="pageSubtitle" value="Módulo de Empleados" scope="request"/>
@@ -278,325 +313,6 @@
                  ═══════════════════════════════════════════════ --%>
             <c:choose>
 
-                <%-- ──────────────────────────────────────────
-                     VISTA: FORMULARIO (nuevo o edición)
-                     param.form=true
-                     ────────────────────────────────────────── --%>
-                <c:when test="${param.form eq 'true'}">
-
-                    <%-- Breadcrumb --%>
-                    <nav class="module-breadcrumb" aria-label="Breadcrumb">
-                        <a href="${pageContext.request.contextPath}/employees">Empleados</a>
-                        <svg class="module-breadcrumb__sep" xmlns="http://www.w3.org/2000/svg"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                        </svg>
-                        <span>${modoEdicion ? 'Editar' : 'Nuevo'}</span>
-                    </nav>
-
-                    <%-- Header --%>
-                    <div class="module-header">
-                        <div class="module-header__left">
-                            <h1 class="module-header__title">
-                                <c:choose>
-                                    <c:when test="${modoEdicion}">Editar Empleado</c:when>
-                                    <c:otherwise>Registrar Empleado</c:otherwise>
-                                </c:choose>
-                            </h1>
-                            <div class="module-header__meta">
-                                <span>Completa los datos del miembro del equipo</span>
-                                <span class="module-header__meta-sep"></span>
-                                <span>Los campos marcados con * son obligatorios</span>
-                            </div>
-                        </div>
-                        <div class="module-header__actions">
-                            <a href="${pageContext.request.contextPath}/employees"
-                               class="btn btn-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
-                                </svg>
-                                Cancelar
-                            </a>
-                        </div>
-                    </div>
-
-                    <%-- Alerta de error --%>
-                    <c:if test="${not empty formError}">
-                        <div class="module-alert module-alert--error" role="alert">
-                            <svg class="module-alert__icon" xmlns="http://www.w3.org/2000/svg"
-                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
-                                         0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
-                                         0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
-                            </svg>
-                            <div class="module-alert__body">
-                                <p class="module-alert__title">Error de validación</p>
-                                <p class="module-alert__text"><c:out value="${formError}"/></p>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <%-- ── FORMULARIO PRINCIPAL ─────────────── --%>
-                    <form action="${pageContext.request.contextPath}/employees"
-                          method="post"
-                          novalidate
-                          autocomplete="off">
-
-                        <input type="hidden" name="action" value="save">
-                        <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
-
-                        <c:if test="${modoEdicion}">
-                            <input type="hidden" name="id" value="<c:out value='${empleado.id}'/>">
-                        </c:if>
-
-                        <div class="form-card form-card--wide">
-
-                            <%-- Header del card --%>
-                            <div class="form-card__header">
-                                <div class="form-card__header-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0
-                                                 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944
-                                                 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062
-                                                 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0
-                                                 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0
-                                                 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0
-                                                 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15
-                                                 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1
-                                                 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0
-                                                 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="form-card__header-title">
-                                        ${modoEdicion ? 'Datos del Empleado' : 'Nuevo Miembro del Equipo'}
-                                    </p>
-                                    <p class="form-card__header-sub">
-                                        <c:if test="${modoEdicion}">
-                                            ID: <c:out value="${empleado.id}"/>
-                                        </c:if>
-                                        <c:if test="${not modoEdicion}">
-                                            El ID se genera automáticamente al guardar
-                                        </c:if>
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="form-card__body">
-
-                                <%-- Sección 1: Datos personales --%>
-                                <div class="form-section-divider">
-                                    <span class="form-section-divider__label">Datos personales</span>
-                                </div>
-
-                                <div class="form-row">
-                                    <%-- Nombre --%>
-                                    <div class="form-field">
-                                        <label for="nombre">
-                                            Nombre <span class="required-star">*</span>
-                                        </label>
-                                        <input type="text"
-                                               id="nombre"
-                                               name="nombre"
-                                               class="form-control"
-                                               placeholder="Ej: Carlos"
-                                               maxlength="100"
-                                               required
-                                               autocomplete="given-name"
-                                               value="<c:out value='${empleado.nombre}'/>">
-                                    </div>
-
-                                    <%-- Apellido --%>
-                                    <div class="form-field">
-                                        <label for="apellido">
-                                            Apellido <span class="required-star">*</span>
-                                        </label>
-                                        <input type="text"
-                                               id="apellido"
-                                               name="apellido"
-                                               class="form-control"
-                                               placeholder="Ej: Ramírez Torres"
-                                               maxlength="100"
-                                               required
-                                               autocomplete="family-name"
-                                               value="<c:out value='${empleado.apellido}'/>">
-                                    </div>
-                                </div>
-
-                                <%-- Sección 2: Documento de identidad --%>
-                                <div class="form-section-divider">
-                                    <span class="form-section-divider__label">Documento de identidad</span>
-                                </div>
-
-                                <div class="form-row">
-                                    <%-- Tipo de documento --%>
-                                    <div class="form-field">
-                                        <label for="idTipoDocumento">
-                                            Tipo de documento <span class="required-star">*</span>
-                                        </label>
-                                        <select id="idTipoDocumento"
-                                                name="idTipoDocumento"
-                                                class="form-control"
-                                                required>
-                                            <option value="">— Seleccionar —</option>
-                                            <c:forEach var="td" items="${tiposDocumento}">
-                                                <option value="<c:out value='${td.id}'/>"
-                                                    ${empleado.tipoDocumento != null
-                                                       and empleado.tipoDocumento.id eq td.id
-                                                       ? 'selected' : ''}>
-                                                    <c:out value="${td.abreviado}"/> —
-                                                    <c:out value="${td.nombreDocumento}"/>
-                                                </option>
-                                            </c:forEach>
-                                        </select>
-                                    </div>
-
-                                    <%-- Número de documento --%>
-                                    <div class="form-field">
-                                        <label for="numeroDocumento">
-                                            Número de documento <span class="required-star">*</span>
-                                        </label>
-                                        <input type="text"
-                                               id="numeroDocumento"
-                                               name="numeroDocumento"
-                                               class="form-control"
-                                               placeholder="Ej: 12345678"
-                                               maxlength="20"
-                                               required
-                                               autocomplete="off"
-                                               value="<c:out value='${empleado.numeroDocumento}'/>">
-                                        <span class="form-field__hint">
-                                            Revisa el tipo de documento para el formato correcto
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <%-- Sección 3: Información de contacto --%>
-                                <div class="form-section-divider">
-                                    <span class="form-section-divider__label">Información de contacto</span>
-                                </div>
-
-                                <div class="form-row">
-                                    <%-- Email (obligatorio para empleados) --%>
-                                    <div class="form-field">
-                                        <label for="email">
-                                            Correo electrónico <span class="required-star">*</span>
-                                        </label>
-                                        <input type="email"
-                                               id="email"
-                                               name="email"
-                                               class="form-control"
-                                               placeholder="empleado@maxfit.com"
-                                               maxlength="150"
-                                               required
-                                               autocomplete="email"
-                                               value="<c:out value='${empleado.email}'/>">
-                                        <span class="form-field__hint">
-                                            Se usará para crear su cuenta de usuario en el sistema
-                                        </span>
-                                    </div>
-
-                                    <%-- Teléfono (opcional) --%>
-                                    <div class="form-field">
-                                        <label for="telefono">Teléfono</label>
-                                        <input type="tel"
-                                               id="telefono"
-                                               name="telefono"
-                                               class="form-control"
-                                               placeholder="Ej: 987654321"
-                                               maxlength="20"
-                                               autocomplete="tel"
-                                               value="<c:out value='${empleado.telefono}'/>">
-                                    </div>
-                                </div>
-
-                                <%-- Sección 4: Cargo --%>
-                                <div class="form-section-divider">
-                                    <span class="form-section-divider__label">Cargo y rol en el equipo</span>
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-field">
-                                        <label for="idCargo">
-                                            Cargo <span class="required-star">*</span>
-                                        </label>
-                                        <select id="idCargo"
-                                                name="idCargo"
-                                                class="form-control"
-                                                required>
-                                            <option value="">— Seleccionar cargo —</option>
-                                            <c:forEach var="cargo" items="${cargos}">
-                                                <option value="<c:out value='${cargo.id}'/>"
-                                                    ${empleado.cargo != null
-                                                       and empleado.cargo.id eq cargo.id
-                                                       ? 'selected' : ''}>
-                                                    <c:out value="${cargo.nombre}"/>
-                                                </option>
-                                            </c:forEach>
-                                        </select>
-                                        <span class="form-field__hint">
-                                            El cargo determina el acceso disponible al crear la cuenta de usuario
-                                        </span>
-                                    </div>
-
-                                    <%-- Espacio visual --%>
-                                    <div></div>
-                                </div>
-
-                                <%-- Aviso informativo --%>
-                                <div class="module-alert module-alert--info"
-                                     style="margin-bottom:0;">
-                                    <svg class="module-alert__icon" xmlns="http://www.w3.org/2000/svg"
-                                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708
-                                                 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0
-                                                 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
-                                    </svg>
-                                    <div class="module-alert__body">
-                                        <p class="module-alert__text">
-                                            Después de registrar al empleado, ve a
-                                            <a href="${pageContext.request.contextPath}/users"
-                                               style="color:var(--clr-info); font-weight:600;">
-                                                Usuarios
-                                            </a>
-                                            para crear sus credenciales de acceso al sistema.
-                                        </p>
-                                    </div>
-                                </div>
-
-                            </div><%-- /form-card__body --%>
-
-                            <%-- Footer del formulario --%>
-                            <div class="form-card__footer">
-                                <button type="submit" class="btn btn-primary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                    </svg>
-                                    ${modoEdicion ? 'Guardar cambios' : 'Registrar empleado'}
-                                </button>
-                                <a href="${pageContext.request.contextPath}/employees"
-                                   class="btn btn-ghost">
-                                    Cancelar
-                                </a>
-                            </div>
-
-                        </div><%-- /form-card --%>
-                    </form>
-
-                </c:when>
-
-                <%-- ──────────────────────────────────────────
-                     VISTA: DETALLE DEL EMPLEADO
-                     param.detail=true
-                     ────────────────────────────────────────── --%>
                 <c:when test="${param.detail eq 'true'}">
 
                     <%-- Breadcrumb --%>
@@ -1032,7 +748,7 @@
                                 </svg>
                                 Gestionar usuarios
                             </a>
-                            <a href="${pageContext.request.contextPath}/employees?action=new"
+                            <button type="button" onclick="openEmployeeModal('new')"
                                class="btn btn-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
@@ -1040,7 +756,7 @@
                                           d="M12 4.5v15m7.5-7.5h-15"/>
                                 </svg>
                                 Nuevo empleado
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -1207,9 +923,7 @@
                                                         </a>
 
                                                         <%-- Editar --%>
-                                                        <a href="${pageContext.request.contextPath}/employees?action=edit&id=<c:out value='${emp.id}'/>"
-                                                           class="btn btn-ghost btn-sm btn-icon"
-                                                           title="Editar ${emp.nombre}">
+                                                        <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Editar ${emp.nombre}" onclick="openEmployeeModal('edit', '${emp.id}', '${emp.nombre}', '${emp.apellido}', '${emp.tipoDocumento.id}', '${emp.numeroDocumento}', '${emp.email}', '${emp.telefono}', '${emp.cargo.id}')">
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -1262,7 +976,7 @@
                                         </strong>
                                         empleado<c:if test="${totalEmpleados ne 1}">s</c:if> registrados
                                     </span>
-                                    <a href="${pageContext.request.contextPath}/employees?action=new"
+                                    <button type="button" onclick="openEmployeeModal('new')"
                                        class="btn btn-primary btn-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
@@ -1270,7 +984,7 @@
                                                   d="M12 4.5v15m7.5-7.5h-15"/>
                                         </svg>
                                         Agregar empleado
-                                    </a>
+                                    </button>
                                 </div>
 
                             </c:when>
@@ -1299,7 +1013,7 @@
                                         Registra el primer miembro del equipo para comenzar
                                         a gestionar los accesos al sistema.
                                     </p>
-                                    <a href="${pageContext.request.contextPath}/employees?action=new"
+                                    <button type="button" onclick="openEmployeeModal('new')"
                                        class="btn btn-primary btn-sm" style="margin-top:0.5rem;">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
@@ -1307,7 +1021,7 @@
                                                   d="M12 4.5v15m7.5-7.5h-15"/>
                                         </svg>
                                         Registrar primer empleado
-                                    </a>
+                                    </button>
                                 </div>
                             </c:otherwise>
                         </c:choose>
@@ -1346,5 +1060,173 @@
     </div><%-- /app-main --%>
 </div><%-- /app-shell --%>
 
+
+
+<%-- =========================================================================
+     MODAL: REGISTRAR / EDITAR EMPLEADO
+     ========================================================================= --%>
+<div id="employeeModal" class="pm-modal-overlay">
+    <div class="pm-modal" style="max-width:680px;">
+
+        <div class="pm-modal__header">
+            <span id="employeeModalTitle">Nuevo Empleado</span>
+            <button class="pm-modal__close" type="button" onclick="closeEmployeeModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form action="${pageContext.request.contextPath}/employees" method="post" autocomplete="off" id="employeeForm">
+            <input type="hidden" name="action" value="save">
+            <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+            <input type="hidden" name="id" id="modalId">
+
+            <div style="padding: 1.5rem;">
+
+                <%-- Datos personales --%>
+                <p style="font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
+                           color:var(--clr-text-dim); margin-bottom:0.85rem;">Datos personales</p>
+
+                <div class="form-row-custom">
+                    <div>
+                        <label for="modalNombre" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                            Nombre <span class="required-star">*</span>
+                        </label>
+                        <input type="text" id="modalNombre" name="nombre" class="form-control"
+                               maxlength="100" required
+                               style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                      border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                    </div>
+                    <div>
+                        <label for="modalApellido" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                            Apellido <span class="required-star">*</span>
+                        </label>
+                        <input type="text" id="modalApellido" name="apellido" class="form-control"
+                               maxlength="100" required
+                               style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                      border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                    </div>
+                </div>
+
+                <%-- Documento de identidad --%>
+                <p style="font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
+                           color:var(--clr-text-dim); margin-bottom:0.85rem; margin-top:1rem;">Documento de identidad</p>
+
+                <div class="form-row-custom">
+                    <div>
+                        <label for="modalIdTipoDocumento" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                            Tipo <span class="required-star">*</span>
+                        </label>
+                        <select id="modalIdTipoDocumento" name="idTipoDocumento" class="form-control" required
+                                style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                       border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                            <option value="">— Seleccionar —</option>
+                            <c:forEach var="td" items="${tiposDocumento}">
+                                <option value="<c:out value='${td.id}'/>"><c:out value="${td.abreviado}"/> — <c:out value="${td.nombreDocumento}"/></option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="modalNumeroDocumento" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                            Número <span class="required-star">*</span>
+                        </label>
+                        <input type="text" id="modalNumeroDocumento" name="numeroDocumento" class="form-control"
+                               maxlength="20" required autocomplete="off"
+                               style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                      border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                    </div>
+                </div>
+
+                <%-- Contacto --%>
+                <p style="font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
+                           color:var(--clr-text-dim); margin-bottom:0.85rem; margin-top:1rem;">Información de contacto</p>
+
+                <div class="form-row-custom">
+                    <div>
+                        <label for="modalEmail" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                            Correo electrónico <span class="required-star">*</span>
+                        </label>
+                        <input type="email" id="modalEmail" name="email" class="form-control"
+                               maxlength="150" required
+                               style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                      border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                    </div>
+                    <div>
+                        <label for="modalTelefono" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                            Teléfono
+                        </label>
+                        <input type="tel" id="modalTelefono" name="telefono" class="form-control"
+                               maxlength="20"
+                               style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                      border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                    </div>
+                </div>
+
+                <%-- Cargo --%>
+                <p style="font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
+                           color:var(--clr-text-dim); margin-bottom:0.85rem; margin-top:1rem;">Cargo en el equipo</p>
+
+                <div>
+                    <label for="modalIdCargo" style="display:block; font-size:0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom:0.3rem;">
+                        Cargo <span class="required-star">*</span>
+                    </label>
+                    <select id="modalIdCargo" name="idCargo" class="form-control" required
+                            style="width:100%; padding:0.65rem 0.75rem; border-radius:var(--radius-md);
+                                   border:1px solid var(--clr-border); background:var(--clr-surface); color:var(--clr-text);">
+                        <option value="">— Seleccionar cargo —</option>
+                        <c:forEach var="cargo" items="${cargos}">
+                            <option value="<c:out value='${cargo.id}'/>"><c:out value="${cargo.nombre}"/></option>
+                        </c:forEach>
+                    </select>
+                </div>
+
+            </div>
+
+            <div style="padding:1rem 1.5rem; border-top:1px solid var(--clr-border);
+                        display:flex; gap:0.75rem; justify-content:flex-end; background:rgba(0,0,0,0.1);">
+                <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:1rem;height:1rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                    </svg>
+                    <span id="btnSubmitText">Registrar empleado</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const empModal = document.getElementById('employeeModal');
+    const empForm = document.getElementById('employeeForm');
+
+    function openEmployeeModal(mode, id='', nombre='', apellido='', idTipoDoc='', numDoc='', email='', tel='', idCargo='') {
+        document.getElementById('modalId').value = id;
+        document.getElementById('modalNombre').value = nombre;
+        document.getElementById('modalApellido').value = apellido;
+        document.getElementById('modalIdTipoDocumento').value = idTipoDoc;
+        document.getElementById('modalNumeroDocumento').value = numDoc;
+        document.getElementById('modalEmail').value = email;
+        document.getElementById('modalTelefono').value = tel;
+        document.getElementById('modalIdCargo').value = idCargo;
+
+        const isEdit = (mode === 'edit');
+        document.getElementById('employeeModalTitle').textContent = isEdit ? 'Editar Empleado' : 'Nuevo Empleado';
+        document.getElementById('btnSubmitText').textContent = isEdit ? 'Guardar cambios' : 'Registrar empleado';
+        
+        empModal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEmployeeModal() {
+        empModal.classList.remove('is-open');
+        empForm.reset();
+        document.body.style.overflow = '';
+    }
+
+</script>
 </body>
+
 </html>

@@ -503,6 +503,19 @@ public class SchedulesController extends AbstractController {
                 return;
             }
 
+            // Validar que no haya choque o superposición de horarios para la misma clase
+            List<Horario> horariosExistentes = horarioDAO.findByClaseId(claseId);
+            for (Horario h : horariosExistentes) {
+                if (h.getDiaSemana() == diaSemana) {
+                    // Condición de superposición: InicioA < FinB && InicioB < FinA
+                    if (horaInicio.isBefore(h.getHoraFin()) && h.getHoraInicio().isBefore(horaFin)) {
+                        mensajeError(req, "Ya existe un horario programado (" + h.getRangoHorario() + ") que coincide o se superpone para este día.");
+                        redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
+                        return;
+                    }
+                }
+            }
+
             Horario horario = new Horario();
             horario.setId(IdGenerator.parHorario());
             horario.setClase(clase);

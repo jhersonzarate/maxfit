@@ -380,6 +380,28 @@ public class MembershipsController extends AbstractController {
             return;
         }
 
+        // validar que no exista otro plan con la misma duración
+        try {
+            for (Membresia m : membresiaDAO.findAll()) {
+                if (m.getDuracionMeses() == duracionMeses) {
+                    if (esNuevo || !m.getId().equals(id)) {
+                        volverAlFormulario(
+                                req,
+                                resp,
+                                esNuevo,
+                                id,
+                                "Ya existe un plan registrado con una duración de " + duracionMeses + " mes(es)."
+                        );
+                        return;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al validar duración de membresía", e);
+            volverAlFormulario(req, resp, esNuevo, id, "Error de base de datos al validar el plan.");
+            return;
+        }
+
         // construir objeto membresía
         Membresia membresia =
                 new Membresia();
