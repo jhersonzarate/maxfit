@@ -516,7 +516,6 @@
                                 display: flex;
                                 justify-content: space-between;
                                 align-items: center;
-                                text-transform: uppercase;
                             }
 
                             .pm-modal__close {
@@ -909,8 +908,7 @@
                                                                                                                 test="${mp.activo}">
                                                                                                                 <form
                                                                                                                     action="${pageContext.request.contextPath}/payment-methods"
-                                                                                                                    method="post"
-                                                                                                                    >
+                                                                                                                    method="post">
                                                                                                                     <input
                                                                                                                         type="hidden"
                                                                                                                         name="action"
@@ -950,8 +948,7 @@
                                                                                                                 <c:otherwise>
                                                                                                                     <form
                                                                                                                         action="${pageContext.request.contextPath}/payment-methods"
-                                                                                                                        method="post"
-                                                                                                                        >
+                                                                                                                        method="post">
                                                                                                                         <input
                                                                                                                             type="hidden"
                                                                                                                             name="action"
@@ -1077,7 +1074,7 @@
                                         <div style="margin-bottom: 1.25rem;">
                                             <label for="pmModalNombre"
                                                 style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">Nombre
-                                                del Método *</label>
+                                                del Método de Pago *</label>
                                             <input type="text" id="pmModalNombre" name="nombre" required maxlength="50"
                                                 style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
                                         </div>
@@ -1140,12 +1137,12 @@
 
                                 function openActionModal(formElement, type, methodName) {
                                     formToSubmit = formElement;
-                                    
+
                                     const iconContainer = document.getElementById('actionModalIconContainer');
                                     const icon = document.getElementById('actionModalIcon');
                                     const text = document.getElementById('actionModalText');
                                     const btn = document.getElementById('btnConfirmAction');
-                                    
+
                                     if (type === 'delete') {
                                         iconContainer.style.borderColor = '#f87171';
                                         iconContainer.style.background = 'rgba(248,113,113,0.1)';
@@ -1171,7 +1168,7 @@
                                         btn.className = 'btn btn-primary';
                                         btn.textContent = 'Sí, activar!';
                                     }
-                                    
+
                                     document.getElementById('actionModal').classList.add('is-open');
                                 }
 
@@ -1207,8 +1204,7 @@
                                         </p>
                                         <div style="display: flex; gap: 0.75rem; justify-content: center;">
                                             <button type="button" class="btn" id="btnConfirmAction"
-                                                onclick="confirmAction()"
-                                                style="min-width: 120px; font-weight: bold;">
+                                                onclick="confirmAction()" style="min-width: 120px; font-weight: bold;">
                                             </button>
                                             <button type="button" class="btn btn-secondary" onclick="closeActionModal()"
                                                 style="min-width: 120px; font-weight: bold; background: #473f3f; border-color: #473f3f;">

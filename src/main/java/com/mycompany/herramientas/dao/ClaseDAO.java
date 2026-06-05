@@ -132,6 +132,18 @@ public class ClaseDAO {
         return 0;
     }
 
+    public boolean isTipoClaseEnUso(String tipoClaseId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Clases WHERE id_tipoClase = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tipoClaseId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+
     // ─── privados ──────────────────────────────────────────────
 
     private void insert(Connection con, Clase c) throws SQLException {

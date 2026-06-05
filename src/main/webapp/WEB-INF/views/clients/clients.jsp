@@ -227,65 +227,125 @@
                                         </select>
                                     </div>
 
-                                    <%-- Fecha de nacimiento --%>
-                                    <div class="form-field">
-                                        <label for="fechaNacimiento">Fecha de nacimiento</label>
-                                        <input type="date"
-                                               id="fechaNacimiento"
-                                               name="fechaNacimiento"
-                                               class="form-control"
-                                               max="<%= java.time.LocalDate.now().minusYears(18).toString() %>"
-                                               value="<c:out value='${cliente.fechaNacimiento}'/>">
-                                    </div>
-                                </div>
+                                                                                                            <%-- Fecha
+                                                                                                                de
+                                                                                                                nacimiento
+                                                                                                                --%>
+                                                                                                                <div
+                                                                                                                    class="form-field">
+                                                                                                                    <label
+                                                                                                                        for="fechaNacimiento">Fecha
+                                                                                                                        de
+                                                                                                                        nacimiento</label>
+                                                                                                                    <input
+                                                                                                                        type="date"
+                                                                                                                        id="fechaNacimiento"
+                                                                                                                        name="fechaNacimiento"
+                                                                                                                        class="form-control"
+                                                                                                                        max="<%= java.time.LocalDate.now().minusYears(5).toString() %>"
+                                                                                                                        value="<c:out value='${cliente.fechaNacimiento}'/>">
+                                                                                                                </div>
+                                                                                                    </div>
 
-                                <c:if test="${not modoEdicion}">
-                                    <%-- Sección: Documento de identidad --%>
-                                    <div class="form-section-divider">
-                                        <span class="form-section-divider__label">Documento de identidad</span>
-                                    </div>
+                                                                                                    <%-- Sección:
+                                                                                                        Documento de
+                                                                                                        identidad --%>
+                                                                                                        <div
+                                                                                                            class="form-section-divider">
+                                                                                                            <span
+                                                                                                                class="form-section-divider__label">Documento
+                                                                                                                de
+                                                                                                                identidad</span>
+                                                                                                        </div>
 
-                                    <div class="form-row">
-                                        <%-- Tipo de documento --%>
-                                        <div class="form-field">
-                                            <label for="idTipoDocumento">
-                                                Tipo de documento <span class="required-star">*</span>
-                                            </label>
-                                            <select id="idTipoDocumento"
-                                                    name="idTipoDocumento"
-                                                    class="form-control"
-                                                    required>
-                                                <option value="">— Seleccionar —</option>
-                                                <c:forEach var="td" items="${tiposDocumento}">
-                                                    <option value="<c:out value='${td.id}'/>"
-                                                        ${cliente.tipoDocumento != null and cliente.tipoDocumento.id eq td.id ? 'selected' : ''}>
-                                                        <c:out value="${td.abreviado}"/> —
-                                                        <c:out value="${td.nombreDocumento}"/>
-                                                    </option>
-                                                </c:forEach>
-                                            </select>
-                                        </div>
+                                                                                                        <div
+                                                                                                            class="form-row">
+                                                                                                            <%-- Tipo de
+                                                                                                                documento
+                                                                                                                --%>
+                                                                                                                <div
+                                                                                                                    class="form-field">
+                                                                                                                    <label
+                                                                                                                        for="idTipoDocumento">
+                                                                                                                        Tipo
+                                                                                                                        de
+                                                                                                                        documento
+                                                                                                                        <span
+                                                                                                                            class="required-star">*</span>
+                                                                                                                    </label>
+                                                                                                                    <select
+                                                                                                                        id="idTipoDocumento"
+                                                                                                                        name="idTipoDocumento"
+                                                                                                                        class="form-control"
+                                                                                                                        required>
+                                                                                                                        <option
+                                                                                                                            value="">
+                                                                                                                            —
+                                                                                                                            Seleccionar
+                                                                                                                            —
+                                                                                                                        </option>
+                                                                                                                        <c:forEach
+                                                                                                                            var="td"
+                                                                                                                            items="${tiposDocumento}">
+                                                                                                                            <option
+                                                                                                                                value="<c:out value='${td.id}'/>"
+                                                                                                                                ${cliente.tipoDocumento
+                                                                                                                                !=null
+                                                                                                                                and
+                                                                                                                                cliente.tipoDocumento.id
+                                                                                                                                eq
+                                                                                                                                td.id
+                                                                                                                                ? 'selected'
+                                                                                                                                : ''
+                                                                                                                                }>
+                                                                                                                                <c:out
+                                                                                                                                    value="${td.abreviado}" />
+                                                                                                                                —
+                                                                                                                                <c:out
+                                                                                                                                    value="${td.nombreDocumento}" />
+                                                                                                                            </option>
+                                                                                                                        </c:forEach>
+                                                                                                                    </select>
+                                                                                                                </div>
 
-                                        <%-- Número de documento --%>
-                                        <div class="form-field">
-                                            <label for="numeroDocumento">
-                                                Número de documento <span class="required-star">*</span>
-                                            </label>
-                                            <input type="text"
-                                                   id="numeroDocumento"
-                                                   name="numeroDocumento"
-                                                   class="form-control"
-                                                   placeholder="Ej: 12345678"
-                                                   maxlength="20"
-                                                   required
-                                                   autocomplete="off"
-                                                   value="<c:out value='${cliente.numeroDocumento}'/>">
-                                            <span class="form-field__hint">
-                                                Revisa el tipo de documento para el formato correcto
-                                            </span>
-                                        </div>
-                                    </div>
-                                </c:if>
+                                                                                                                <%-- Número
+                                                                                                                    de
+                                                                                                                    documento
+                                                                                                                    --%>
+                                                                                                                    <div
+                                                                                                                        class="form-field">
+                                                                                                                        <label
+                                                                                                                            for="numeroDocumento">
+                                                                                                                            Número
+                                                                                                                            de
+                                                                                                                            documento
+                                                                                                                            <span
+                                                                                                                                class="required-star">*</span>
+                                                                                                                        </label>
+                                                                                                                        <input
+                                                                                                                            type="text"
+                                                                                                                            id="numeroDocumento"
+                                                                                                                            name="numeroDocumento"
+                                                                                                                            class="form-control"
+                                                                                                                            placeholder="Ej: 12345678"
+                                                                                                                            maxlength="20"
+                                                                                                                            required
+                                                                                                                            autocomplete="off"
+                                                                                                                            value="<c:out value='${cliente.numeroDocumento}'/>">
+                                                                                                                        <span
+                                                                                                                            class="form-field__hint">
+                                                                                                                            Revisa
+                                                                                                                            el
+                                                                                                                            tipo
+                                                                                                                            de
+                                                                                                                            documento
+                                                                                                                            para
+                                                                                                                            el
+                                                                                                                            formato
+                                                                                                                            correcto
+                                                                                                                        </span>
+                                                                                                                    </div>
+                                                                                                        </div>
 
                                 <%-- Sección: Contacto --%>
                                 <div class="form-section-divider">

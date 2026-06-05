@@ -85,14 +85,6 @@
         }
         .cat-table tbody td:first-child { padding-left: 1.35rem; }
         .cat-table tbody td:last-child  { padding-right: 1.35rem; text-align: right; }
-        .cat-form-panel {
-            background: var(--clr-card);
-            border: 1px solid var(--clr-card-border);
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            max-width: 720px;
-            animation: fadeSlideUp 0.42s cubic-bezier(0.4,0,0.2,1) both 0.05s;
-        }
         .estado-pill {
             display: inline-flex;
             align-items: center;
@@ -127,6 +119,34 @@
             .cat-kpi { border-right: none; border-bottom: 1px solid var(--clr-border-light); }
             .cat-kpi:last-child { border-bottom: none; }
         }
+        /* Modal Styles */
+        .pm-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .pm-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+        .pm-modal {
+            background: var(--clr-card); width: 100%; max-width: 480px;
+            border-radius: var(--radius-xl); border: 1px solid var(--clr-card-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pm-modal-overlay.is-open .pm-modal { transform: translateY(0); }
+        .pm-modal__header {
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--clr-border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
+        }
+        .pm-modal__close {
+            background: none; border: none; color: var(--clr-text-muted);
+            cursor: pointer; padding: 0.5rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .pm-modal__close:hover { background: rgba(255,255,255,0.05); color: var(--clr-text); }
     </style>
 </head>
 <body>
@@ -134,8 +154,8 @@
     <%@ include file="/WEB-INF/views/includes/sidebar.jsp" %>
 
     <div class="app-main">
-        <c:set var="pageTitle"    value="Tipos de Clase"                    scope="request"/>
-        <c:set var="pageSubtitle" value="Gestión de tipos de clase grupal"  scope="request"/>
+        <c:set var="pageTitle"    value="Tipos de Clase"                              scope="request"/>
+        <c:set var="pageSubtitle" value="Gestión de tipos de clase grupal"      scope="request"/>
         <%@ include file="/WEB-INF/views/includes/navbar.jsp" %>
 
         <div class="page-content">
@@ -149,126 +169,29 @@
                 </div>
             </div>
 
-            <%-- KPI strip + Tabla: solo en modo lista --%>
-            <c:if test="${!modoForm}">
-                <c:set var="tcActivos"   value="0"/>
-                <c:set var="tcInactivos" value="0"/>
-                <c:forEach var="tc" items="${tiposClase}">
-                    <c:if test="${tc.activo}">  <c:set var="tcActivos"   value="${tcActivos + 1}"/></c:if>
-                    <c:if test="${!tc.activo}"> <c:set var="tcInactivos" value="${tcInactivos + 1}"/></c:if>
-                </c:forEach>
-                <div class="cat-kpi-strip">
-                    <div class="cat-kpi">
-                        <span class="cat-kpi__num">${fn:length(tiposClase)}</span>
-                        <span class="cat-kpi__label">Total tipos</span>
-                    </div>
-                    <div class="cat-kpi">
-                        <span class="cat-kpi__num green">${tcActivos}</span>
-                        <span class="cat-kpi__label">Activos</span>
-                    </div>
-                    <div class="cat-kpi">
-                        <span class="cat-kpi__num dim">${tcInactivos}</span>
-                        <span class="cat-kpi__label">Inactivos</span>
-                    </div>
+            <%-- KPI strip + Tabla --%>
+            <c:set var="tcActivos"   value="0"/>
+            <c:set var="tcInactivos" value="0"/>
+            <c:forEach var="tc" items="${tiposClase}">
+                <c:if test="${tc.activo}">  <c:set var="tcActivos"   value="${tcActivos + 1}"/></c:if>
+                <c:if test="${!tc.activo}"> <c:set var="tcInactivos" value="${tcInactivos + 1}"/></c:if>
+            </c:forEach>
+            <div class="cat-kpi-strip">
+                <div class="cat-kpi">
+                    <span class="cat-kpi__num">${fn:length(tiposClase)}</span>
+                    <span class="cat-kpi__label">Total tipos</span>
                 </div>
-            </c:if>
-
-            <%-- Formulario nuevo / edición --%>
-            <c:if test="${modoForm}">
-                <div class="cat-form-panel" style="margin-bottom:1.5rem;">
-                    <div class="form-card__header">
-                        <div class="form-card__header-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="form-card__header-title">
-                                ${modoEdicion ? 'Editar Tipo de Clase' : 'Nuevo Tipo de Clase'}
-                            </p>
-                            <p class="form-card__header-sub">
-                                <c:if test="${modoEdicion}">ID: <c:out value="${entidad.id}"/></c:if>
-                                <c:if test="${!modoEdicion}">El ID se genera automáticamente del nombre</c:if>
-                            </p>
-                        </div>
-                    </div>
-
-                    <c:if test="${not empty errorMsg}">
-                        <div class="module-alert module-alert--error" style="margin:1rem 1.5rem 0;">
-                            <svg class="module-alert__icon" xmlns="http://www.w3.org/2000/svg"
-                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
-                                         0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
-                                         0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
-                            </svg>
-                            <div class="module-alert__body">
-                                <p class="module-alert__text"><c:out value="${errorMsg}"/></p>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <form action="${pageContext.request.contextPath}/tipoclase"
-                          method="post" novalidate autocomplete="off">
-                        <input type="hidden" name="action" value="save">
-                        <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
-                        <c:if test="${modoEdicion}">
-                            <input type="hidden" name="id" value="<c:out value='${entidad.id}'/>">
-                        </c:if>
-
-                        <div style="padding:1.35rem 1.5rem; display:flex; flex-direction:column; gap:1rem;">
-                            <div class="form-section-divider">
-                                <span class="form-section-divider__label">Datos del tipo de clase</span>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-field">
-                                    <label for="nombreTipoClase">
-                                        Nombre <span class="required-star">*</span>
-                                    </label>
-                                    <input type="text" id="nombreTipoClase" name="nombre"
-                                           class="form-control"
-                                           placeholder="Ej: Yoga, CrossFit, Spinning"
-                                           maxlength="50" required
-                                           value="<c:out value='${entidad.nombre}'/>">
-                                    <span class="form-field__hint">Nombre descriptivo del tipo de clase</span>
-                                </div>
-                                <div class="form-field">
-                                    <label for="estado-tc">Estado</label>
-                                    <select id="estado-tc" name="estado" class="form-control">
-                                        <option value="activo"
-                                            ${empty entidad.estado or entidad.estado eq 'activo' ? 'selected' : ''}>
-                                            Activo
-                                        </option>
-                                        <option value="inactivo"
-                                            ${entidad.estado eq 'inactivo' ? 'selected' : ''}>
-                                            Inactivo
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-card__footer">
-                            <button type="submit" class="btn btn-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                </svg>
-                                ${modoEdicion ? 'Guardar cambios' : 'Crear tipo de clase'}
-                            </button>
-                            <a href="${pageContext.request.contextPath}/tipoclase"
-                               class="btn btn-ghost">Cancelar</a>
-                        </div>
-                    </form>
+                <div class="cat-kpi">
+                    <span class="cat-kpi__num green">${tcActivos}</span>
+                    <span class="cat-kpi__label">Activos</span>
                 </div>
-            </c:if>
+                <div class="cat-kpi">
+                    <span class="cat-kpi__num dim">${tcInactivos}</span>
+                    <span class="cat-kpi__label">Inactivos</span>
+                </div>
+            </div>
 
-            <%-- Tabla: solo en modo lista --%>
-            <c:if test="${!modoForm}">
-                <div class="cat-table-wrapper">
+            <div class="cat-table-wrapper">
                     <div style="display:flex; align-items:center; justify-content:space-between;
                                 padding:0.9rem 1.35rem; border-bottom:1px solid var(--clr-border);
                                 background:var(--clr-surface);">
@@ -276,23 +199,23 @@
                                      text-transform:uppercase; color:var(--clr-text-muted);">
                             Tipos de Clase registrados
                         </span>
-                        <a href="${pageContext.request.contextPath}/tipoclase?action=new"
+                        <button type="button" onclick="openTipoClaseModal()"
                            class="btn btn-primary btn-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                             </svg>
-                            Nuevo tipo
-                        </a>
+                            Nuevo tipo de clase
+                        </button>
                     </div>
 
                     <c:choose>
                         <c:when test="${not empty tiposClase}">
-                            <table class="cat-table" aria-label="Tipos de clase">
+                            <table class="cat-table" aria-label="Tipos de clase del sistema">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Nombre</th>
+                                        <th>Nombre del tipo de clase</th>
                                         <th>Estado</th>
                                         <th aria-label="Acciones"></th>
                                     </tr>
@@ -308,7 +231,7 @@
                                                     <div class="cell-name__avatar ${fn:split(avColors,',')[avIdx]}">
                                                         <c:out value="${fn:substring(tc.nombre,0,1)}"/>
                                                     </div>
-                                                    <span style="font-weight:500; color:var(--clr-text);">
+                                                    <span style="font-weight:500; color:var(--clr-text); font-size:0.875rem;">
                                                         <c:out value="${tc.nombre}"/>
                                                     </span>
                                                 </div>
@@ -320,20 +243,22 @@
                                             </td>
                                             <td>
                                                 <div class="cell-actions">
-                                                    <a href="${pageContext.request.contextPath}/tipoclase?action=edit&id=<c:out value='${tc.id}'/>"
+                                                    <button type="button"
+                                                       onclick="openTipoClaseModal({id: '<c:out value='${tc.id}'/>', nombre: '<c:out value='${fn:escapeXml(tc.nombre)}'/>', estado: '${tc.activo ? 'activo' : 'inactivo'}'})"
                                                        class="btn btn-ghost btn-sm btn-icon" title="Editar">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                              viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                   d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/>
                                                         </svg>
-                                                    </a>
+                                                    </button>
                                                     <form action="${pageContext.request.contextPath}/tipoclase"
                                                           method="post" class="toggle-estado-form">
                                                         <input type="hidden" name="action" value="toggle">
                                                         <input type="hidden" name="id"     value="<c:out value='${tc.id}'/>">
                                                         <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
-                                                        <button type="submit"
+                                                        <button type="button"
+                                                                onclick="openActionModal(event, '${tc.activo ? 'deactivate' : 'activate'}', '${fn:escapeXml(tc.nombre)}')"
                                                                 class="btn ${tc.activo ? 'btn-danger' : 'btn-success'} btn-sm btn-icon"
                                                                 title="${tc.activo ? 'Desactivar' : 'Activar'}">
                                                             <c:choose>
@@ -348,6 +273,31 @@
                                                                     </svg>
                                                                 </c:otherwise>
                                                             </c:choose>
+                                                        </button>
+                                                    </form>
+                                                    <%-- Eliminar --%>
+                                                    <form action="${pageContext.request.contextPath}/tipoclase"
+                                                          method="post"
+                                                          style="display:inline;">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="id"     value="<c:out value='${tc.id}'/>">
+                                                        <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
+                                                        <button type="button"
+                                                                onclick="openActionModal(event, 'delete', '${fn:escapeXml(tc.nombre)}')"
+                                                                class="btn btn-danger btn-sm btn-icon"
+                                                                title="Eliminar ${fn:escapeXml(tc.nombre)}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107
+                                                                         1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0
+                                                                         1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772
+                                                                         5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12
+                                                                         .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0
+                                                                         0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964
+                                                                         51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09
+                                                                         2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                                                            </svg>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -369,22 +319,190 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                          viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+                                              d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5
+                                                 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z"/>
                                     </svg>
                                 </div>
-                                <p class="table-empty__title">Sin tipos de clase</p>
-                                <p class="table-empty__desc">Crea el primer tipo de clase grupal.</p>
-                                <a href="${pageContext.request.contextPath}/tipoclase?action=new"
+                                <p class="table-empty__title">Sin tipos de clase registrados</p>
+                                <p class="table-empty__desc">Crea el primer tipo de clase.</p>
+                                <button type="button" onclick="openTipoClaseModal()"
                                    class="btn btn-primary btn-sm" style="margin-top:0.5rem;">
                                     Crear tipo de clase
-                                </a>
+                                </button>
                             </div>
                         </c:otherwise>
                     </c:choose>
                 </div>
-            </c:if>
 
         </div><%-- /page-content --%>
+
+        <%-- ── Modal de Formulario ────────────────────────────────── --%>
+        <div id="tipoClaseModal" class="pm-modal-overlay">
+            <div class="pm-modal">
+                <div class="pm-modal__header">
+                    <span id="tipoClaseModalTitle">Nuevo Tipo de Clase</span>
+                    <button class="pm-modal__close" type="button" onclick="closeTipoClaseModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form action="${pageContext.request.contextPath}/tipoclase" method="post" autocomplete="off">
+                    <input type="hidden" name="action" value="save">
+                    <input type="hidden" name="id" id="tipoClaseModalId" value="">
+                    <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+
+                    <div style="padding: 1.5rem;">
+                        
+                        <div id="tipoClaseModalIdContainer" style="display:none; margin-bottom: 1.25rem;">
+                            <label style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                ID del Tipo de Clase
+                            </label>
+                            <div id="tipoClaseModalIdDisplay" style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-text-muted); background:var(--clr-surface); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--clr-border);">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1.25rem;">
+                            <label for="tipoClaseModalNombre" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                Nombre <span class="required-star">*</span>
+                            </label>
+                            <input type="text" id="tipoClaseModalNombre" name="nombre" class="form-control"
+                                   placeholder="Ej: Yoga, CrossFit, Spinning"
+                                   required maxlength="50"
+                                   style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                        </div>
+
+                        <div style="margin-bottom: 1.75rem;">
+                            <label for="tipoClaseModalEstado" style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">
+                                Estado
+                            </label>
+                            <select id="tipoClaseModalEstado" name="estado" class="form-control" style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--clr-border); display: flex; gap: 0.75rem; justify-content: flex-end; background: rgba(0,0,0,0.1);">
+                        <button type="button" class="btn btn-secondary" onclick="closeTipoClaseModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openTipoClaseModal(tipoClase) {
+                const modal = document.getElementById('tipoClaseModal');
+                const title = document.getElementById('tipoClaseModalTitle');
+                const idInput = document.getElementById('tipoClaseModalId');
+                const idContainer = document.getElementById('tipoClaseModalIdContainer');
+                const idDisplay = document.getElementById('tipoClaseModalIdDisplay');
+                const nombreInput = document.getElementById('tipoClaseModalNombre');
+                const estadoSelect = document.getElementById('tipoClaseModalEstado');
+
+                if (tipoClase) {
+                    title.textContent = 'Editar Tipo de Clase';
+                    idInput.value = tipoClase.id;
+                    idContainer.style.display = 'block';
+                    idDisplay.textContent = tipoClase.id;
+                    nombreInput.value = tipoClase.nombre;
+                    estadoSelect.value = tipoClase.estado;
+                } else {
+                    title.textContent = 'Nuevo Tipo de Clase';
+                    idInput.value = '';
+                    idContainer.style.display = 'none';
+                    idDisplay.textContent = '';
+                    nombreInput.value = '';
+                    estadoSelect.value = 'activo';
+                }
+
+                modal.classList.add('is-open');
+                setTimeout(() => nombreInput.focus(), 100);
+            }
+
+            function closeTipoClaseModal() {
+                document.getElementById('tipoClaseModal').classList.remove('is-open');
+            }
+
+            // --- Confirm Modal Actions ---
+            let formToSubmit = null;
+
+            function openActionModal(event, type, methodName) {
+                event.preventDefault();
+                formToSubmit = event.currentTarget.closest('form');
+
+                const iconContainer = document.getElementById('actionModalIconContainer');
+                const icon = document.getElementById('actionModalIcon');
+                const text = document.getElementById('actionModalText');
+                const btn = document.getElementById('btnConfirmAction');
+
+                if (type === 'delete') {
+                    iconContainer.style.borderColor = '#f87171'; // red
+                    iconContainer.style.background = 'rgba(248,113,113,0.1)';
+                    icon.style.color = '#f87171';
+                    icon.textContent = '!';
+                    text.innerHTML = `Se eliminará de forma permanente <br><strong><span style="color: var(--clr-text-muted);">` + methodName + `</span></strong><br><br><span style="font-size:0.8rem">Solo se permite si no está en uso por alguna clase.</span>`;
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Sí, eliminar!';
+                } else if (type === 'deactivate') {
+                    iconContainer.style.borderColor = '#fbbf24'; // warning yellow
+                    iconContainer.style.background = 'rgba(251,191,36,0.1)';
+                    icon.style.color = '#fbbf24';
+                    icon.textContent = '!';
+                    text.innerHTML = `Se desactivará el tipo de clase <br><strong><span style="color: var(--clr-text-muted);">` + methodName + `</span></strong>`;
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Sí, desactivar!';
+                } else if (type === 'activate') {
+                    iconContainer.style.borderColor = '#34d399'; // success green
+                    iconContainer.style.background = 'rgba(52,211,153,0.1)';
+                    icon.style.color = '#34d399';
+                    icon.textContent = '?';
+                    text.innerHTML = `Se activará el tipo de clase <br><strong><span style="color: var(--clr-text-muted);">` + methodName + `</span></strong>`;
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Sí, activar!';
+                }
+
+                document.getElementById('actionModal').classList.add('is-open');
+            }
+
+            function closeActionModal() {
+                formToSubmit = null;
+                document.getElementById('actionModal').classList.remove('is-open');
+            }
+
+            function confirmAction() {
+                if (formToSubmit) {
+                    formToSubmit.submit();
+                }
+            }
+        </script>
+
+        <%-- ── Modal de Confirmación de Acción ─────────────────────── --%>
+        <div id="actionModal" class="pm-modal-overlay">
+            <div class="pm-modal" style="max-width: 400px; text-align: center; padding: 2rem 1.5rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <div id="actionModalIconContainer" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <span id="actionModalIcon" style="font-size: 3.5rem; line-height: 1; font-family: var(--font-display); padding-bottom: 0.5rem;"></span>
+                    </div>
+                </div>
+                <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--clr-text); margin-bottom: 0.75rem;">
+                    ¿Estás seguro?
+                </h2>
+                <p id="actionModalText" style="color: var(--clr-text-dim); font-size: 0.95rem; margin-bottom: 1.75rem; line-height: 1.5;">
+                </p>
+                <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                    <button type="button" class="btn" id="btnConfirmAction" onclick="confirmAction()" style="min-width: 120px; font-weight: bold;">
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeActionModal()" style="min-width: 120px; font-weight: bold; background: #473f3f; border-color: #473f3f;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div><%-- /app-main --%>
 </div><%-- /app-shell --%>
 </body>
