@@ -503,16 +503,16 @@ public class SchedulesController extends AbstractController {
                 return;
             }
 
-            // Validar que no haya choque o superposición de horarios para la misma clase
-            List<Horario> horariosExistentes = horarioDAO.findByClaseId(claseId);
-            for (Horario h : horariosExistentes) {
-                if (h.getDiaSemana() == diaSemana) {
-                    // Condición de superposición: InicioA < FinB && InicioB < FinA
-                    if (horaInicio.isBefore(h.getHoraFin()) && h.getHoraInicio().isBefore(horaFin)) {
-                        mensajeError(req, "Ya existe un horario programado (" + h.getRangoHorario() + ") que coincide o se superpone para este día.");
-                        redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
-                        return;
-                    }
+            // compara contra TODOS los horarios del día (sala única)
+            List<Horario> horariosDelDia = horarioDAO.findProgramadosByDia(diaSemana);
+            for (Horario h : horariosDelDia) {
+                // condición estándar de superposición: InicioA < FinB && InicioB < FinA
+                if (horaInicio.isBefore(h.getHoraFin()) && h.getHoraInicio().isBefore(horaFin)) {
+                    mensajeError(req, "La sala ya está ocupada el " + h.getNombreDia()
+                            + " de " + h.getRangoHorario()
+                            + " por la clase \"" + h.getClase().getNombreClase() + "\".");
+                    redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
+                    return;
                 }
             }
 
