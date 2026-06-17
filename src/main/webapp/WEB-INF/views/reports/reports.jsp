@@ -841,7 +841,7 @@
 
         /* ── Strip resumen de ingresos ──────────────────────── */
         .ingresos-highlight {
-            background: linear-gradient(135deg, #161618 0%, #1c1416 60%, #1a1212 100%);
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe8e7 60%, #fff0ef 100%);
             border: 1px solid rgba(230,48,39,0.18);
             border-radius: var(--radius-lg);
             padding: 1.35rem 1.5rem;

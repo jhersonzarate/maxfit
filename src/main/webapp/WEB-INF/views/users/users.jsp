@@ -337,20 +337,54 @@
                                         }
 
                                         @media (max-width: 640px) {
-                                            .usr-stats-strip {
-                                                grid-template-columns: 1fr 1fr;
-                                            }
+                                             .usr-stats-strip {
+                                                 grid-template-columns: 1fr 1fr;
+                                             }
 
-                                            .reset-pw-form {
-                                                flex-direction: column;
-                                                align-items: flex-start;
-                                            }
+                                             .reset-pw-form {
+                                                 flex-direction: column;
+                                                 align-items: flex-start;
+                                             }
 
-                                            .reset-pw-input {
-                                                width: 120px;
-                                            }
-                                        }
-                                    </style>
+                                             .reset-pw-input {
+                                                 width: 120px;
+                                             }
+                                         }
+                                         /* Modal Styles */
+                                         .pm-modal-overlay {
+                                             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                                             background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+                                             display: flex; align-items: center; justify-content: center;
+                                             z-index: 1000; opacity: 0; pointer-events: none;
+                                             transition: opacity 0.3s ease;
+                                         }
+                                         .pm-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+                                         .pm-modal {
+                                             background: var(--clr-card); width: 100%; max-width: 520px;
+                                             border-radius: var(--radius-xl); border: 1px solid var(--clr-card-border);
+                                             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                                             transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                                             max-height: 90vh; overflow-y: auto;
+                                         }
+                                         .pm-modal-overlay.is-open .pm-modal { transform: translateY(0); }
+                                         .pm-modal__header {
+                                             padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--clr-border);
+                                             display: flex; align-items: center; justify-content: space-between;
+                                             font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
+                                         }
+                                         .pm-modal__close {
+                                             background: none; border: none; color: var(--clr-text-muted);
+                                             cursor: pointer; padding: 0.5rem; border-radius: 50%;
+                                             display: flex; align-items: center; justify-content: center;
+                                             transition: background 0.2s, color 0.2s;
+                                         }
+                                         .pm-modal__close:hover { background: rgba(255,255,255,0.05); color: var(--clr-text); }
+                                         .form-row-custom {
+                                             display: grid; grid-template-columns: 1fr 1fr;
+                                             gap: 1rem; margin-bottom: 1.25rem;
+                                         }
+                                         @media (max-width: 480px) { .form-row-custom { grid-template-columns: 1fr; } }
+                                     </style>
                             </head>
 
                             <body>
@@ -884,42 +918,36 @@
                                                                                     </div>
                                                                                 </div>
                                                                                 <div class="module-header__actions">
-                                                                                    <a href="${pageContext.request.contextPath}/employees"
-                                                                                        class="btn btn-secondary">
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                            fill="none"
-                                                                                            viewBox="0 0 24 24"
-                                                                                            stroke="currentColor"
-                                                                                            stroke-width="1.8">
-                                                                                            <path stroke-linecap="round"
-                                                                                                stroke-linejoin="round"
-                                                                                                d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0
-                                             0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944
-                                             11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062
-                                             6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0
-                                             0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0
-                                             0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0
-                                             0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15
-                                             6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1
-                                             1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0
-                                             1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-                                                                                        </svg>
-                                                                                        Empleados
-                                                                                    </a>
-                                                                                    <a href="${pageContext.request.contextPath}/users?action=new"
-                                                                                        class="btn btn-primary">
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                            fill="none"
-                                                                                            viewBox="0 0 24 24"
-                                                                                            stroke="currentColor"
-                                                                                            stroke-width="2.2">
-                                                                                            <path stroke-linecap="round"
-                                                                                                stroke-linejoin="round"
-                                                                                                d="M12 4.5v15m7.5-7.5h-15" />
-                                                                                        </svg>
-                                                                                        Nuevo usuario
-                                                                                    </a>
-                                                                                </div>
+                                                                                     <a href="${pageContext.request.contextPath}/employees"
+                                                                                         class="btn btn-secondary">
+                                                                                         <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                             fill="none" viewBox="0 0 24 24"
+                                                                                             stroke="currentColor" stroke-width="1.8">
+                                                                                             <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                 d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0
+                                                                             0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944
+                                                                             11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062
+                                                                             6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0
+                                                                             0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0
+                                                                             0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0
+                                                                             0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15
+                                                                             6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1
+                                                                             1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0
+                                                                             1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                                                                                         </svg>
+                                                                                         Empleados
+                                                                                     </a>
+                                                                                     <button type="button" onclick="openUserModal()"
+                                                                                         class="btn btn-primary">
+                                                                                         <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                             fill="none" viewBox="0 0 24 24"
+                                                                                             stroke="currentColor" stroke-width="2.2">
+                                                                                             <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                 d="M12 4.5v15m7.5-7.5h-15" />
+                                                                                         </svg>
+                                                                                         Nuevo usuario
+                                                                                     </button>
+                                                                                 </div>
                                                                             </div>
 
                                                                             <%-- Stats strip --%>
@@ -1240,44 +1268,31 @@
                                                                                                                                             <div
                                                                                                                                                 class="cell-actions">
 
-                                                                                                                                                <%-- Editar
-                                                                                                                                                    --%>
-                                                                                                                                                    <a href="${pageContext.request.contextPath}/users?action=edit&id=<c:out value='${usr.id}'/>"
-                                                                                                                                                        class="btn btn-ghost btn-sm btn-icon"
-                                                                                                                                                        title="Editar usuario">
-                                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                                            fill="none"
-                                                                                                                                                            viewBox="0 0 24 24"
-                                                                                                                                                            stroke="currentColor"
-                                                                                                                                                            stroke-width="1.8">
-                                                                                                                                                            <path
-                                                                                                                                                                stroke-linecap="round"
-                                                                                                                                                                stroke-linejoin="round"
-                                                                                                                                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652
-                                                                         2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6
-                                                                         18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-                                                                                                                                                        </svg>
-                                                                                                                                                    </a>
+                                                                                                                                                    <%-- Editar --%>
+                                                                                                                                                     <button type="button"
+                                                                                                                                                         class="btn btn-ghost btn-sm btn-icon"
+                                                                                                                                                         title="Editar usuario"
+                                                                                                                                                         onclick="openUserModal('<c:out value="${usr.id}"/>', '<c:out value="${fn:escapeXml(usr.email)}"/>', '${usr.rol != null ? usr.rol.id : ""}', '${usr.empleado != null ? usr.empleado.id : ""}')">
+                                                                                                                                                         <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                                             fill="none" viewBox="0 0 24 24"
+                                                                                                                                                             stroke="currentColor" stroke-width="1.8">
+                                                                                                                                                             <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                                 d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652
+                                                                                                                                              2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6
+                                                                                                                                              18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                                                                                                                                                         </svg>
+                                                                                                                                                     </button>
 
                                                                                                                                                     <%-- Toggle
                                                                                                                                                         estado
-                                                                                                                                                        (no
-                                                                                                                                                        si
-                                                                                                                                                        es
-                                                                                                                                                        mi
-                                                                                                                                                        propia
-                                                                                                                                                        cuenta)
                                                                                                                                                         --%>
                                                                                                                                                         <c:if
                                                                                                                                                             test="${not esMiCuenta}">
-                                                                                                                                                            <c:set
-                                                                                                                                                                var="toggleMsg"
-                                                                                                                                                                value="${usr.activo ? 'Desactivar' : 'Activar'}" />
                                                                                                                                                             <form
                                                                                                                                                                 action="${pageContext.request.contextPath}/users"
                                                                                                                                                                 method="post"
                                                                                                                                                                 class="toggle-form"
-                                                                                                                                                                onsubmit="return confirm('¿${toggleMsg} la cuenta de ${usr.email}?');">
+                                                                                                                                                                onsubmit="openActionModal(event, '${usr.activo ? 'deactivate' : 'activate'}', '${fn:escapeXml(usr.email)}'); return false;">
                                                                                                                                                                 <input
                                                                                                                                                                     type="hidden"
                                                                                                                                                                     name="action"
@@ -1297,9 +1312,6 @@
                                                                                                                                                                     <c:choose>
                                                                                                                                                                         <c:when
                                                                                                                                                                             test="${usr.activo}">
-                                                                                                                                                                            <%-- Ícono
-                                                                                                                                                                                desactivar
-                                                                                                                                                                                --%>
                                                                                                                                                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                                                                                                                                                     fill="none"
                                                                                                                                                                                     viewBox="0 0 24 24"
@@ -1313,9 +1325,6 @@
                                                                                                                                                                                 </svg>
                                                                                                                                                                         </c:when>
                                                                                                                                                                         <c:otherwise>
-                                                                                                                                                                            <%-- Ícono
-                                                                                                                                                                                activar
-                                                                                                                                                                                --%>
                                                                                                                                                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                                                                                                                                                     fill="none"
                                                                                                                                                                                     viewBox="0 0 24 24"
@@ -1332,38 +1341,22 @@
                                                                                                                                                             </form>
                                                                                                                                                         </c:if>
 
-                                                                                                                                                        <%-- Si
-                                                                                                                                                            es
-                                                                                                                                                            mi
-                                                                                                                                                            cuenta:
-                                                                                                                                                            tooltip
-                                                                                                                                                            bloqueado
-                                                                                                                                                            --%>
-                                                                                                                                                            <c:if
-                                                                                                                                                                test="${esMiCuenta}">
-                                                                                                                                                                <button
-                                                                                                                                                                    class="btn btn-ghost btn-sm btn-icon"
-                                                                                                                                                                    disabled
-                                                                                                                                                                    title="No puedes desactivar tu propia cuenta"
-                                                                                                                                                                    style="opacity:0.35; cursor:not-allowed;">
-                                                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                                                        fill="none"
-                                                                                                                                                                        viewBox="0 0 24 24"
-                                                                                                                                                                        stroke="currentColor"
-                                                                                                                                                                        stroke-width="1.8">
-                                                                                                                                                                        <path
-                                                                                                                                                                            stroke-linecap="round"
-                                                                                                                                                                            stroke-linejoin="round"
-                                                                                                                                                                            d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75
-                                                                             11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25
-                                                                             2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0
-                                                                             0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                                                                                                                        <%-- Delete button --%>
+                                                                                                                                                        <c:if test="${not esMiCuenta}">
+                                                                                                                                                            <form action="${pageContext.request.contextPath}/users" method="post" class="toggle-form" onsubmit="openActionModal(event, 'delete', '${fn:escapeXml(usr.email)}'); return false;">
+                                                                                                                                                                <input type="hidden" name="action" value="delete">
+                                                                                                                                                                <input type="hidden" name="id" value="<c:out value='${usr.id}'/>">
+                                                                                                                                                                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+                                                                                                                                                                <button type="submit" class="btn btn-danger btn-sm btn-icon" title="Eliminar usuario">
+                                                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                                                                                                                                     </svg>
                                                                                                                                                                 </button>
-                                                                                                                                                            </c:if>
+                                                                                                                                                            </form>
+                                                                                                                                                        </c:if>
 
-                                                                                                                                            </div>
-                                                                                                                                        </td>
+                                                                                                             </div>
+                                                                                                         </td>
                                                                                                             </tr>
                                                                                                         </c:forEach>
                                                                                                     </tbody>
@@ -1385,70 +1378,18 @@
                                                                                                                 s</c:if>
                                                                                                             registrados
                                                                                                         </span>
-                                                                                                        <a href="${pageContext.request.contextPath}/users?action=new"
-                                                                                                            class="btn btn-primary btn-sm">
-                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                fill="none"
-                                                                                                                viewBox="0 0 24 24"
-                                                                                                                stroke="currentColor"
-                                                                                                                stroke-width="2.2">
-                                                                                                                <path
-                                                                                                                    stroke-linecap="round"
-                                                                                                                    stroke-linejoin="round"
-                                                                                                                    d="M12 4.5v15m7.5-7.5h-15" />
-                                                                                                            </svg>
-                                                                                                            Agregar
-                                                                                                            usuario
-                                                                                                        </a>
                                                                                                     </div>
 
                                                                                             </c:when>
 
                                                                                             <%-- Estado vacío --%>
                                                                                                 <c:otherwise>
-                                                                                                    <div
-                                                                                                        class="table-empty">
-                                                                                                        <div
-                                                                                                            class="table-empty__icon">
-                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                fill="none"
-                                                                                                                viewBox="0 0 24 24"
-                                                                                                                stroke="currentColor"
-                                                                                                                stroke-width="1.5">
-                                                                                                                <path
-                                                                                                                    stroke-linecap="round"
-                                                                                                                    stroke-linejoin="round"
-                                                                                                                    d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5
-                                                     17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1
-                                                     .43-1.563A6 6 0 0 1 21.75 8.25Z" />
+                                                                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1.43-1.563A6 6 0 0 1 21.75 8.25Z" />
                                                                                                             </svg>
                                                                                                         </div>
-                                                                                                        <p
-                                                                                                            class="table-empty__title">
-                                                                                                            No hay
-                                                                                                            usuarios
-                                                                                                            registrados
-                                                                                                        </p>
-                                                                                                        <p
-                                                                                                            class="table-empty__desc">
-                                                                                                            Crea el
-                                                                                                            primer
-                                                                                                            usuario para
-                                                                                                            dar acceso
-                                                                                                            al sistema.
-                                                                                                            Primero
-                                                                                                            registra el
-                                                                                                            empleado
-                                                                                                            desde el
-                                                                                                            módulo de
-                                                                                                            Empleados.
-                                                                                                        </p>
-                                                                                                        <a href="${pageContext.request.contextPath}/users?action=new"
-                                                                                                            class="btn btn-primary btn-sm"
-                                                                                                            style="margin-top:0.5rem;">
-                                                                                                            Crear primer
-                                                                                                            usuario
-                                                                                                        </a>
+                                                                                                        <p class="table-empty__title">No hay usuarios registrados</p>
+                                                                                                        <p class="table-empty__desc">Crea el primer usuario para dar acceso al sistema.</p>
+                                                                                                        <button type="button" onclick="openUserModal()" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Crear primer usuario</button>
                                                                                                     </div>
                                                                                                 </c:otherwise>
                                                                                         </c:choose>
@@ -1462,6 +1403,182 @@
                                         </div><%-- /app-main --%>
                                 </div><%-- /app-shell --%>
 
-                            </body>
+                            
+<%-- ─── Modal: Nuevo / Editar Usuario ─────────────────────────────────────── --%>
+<div id="userModal" class="pm-modal-overlay">
+    <div class="pm-modal" style="max-width:560px;">
+        <div class="pm-modal__header">
+            <span id="userModalTitle">Nuevo Usuario</span>
+            <button class="pm-modal__close" type="button" onclick="closeUserModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <form action="${pageContext.request.contextPath}/users" method="post" autocomplete="off" id="userForm">
+            <input type="hidden" name="action" value="save">
+            <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
+            <input type="hidden" name="id" id="userModalId">
+            <div style="padding:1.5rem;">
+                <p style="font-size:0.72rem;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;
+                           color:var(--clr-text-dim);margin-bottom:0.85rem;">Cuenta de acceso</p>
+
+                <div style="margin-bottom:1.25rem;">
+                    <label for="userModalEmail" style="display:block;font-size:0.75rem;font-weight:600;color:var(--clr-text-dim);margin-bottom:0.3rem;">
+                        Correo electr&oacute;nico <span style="color:#f87171;">*</span>
+                    </label>
+                    <input type="email" id="userModalEmail" name="email" required maxlength="150"
+                           style="width:100%;padding:0.65rem 0.75rem;border-radius:var(--radius-md);border:1px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:0.9rem;box-sizing:border-box;">
+                </div>
+
+                <div style="margin-bottom:1.25rem;">
+                    <label for="userModalPwd" style="display:block;font-size:0.75rem;font-weight:600;color:var(--clr-text-dim);margin-bottom:0.3rem;">
+                        Contrase&ntilde;a <span id="userModalPwdReq" style="color:#f87171;">*</span>
+                        <span id="userModalPwdHint" style="font-weight:400;color:var(--clr-text-dim);font-style:italic;"></span>
+                    </label>
+                    <input type="password" id="userModalPwd" name="password"
+                           minlength="8" maxlength="255" autocomplete="new-password"
+                           style="width:100%;padding:0.65rem 0.75rem;border-radius:var(--radius-md);border:1px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:0.9rem;box-sizing:border-box;">
+                </div>
+
+                <p style="font-size:0.72rem;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;
+                           color:var(--clr-text-dim);margin-bottom:0.85rem;margin-top:1rem;">Rol y empleado</p>
+
+                <div class="form-row-custom">
+                    <div>
+                        <label for="userModalRol" style="display:block;font-size:0.75rem;font-weight:600;color:var(--clr-text-dim);margin-bottom:0.3rem;">
+                            Rol <span style="color:#f87171;">*</span>
+                        </label>
+                        <select id="userModalRol" name="idRol" required
+                                style="width:100%;padding:0.65rem 0.75rem;border-radius:var(--radius-md);border:1px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:0.9rem;box-sizing:border-box;">
+                            <option value="">&#8212; Seleccionar rol &#8212;</option>
+                            <c:forEach var="rol" items="${roles}">
+                                <option value="<c:out value='${rol.id}'/>"><c:out value="${rol.nombreRol}"/></option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="userModalEmpleado" style="display:block;font-size:0.75rem;font-weight:600;color:var(--clr-text-dim);margin-bottom:0.3rem;">
+                            Empleado vinculado
+                        </label>
+                        <select id="userModalEmpleado" name="idEmpleado"
+                                style="width:100%;padding:0.65rem 0.75rem;border-radius:var(--radius-md);border:1px solid var(--clr-border);background:var(--clr-surface);color:var(--clr-text);font-size:0.9rem;box-sizing:border-box;">
+                            <option value="">&#8212; Ninguno &#8212;</option>
+                            <c:forEach var="emp" items="${empleados}">
+                                <option value="<c:out value='${emp.id}'/>"><c:out value="${emp.nombre} ${emp.apellido}"/></option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:1rem 1.5rem;border-top:1px solid var(--clr-border);
+                        display:flex;gap:0.75rem;justify-content:flex-end;background:rgba(0,0,0,0.1);">
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <span id="userModalBtnText">Crear usuario</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%-- ─── Modal de Confirmaci&oacute;n ────────────────────────────────────────────── --%>
+<div id="actionModal" class="pm-modal-overlay">
+    <div class="pm-modal" style="max-width:400px;text-align:center;padding:2rem 1.5rem;">
+        <div style="margin-bottom:1.5rem;">
+            <div id="actionModalIconContainer" style="width:80px;height:80px;border-radius:50%;border:3px solid;
+                 display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                <span id="actionModalIcon" style="font-size:3.5rem;line-height:1;
+                      font-family:var(--font-display);padding-bottom:0.5rem;"></span>
+            </div>
+        </div>
+        <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--clr-text);margin-bottom:0.75rem;">&iquest;Est&aacute;s seguro?</h2>
+        <p id="actionModalText" style="color:var(--clr-text-dim);font-size:0.95rem;margin-bottom:1.75rem;line-height:1.5;"></p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button type="button" class="btn" id="btnConfirmAction"
+                    onclick="confirmAction()" style="min-width:120px;font-weight:bold;"></button>
+            <button type="button" class="btn btn-secondary" onclick="closeActionModal()"
+                    style="min-width:120px;font-weight:bold;background:#473f3f;border-color:#473f3f;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var userModal = document.getElementById('userModal');
+    var userForm  = document.getElementById('userForm');
+
+    function openUserModal(id, email, idRol, idEmpleado) {
+        var isEdit = (id !== undefined && id !== null && id !== '');
+        document.getElementById('userModalTitle').textContent = isEdit ? 'Editar Usuario' : 'Nuevo Usuario';
+        document.getElementById('userModalBtnText').textContent = isEdit ? 'Guardar cambios' : 'Crear usuario';
+        document.getElementById('userModalId').value = isEdit ? id : '';
+        document.getElementById('userModalEmail').value = isEdit ? (email || '') : '';
+        document.getElementById('userModalRol').value = isEdit ? (idRol || '') : '';
+        document.getElementById('userModalEmpleado').value = isEdit ? (idEmpleado || '') : '';
+        var pwdInput = document.getElementById('userModalPwd');
+        var pwdHint  = document.getElementById('userModalPwdHint');
+        var pwdReq   = document.getElementById('userModalPwdReq');
+        if (isEdit) {
+            pwdInput.required = false;
+            pwdHint.textContent = '(dejar vac\u00edo para no cambiar)';
+            if (pwdReq) pwdReq.style.display = 'none';
+        } else {
+            pwdInput.required = true;
+            pwdHint.textContent = '';
+            if (pwdReq) pwdReq.style.display = '';
+        }
+        userModal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeUserModal() {
+        userModal.classList.remove('is-open');
+        userForm.reset();
+        document.body.style.overflow = '';
+    }
+
+    var formToSubmit = null;
+
+    function openActionModal(event, type, name) {
+        event.preventDefault();
+        formToSubmit = event.currentTarget.closest('form');
+        var iconContainer = document.getElementById('actionModalIconContainer');
+        var icon = document.getElementById('actionModalIcon');
+        var text = document.getElementById('actionModalText');
+        var btn  = document.getElementById('btnConfirmAction');
+        if (type === 'delete') {
+            iconContainer.style.borderColor = '#f87171';
+            iconContainer.style.background  = 'rgba(248,113,113,0.1)';
+            icon.style.color = '#f87171'; icon.textContent = '!';
+            text.innerHTML = 'Se eliminar\u00e1 permanentemente la cuenta de<br><strong>' + name + '</strong><br><br><span style="font-size:0.8rem">Solo se permite si no está relacionado a clientes, contratos u horarios.</span>';
+            btn.className = 'btn btn-primary'; btn.textContent = 'S\u00ed, eliminar';
+        } else if (type === 'deactivate') {
+            iconContainer.style.borderColor = '#fbbf24';
+            iconContainer.style.background  = 'rgba(251,191,36,0.1)';
+            icon.style.color = '#fbbf24'; icon.textContent = '!';
+            text.innerHTML = 'Se desactivar\u00e1 la cuenta de<br><strong>' + name + '</strong>';
+            btn.className = 'btn btn-primary'; btn.textContent = 'S\u00ed, desactivar';
+        } else if (type === 'activate') {
+            iconContainer.style.borderColor = '#34d399';
+            iconContainer.style.background  = 'rgba(52,211,153,0.1)';
+            icon.style.color = '#34d399'; icon.textContent = '\u2713';
+            text.innerHTML = 'Se activar\u00e1 la cuenta de<br><strong>' + name + '</strong>';
+            btn.className = 'btn btn-primary'; btn.textContent = 'S\u00ed, activar';
+        }
+        document.getElementById('actionModal').classList.add('is-open');
+    }
+
+    function closeActionModal() {
+        formToSubmit = null;
+        document.getElementById('actionModal').classList.remove('is-open');
+    }
+
+    function confirmAction() {
+        if (formToSubmit) formToSubmit.submit();
+    }
+</script>
+
+</body>
 
                             </html>

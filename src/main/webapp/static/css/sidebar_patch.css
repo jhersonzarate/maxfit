@@ -1,9 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
-   SIDEBAR RESPONSIVE — reemplaza el bloque @media al final
-   de los <style> dentro de sidebar.jsp
-
-   ANTES era @media (max-width: 1024px) → colapsaba demasiado pronto
-   AHORA es  @media (max-width:  900px) → sidebar completo en desktop
+   sidebar_patch.css  —  MaxFit Sistema de Gestión
+   Tema: CLARO con acento rojo MaxFit.
+   Responsive para sidebar colapsado en tablet ≤ 900px.
    ══════════════════════════════════════════════════════════ */
 
 /* ── Modo colapsado (solo íconos) — tablet estrecha ≤ 900px ─ */

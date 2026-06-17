@@ -83,6 +83,11 @@ public class UsersController extends AbstractController {
                 resetearContrasena(req, resp);
                 break;
 
+            // eliminar usuario
+            case "delete":
+                eliminarUsuario(req, resp);
+                break;
+
             default:
                 redirigirA("/users", req, resp);
         }
@@ -97,6 +102,8 @@ public class UsersController extends AbstractController {
             List<Usuario> usuarios = usuarioDAO.findAll();
             req.setAttribute("usuarios",      usuarios);
             req.setAttribute("totalUsuarios", usuarios.size());
+            // cargar catálogos para el modal de nuevo usuario
+            cargarCatalogosFormulario(req);
             irA(ViewRoutes.USERS_INDEX, req, resp);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al listar usuarios", e);
@@ -163,17 +170,21 @@ public class UsersController extends AbstractController {
         String email        = param(req, "email");
         String rawPassword  = param(req, "password");       // solo en creación
         String idRol        = param(req, "idRol");
-        String idEmpleado   = param(req, "idEmpleado");     // puede ser null
+        String idEmpleado   = param(req, "idEmpleado");
 
         boolean esNuevo = (id == null || id.isBlank());
 
         // validar campos obligatorios
-        if (email == null) {
+        if (email == null || email.isBlank()) {
             volverAlFormulario(req, resp, esNuevo, id, "El correo es obligatorio.");
             return;
         }
-        if (idRol == null) {
+        if (idRol == null || idRol.isBlank()) {
             volverAlFormulario(req, resp, esNuevo, id, "Debe seleccionar un rol.");
+            return;
+        }
+        if (idEmpleado == null || idEmpleado.isBlank()) {
+            volverAlFormulario(req, resp, esNuevo, id, "Debe seleccionar un empleado.");
             return;
         }
         // contraseña obligatoria solo al crear
@@ -192,7 +203,7 @@ public class UsersController extends AbstractController {
                 return;
             }
 
-            // verificar empleado vinculado (campo opcional)
+            // verificar empleado vinculado
             Empleado empleado = null;
             if (idEmpleado != null && !idEmpleado.isBlank()) {
                 empleado = empleadoDAO.findById(idEmpleado);
@@ -227,8 +238,27 @@ public class UsersController extends AbstractController {
                 usuario.setEstado(existente.getEstado());
             }
 
+            // verificar email duplicado antes de guardar
+            Usuario emailExistente = usuarioDAO.findByEmail(email);
+            if (emailExistente != null && !emailExistente.getId().equals(id == null ? "" : id)) {
+                volverAlFormulario(req, resp, esNuevo, id,
+                        "El correo " + email + " ya está registrado en otro usuario.");
+                return;
+            }
+
+            // verificar que el empleado no tenga ya una cuenta asignada
+            if (idEmpleado != null && !idEmpleado.isBlank()) {
+                Usuario empExistente = usuarioDAO.findByEmpleadoId(idEmpleado);
+                if (empExistente != null && !empExistente.getId().equals(id == null ? "" : id)) {
+                    volverAlFormulario(req, resp, esNuevo, id,
+                            "El empleado seleccionado ya tiene una cuenta asignada.");
+                    return;
+                }
+            }
+
             // persistir en BD
             usuarioDAO.save(usuario);
+
             String accion = esNuevo ? "creado" : "actualizado";
             LOGGER.info("Usuario " + accion + ": " + usuario.getEmail()
                     + " | rol: " + idRol);
@@ -335,6 +365,50 @@ public class UsersController extends AbstractController {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error al resetear contraseña del usuario: " + id, e);
             mensajeError(req, "Error al actualizar la contraseña. Intenta nuevamente.");
+        }
+
+        redirigirA("/users", req, resp);
+    }
+
+    // ─── eliminar usuario ──────────────────────────────────────
+
+    // elimina el usuario solo si no tiene transacciones vinculadas
+    private void eliminarUsuario(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        String id = param(req, "id");
+        if (id == null) {
+            mensajeError(req, "ID de usuario no especificado.");
+            redirigirA("/users", req, resp);
+            return;
+        }
+
+        // no puede eliminarse a sí mismo
+        String miId = getSessionUserId(req);
+        if (id.equals(miId)) {
+            mensajeError(req, "No puedes eliminar tu propia cuenta.");
+            redirigirA("/users", req, resp);
+            return;
+        }
+
+        try {
+            // verificar si tiene transacciones
+            if (usuarioDAO.hasTransacciones(id)) {
+                mensajeError(req, "Error: No puede ser eliminado porque tiene registros relacionados con contratos, clientes u horarios. Solo puede ser eliminado si no está relacionado con nada.");
+                redirigirA("/users", req, resp);
+                return;
+            }
+
+            Usuario usuario = usuarioDAO.findById(id);
+            String emailRef = (usuario != null) ? usuario.getEmail() : id;
+            usuarioDAO.delete(id);
+
+            LOGGER.info("Usuario eliminado: " + emailRef);
+            mensajeExito(req, "Usuario " + emailRef + " eliminado correctamente.");
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al eliminar usuario: " + id, e);
+            mensajeError(req, "Error al eliminar el usuario. Intenta nuevamente.");
         }
 
         redirigirA("/users", req, resp);
