@@ -145,6 +145,16 @@ public class CatalogoDAO {
         }
     }
 
+    public boolean deleteTipoDocumento(String id) throws SQLException {
+        String sql = "DELETE FROM TipoDocumentos WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, id);
+            boolean ok = ps.executeUpdate() > 0;
+            if (ok) LOGGER.info("TipoDocumento eliminado: " + id);
+            return ok;
+        }
+    }
     // ═══════════════════════════════════════════════════════════
     // CARGOS (RF-13)
     // ═══════════════════════════════════════════════════════════
@@ -254,6 +264,17 @@ public class CatalogoDAO {
         }
     }
 
+    // DELETE cargo
+    public boolean deleteCargo(String id) throws SQLException {
+        String sql = "DELETE FROM Cargos WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, id);
+            boolean ok = ps.executeUpdate() > 0;
+            if (ok) LOGGER.info("Cargo eliminado: " + id);
+            return ok;
+        }
+    }
     // ═══════════════════════════════════════════════════════════
     // METODOS DE PAGO (RF-06)
     // ═══════════════════════════════════════════════════════════
@@ -568,6 +589,18 @@ public class CatalogoDAO {
         }
     }
 
+
+    public boolean deleteTipoClase(String id) throws SQLException {
+        String sql = "DELETE FROM TipoClases WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, id);
+            int rows = ps.executeUpdate();
+            boolean ok = (rows > 0);
+            if (ok) LOGGER.info("TipoClase eliminado: " + id);
+            return ok;
+        }
+    }
     // ─── helpers privados ──────────────────────────────────────
 
     private TipoDocumento mapTipoDocumento(ResultSet rs)

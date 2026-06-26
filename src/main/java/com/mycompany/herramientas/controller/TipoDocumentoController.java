@@ -2,6 +2,8 @@ package com.mycompany.herramientas.controller;
 
 import com.mycompany.herramientas.config.AppConfig;
 import com.mycompany.herramientas.dao.CatalogoDAO;
+import com.mycompany.herramientas.dao.ClienteDAO;
+import com.mycompany.herramientas.dao.EmpleadoDAO;
 import com.mycompany.herramientas.model.TipoDocumento;
 import com.mycompany.herramientas.view.ViewRoutes;
 
@@ -21,6 +23,8 @@ public class TipoDocumentoController extends AbstractController {
             Logger.getLogger(TipoDocumentoController.class.getName());
 
     private final CatalogoDAO catalogoDAO = new CatalogoDAO();
+    private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
 
     @Override
     protected void doGet(HttpServletRequest req,
@@ -47,6 +51,9 @@ public class TipoDocumentoController extends AbstractController {
         switch (getAction(req)) {
             case "save":   guardar(req, resp);      break;
             case "toggle": toggleEstado(req, resp); break;
+            case "delete":
+                eliminar(req, resp);
+                break;
             default:       redirigirA("/tipodocumento", req, resp);
         }
     }
