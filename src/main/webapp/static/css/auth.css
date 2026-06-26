@@ -6,23 +6,23 @@
 
 /* ── 1. Variables de diseño ──────────────────────────────── */
 :root {
-    --clr-bg:          #0d0d0d;
-    --clr-panel:       #161618;
-    --clr-panel-edge:  #1f1f22;
-    --clr-surface:     #1c1c1f;
-    --clr-surface-2:   #252528;
-    --clr-border:      #2a2a2d;
-    --clr-border-focus:#c0392b;
+    --clr-bg:          #f5f6f8;
+    --clr-panel:       #ffffff;
+    --clr-panel-edge:  #e5e7eb;
+    --clr-surface:     #f9fafb;
+    --clr-surface-2:   #f3f4f6;
+    --clr-border:      #d1d5db;
+    --clr-border-focus:#e63027;
 
     --clr-red:         #e63027;
     --clr-red-dark:    #c0392b;
-    --clr-red-glow:    rgba(230, 48, 39, 0.22);
-    --clr-red-hover:   #ff3d33;
+    --clr-red-glow:    rgba(230, 48, 39, 0.16);
+    --clr-red-hover:   #d62820;
 
-    --clr-text:        #f0f0f0;
-    --clr-text-muted:  #8a8a90;
-    --clr-text-dim:    #55555c;
-    --clr-placeholder: #4a4a52;
+    --clr-text:        #111827;
+    --clr-text-muted:  #6b7280;
+    --clr-text-dim:    #9ca3af;
+    --clr-placeholder: #9ca3af;
 
     --font-display:    'Barlow Condensed', sans-serif;
     --font-body:       'DM Sans', sans-serif;
@@ -32,10 +32,10 @@
     --radius-lg:       16px;
     --radius-xl:       22px;
 
-    --shadow-panel:    0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
-    --shadow-input:    inset 0 1px 2px rgba(0,0,0,0.4);
-    --shadow-btn:      0 4px 20px rgba(230, 48, 39, 0.45);
-    --shadow-btn-hover:0 6px 28px rgba(230, 48, 39, 0.65);
+    --shadow-panel:    0 24px 60px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04);
+    --shadow-input:    inset 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-btn:      0 4px 18px rgba(230, 48, 39, 0.25);
+    --shadow-btn-hover:0 6px 24px rgba(230, 48, 39, 0.34);
 
     --transition:      0.22s cubic-bezier(0.4,0,0.2,1);
 }
@@ -84,7 +84,7 @@ html, body {
     /* background-image se inyecta inline desde login.jsp via JSTL */
     background-size: cover;
     background-position: center 30%;
-    filter: brightness(0.45) saturate(0.8);
+    filter: brightness(0.92) saturate(0.95);
     transform: scale(1.03);
     transition: transform 12s ease;
 }
@@ -95,10 +95,10 @@ html, body {
     position: absolute;
     inset: 0;
     background: linear-gradient(
-        135deg,
-        rgba(0,0,0,0.75) 0%,
-        rgba(13,13,13,0.45) 50%,
-        rgba(0,0,0,0.82) 100%
+            135deg,
+            rgba(255,255,255,0.72) 0%,
+            rgba(255,255,255,0.40) 50%,
+            rgba(255,255,255,0.76) 100%
     );
     pointer-events: none;
 }
@@ -134,7 +134,7 @@ html, body {
     line-height: 1.08;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #e8e8e8;
+    color: #111827;
 }
 
 .auth-hero__tagline span.accent {
@@ -149,10 +149,11 @@ html, body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    background: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.78);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.10);
+    border: 1px solid rgba(209,213,219,0.80);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
     border-radius: var(--radius-lg);
     padding: 1.25rem 1.5rem;
     max-width: 380px;
@@ -162,7 +163,7 @@ html, body {
     flex-shrink: 0;
     width: 48px;
     height: 48px;
-    background: rgba(255,255,255,0.10);
+    background: rgba(230, 48, 39, 0.08);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -254,7 +255,7 @@ html, body {
 }
 
 .auth-logo__wordmark span.max {
-    color: #f5f5f5;
+    color: #111827;
 }
 
 .auth-logo__wordmark span.fit {
@@ -320,7 +321,7 @@ html, body {
 
 .auth-alert__text {
     font-size: 0.82rem;
-    color: #f0a0a0;
+    color: #b91c1c;
     line-height: 1.5;
 }
 
@@ -331,11 +332,11 @@ html, body {
 }
 
 .auth-alert--success .auth-alert__icon {
-    color: #27ae60;
+    color: #166534;
 }
 
 .auth-alert--success .auth-alert__text {
-    color: #a0d4b0;
+    color: #1d4ed8;
 }
 
 /* ── 8. Campos del formulario ────────────────────────────── */
@@ -398,7 +399,7 @@ html, body {
 }
 
 .input-wrapper input:hover {
-    border-color: #3a3a40;
+    border-color: #9ca3af;
     background: var(--clr-surface-2);
 }
 
@@ -545,7 +546,7 @@ html, body {
 
 /* ── 11. Botón secundario (forgot-password de vuelta) ────── */
 .btn-auth--ghost {
-    background: transparent;
+    background: #ffffff;
     border: 1px solid var(--clr-border);
     color: var(--clr-text-muted);
     box-shadow: none;
@@ -553,6 +554,7 @@ html, body {
 
 .btn-auth--ghost:hover {
     background: var(--clr-surface-2);
+    color: var(--clr-text);
     box-shadow: none;
     transform: translateY(-1px);
 }

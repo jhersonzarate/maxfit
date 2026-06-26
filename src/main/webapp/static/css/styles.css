@@ -6,46 +6,45 @@
 /* ── 1. Variables de diseño ──────────────────────────────── */
 :root {
     /* Superficie y fondo */
-    --clr-bg: #0d0d0d;
-    --clr-shell: #111113;
-    --clr-sidebar: #111113;
-    --clr-sidebar-border: #1e1e22;
-    --clr-navbar: #111113;
-    --clr-navbar-border: #1e1e22;
-    --clr-surface: #1c1c1f;
-    --clr-surface-2: #252528;
-    --clr-surface-3: #2e2e32;
-    --clr-card: #18181b;
-    --clr-card-border: #27272a;
+    --clr-bg: #f5f6f8;
+    --clr-shell: #ffffff;
+    --clr-sidebar: #ffffff;
+    --clr-sidebar-border: #e5e7eb;
+    --clr-navbar: #ffffff;
+    --clr-navbar-border: #e5e7eb;
+    --clr-surface: #f9fafb;
+    --clr-surface-2: #f3f4f6;
+    --clr-surface-3: #e5e7eb;
+    --clr-card: #ffffff;
+    --clr-card-border: #e5e7eb;
 
     /* Texto */
-    --clr-text: #f0f0f0;
-    --clr-text-muted: #8a8a90;
-    --clr-text-dim: #52525a;
-    --clr-text-inverted: #0d0d0d;
+    --clr-text: #111827;
+    --clr-text-muted: #6b7280;
+    --clr-text-dim: #9ca3af;
+    --clr-text-inverted: #ffffff;
 
     /* Acento principal — rojo MaxFit */
     --clr-red: #e63027;
     --clr-red-dark: #c0392b;
-    --clr-red-hover: #ff3d33;
-    --clr-red-glow: rgba(230, 48, 39, 0.18);
+    --clr-red-hover: #d62820;
+    --clr-red-glow: rgba(230, 48, 39, 0.16);
     --clr-red-subtle: rgba(230, 48, 39, 0.08);
 
     /* Estados semánticos */
-    --clr-success: #22c55e;
-    --clr-success-subtle: rgba(34, 197, 94, 0.10);
-    --clr-warning: #f59e0b;
-    --clr-warning-subtle: rgba(245, 158, 11, 0.10);
-    --clr-danger: #e63027;
-    --clr-danger-subtle: rgba(230, 48, 39, 0.10);
-    --clr-info: #3b82f6;
-    --clr-info-subtle: rgba(59, 130, 246, 0.10);
+    --clr-success: #16a34a;
+    --clr-success-subtle: rgba(22, 163, 74, 0.10);
+    --clr-warning: #d97706;
+    --clr-warning-subtle: rgba(217, 119, 6, 0.12);
+    --clr-danger: #dc2626;
+    --clr-danger-subtle: rgba(220, 38, 38, 0.10);
+    --clr-info: #2563eb;
+    --clr-info-subtle: rgba(37, 99, 235, 0.10);
 
     /* Bordes */
-    --clr-border: #27272a;
-    --clr-border-light: #1e1e22;
+    --clr-border: #e5e7eb;
+    --clr-border-light: #f0f1f3;
     --clr-border-focus: #e63027;
-
     /* Tipografía */
     --font-display: 'Barlow Condensed', sans-serif;
     --font-body: 'DM Sans', sans-serif;
@@ -60,13 +59,12 @@
     --radius-full: 9999px;
 
     /* Sombras */
-    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.55);
-    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.65);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
-    --shadow-red: 0 4px 20px rgba(230, 48, 39, 0.35);
-
+    --shadow-xs: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.10);
+    --shadow-md: 0 4px 20px rgba(15, 23, 42, 0.12);
+    --shadow-lg: 0 8px 40px rgba(15, 23, 42, 0.16);
+    --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.03);
+    --shadow-red: 0 4px 18px rgba(230, 48, 39, 0.25);
     /* ── Layout ──────────────────────────────────────────────
        sidebar-width:     ancho COMPLETO con etiquetas (240px)
        sidebar-collapsed: ancho SOLO ÍCONOS (68px)
