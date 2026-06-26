@@ -18,7 +18,6 @@ public class HorarioDAO {
 
     // ─── SQL ───────────────────────────────────────────────────
 
-
     private static final String SQL_SELECT_BASE =
         "SELECT h.id, h.dia_semana, h.hora_inicio, h.hora_fin, h.estado, " +
         "       cl.id AS cl_id, cl.nombre_clase, cl.estado AS cl_estado " +
@@ -41,12 +40,6 @@ public class HorarioDAO {
         SQL_SELECT_BASE +
         "WHERE h.id_clase = ? AND h.estado = 'programado' " +
         "ORDER BY h.dia_semana ASC, h.hora_inicio ASC";
-
-    // SQL nuevo — horarios programados de TODAS las clases para un día específico
-    private static final String SQL_FIND_PROGRAMADOS_BY_DIA =
-            SQL_SELECT_BASE +
-                    "WHERE h.dia_semana = ? AND h.estado = 'programado' " +
-                    "ORDER BY h.hora_inicio ASC";
 
     // horarios del día indicado (ISO: 1=Lunes … 7=Domingo) — se pasa desde Java
     // con LocalDate.now().getDayOfWeek().getValue() para evitar SET DATEFIRST
@@ -111,19 +104,6 @@ public class HorarioDAO {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_PROGRAMADOS_BY_CLASE)) {
             ps.setString(1, claseId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
-            }
-        }
-        return lista;
-    }
-
-    // devuelve todos los horarios programados de ese día — para validar sala única
-    public List<Horario> findProgramadosByDia(int diaSemana) throws SQLException {
-        List<Horario> lista = new ArrayList<>();
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_PROGRAMADOS_BY_DIA)) {
-            ps.setInt(1, diaSemana);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }

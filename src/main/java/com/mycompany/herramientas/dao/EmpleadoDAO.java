@@ -189,6 +189,7 @@ public class EmpleadoDAO {
         e.setCargo(cargo);
         return e;
     }
+
     public boolean isTipoDocumentoEnUso(String idTipoDocumento) {
         String sql = "SELECT COUNT(*) FROM Empleados WHERE id_TipoDocumento = ?";
         try (Connection conn = DatabaseConnection.getConnection();

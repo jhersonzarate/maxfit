@@ -100,7 +100,57 @@
 
 </header><%-- /app-navbar --%>
 
+<%-- ── Flash messages globales ─────────────────────────────
+     Toasts flotantes en esquina inferior derecha.
+     Los atributos successMsg / errorMsg son "consumidos" (eliminados
+     de sesión) por AbstractController.transferirFlashMessages().
+     ──────────────────────────────────────────────────────────── --%>
+<c:if test="${not empty successMsg or not empty errorMsg}">
+    <div class="flash-messages-modal-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; pointer-events: none; display: flex; flex-direction: column; gap: 10px;">
 
+        <c:if test="${not empty successMsg}">
+            <div class="flash-modal-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border-light); border-left: 4px solid #34d399; border-radius: var(--radius-md); width: 340px; padding: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); pointer-events: auto; animation: slideInBottomRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 1rem;">
+                <div style="flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: rgba(52,211,153,0.1); display: flex; align-items: center; justify-content: center;">
+                    <svg style="color: #34d399; width: 22px; height: 22px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                </div>
+                <div style="text-align: left;">
+                    <h4 style="font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--clr-text); margin: 0 0 0.25rem 0;">¡Éxito!</h4>
+                    <p style="color: var(--clr-text-dim); font-size: 0.85rem; line-height: 1.4; margin: 0;"><c:out value="${successMsg}"/></p>
+                </div>
+            </div>
+        </c:if>
+
+        <c:if test="${not empty errorMsg}">
+            <div class="flash-modal-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border-light); border-left: 4px solid #fbbf24; border-radius: var(--radius-md); width: 340px; padding: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); pointer-events: auto; animation: slideInBottomRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 1rem;">
+                <div style="flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: rgba(251,191,36,0.1); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 1.7rem; line-height: 1; font-family: var(--font-display); color: #fbbf24; font-weight: bold; margin-top: -2px;">!</span>
+                </div>
+                <div style="text-align: left;">
+                    <h4 style="font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--clr-text); margin: 0 0 0.25rem 0;">¡Atención!</h4>
+                    <p style="color: var(--clr-text-dim); font-size: 0.85rem; line-height: 1.4; margin: 0;"><c:out value="${errorMsg}"/></p>
+                </div>
+            </div>
+        </c:if>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const flashContainer = document.querySelector('.flash-messages-modal-container');
+            const flashCard = document.querySelector('.flash-modal-card');
+            if (flashContainer && flashCard) {
+                setTimeout(() => {
+                    flashCard.style.animation = 'slideOutBottomRight 0.4s ease-in forwards';
+                    setTimeout(() => {
+                        flashContainer.remove();
+                    }, 400);
+                }, 5000);
+            }
+        });
+    </script>
+</c:if>
 
 <%-- ── Estilos del Navbar ──────────────────────────────────── --%>
 <style>
@@ -223,10 +273,25 @@
     height: 15px;
 }
 
+/* ── Flash messages container ─────────────────────────────── */
+.flash-messages-container {
+    padding: 0.85rem 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flash-messages-container .flash-alert {
+    margin-bottom: 0;
+}
+
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
     .navbar-user__info { display: none; }
     .navbar-logout-label { display: none; }
+    .flash-messages-container {
+        padding: 0.75rem 1rem 0;
+    }
 }
 
 @media (max-width: 480px) {
@@ -242,50 +307,3 @@
     100% { transform: translateX(120%); opacity: 0; }
 }
 </style>
-
-<c:if test="${not empty successMsg or not empty errorMsg}">
-    <div class="flash-messages-modal-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; pointer-events: none; display: flex; flex-direction: column; gap: 10px;">
-        
-        <c:if test="${not empty successMsg}">
-            <div class="flash-modal-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border-light); border-left: 4px solid #34d399; border-radius: var(--radius-md); width: 340px; padding: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); pointer-events: auto; animation: slideInBottomRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 1rem;">
-                <div style="flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: rgba(52,211,153,0.1); display: flex; align-items: center; justify-content: center;">
-                    <svg style="color: #34d399; width: 22px; height: 22px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                </div>
-                <div style="text-align: left;">
-                    <h4 style="font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--clr-text); margin: 0 0 0.25rem 0;">¡Éxito!</h4>
-                    <p style="color: var(--clr-text-dim); font-size: 0.85rem; line-height: 1.4; margin: 0;"><c:out value="${successMsg}"/></p>
-                </div>
-            </div>
-        </c:if>
-
-        <c:if test="${not empty errorMsg}">
-            <div class="flash-modal-card" style="background: var(--clr-surface); border: 1px solid var(--clr-border-light); border-left: 4px solid #fbbf24; border-radius: var(--radius-md); width: 340px; padding: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); pointer-events: auto; animation: slideInBottomRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: flex; align-items: center; gap: 1rem;">
-                <div style="flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: rgba(251,191,36,0.1); display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 1.7rem; line-height: 1; font-family: var(--font-display); color: #fbbf24; font-weight: bold; margin-top: -2px;">!</span>
-                </div>
-                <div style="text-align: left;">
-                    <h4 style="font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--clr-text); margin: 0 0 0.25rem 0;">¡Atención!</h4>
-                    <p style="color: var(--clr-text-dim); font-size: 0.85rem; line-height: 1.4; margin: 0;"><c:out value="${errorMsg}"/></p>
-                </div>
-            </div>
-        </c:if>
-
-    </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const flashContainer = document.querySelector('.flash-messages-modal-container');
-            const flashCard = document.querySelector('.flash-modal-card');
-            if (flashContainer && flashCard) {
-                setTimeout(() => {
-                    flashCard.style.animation = 'slideOutBottomRight 0.4s ease-in forwards';
-                    setTimeout(() => {
-                        flashContainer.remove();
-                    }, 400);
-                }, 5000);
-            }
-        });
-    </script>
-</c:if>

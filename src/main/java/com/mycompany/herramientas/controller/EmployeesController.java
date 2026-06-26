@@ -40,6 +40,15 @@ public class EmployeesController extends AbstractController {
         String action = getAction(req);
 
         switch (action) {
+
+            case "new":
+                mostrarFormularioNuevo(req, resp);
+                break;
+
+            case "edit":
+                mostrarFormularioEdicion(req, resp);
+                break;
+
             case "view":
                 mostrarDetalle(req, resp);
                 break;
@@ -83,8 +92,6 @@ public class EmployeesController extends AbstractController {
 
             req.setAttribute("empleados", empleados);
             req.setAttribute("totalEmpleados", empleados.size());
-            req.setAttribute("tiposDocumento", catalogoDAO.findAllTipoDocumentos());
-            req.setAttribute("cargos", catalogoDAO.findAllCargos());
 
             irA(ViewRoutes.EMPLOYEES_INDEX, req, resp);
 
@@ -92,13 +99,109 @@ public class EmployeesController extends AbstractController {
 
             LOGGER.log(Level.SEVERE, "Error al listar empleados", e);
 
-            req.setAttribute("errorMsg", "Error al cargar los empleados.");
+            req.setAttribute(
+                    "errorMsg",
+                    "Error al cargar los empleados."
+            );
 
             irA(ViewRoutes.EMPLOYEES_INDEX, req, resp);
         }
     }
 
-    // Métodos mostrarFormularioNuevo y mostrarFormularioEdicion eliminados (ahora se usa modal en mostrarLista)
+    // ───────────────── formulario de registro ─────────
+
+    private void mostrarFormularioNuevo(HttpServletRequest req,
+                                        HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        try {
+
+            cargarCatalogosFormulario(req);
+
+            req.setAttribute("modoEdicion", false);
+            req.setAttribute("empleado", new Empleado());
+
+            irA(
+                    ViewRoutes.EMPLOYEES_INDEX + "?form=true",
+                    req,
+                    resp
+            );
+
+        } catch (SQLException e) {
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al cargar formulario de empleado",
+                    e
+            );
+
+            mensajeError(req, "Error al cargar el formulario.");
+
+            redirigirA("/employees", req, resp);
+        }
+    }
+
+    // ───────────────── formulario de edición ──────────
+
+    private void mostrarFormularioEdicion(HttpServletRequest req,
+                                          HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        String id = param(req, "id");
+
+        // validar existencia del ID
+        if (id == null) {
+
+            mensajeError(req, "ID de empleado no especificado.");
+
+            redirigirA("/employees", req, resp);
+
+            return;
+        }
+
+        try {
+
+            Empleado empleado = empleadoDAO.findById(id);
+
+            // validar existencia del empleado
+            if (empleado == null) {
+
+                mensajeError(
+                        req,
+                        "No se encontró el empleado con ID: " + id
+                );
+
+                redirigirA("/employees", req, resp);
+
+                return;
+            }
+
+            cargarCatalogosFormulario(req);
+
+            req.setAttribute("empleado", empleado);
+            req.setAttribute("modoEdicion", true);
+
+            irA(
+                    ViewRoutes.EMPLOYEES_INDEX + "?form=true",
+                    req,
+                    resp
+            );
+
+        } catch (SQLException e) {
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al cargar empleado para edición: " + id,
+                    e
+            );
+
+            mensajeError(req, "Error al cargar el empleado.");
+
+            redirigirA("/employees", req, resp);
+        }
+    }
+
+    // ───────────────── detalle del empleado ───────────
 
     private void mostrarDetalle(HttpServletRequest req,
                                 HttpServletResponse resp)
@@ -174,84 +277,187 @@ public class EmployeesController extends AbstractController {
 
         // validar campos obligatorios
         if (nombre == null || apellido == null) {
-            mensajeError(req, "El nombre y apellido son obligatorios.");
-            redirigirA("/employees", req, resp);
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El nombre y apellido son obligatorios."
+            );
+
             return;
         }
 
-        if (!contieneSoloLetras(nombre)|| !contieneSoloLetras(apellido)) {
-            mensajeError(req, "El nombre y apellido solo deben contener letras.");
-            redirigirA("/employees", req, resp);
+        //valida que no exista letras en los campos de nombre y apellido.
+        if (!contieneSoloLetras(nombre)|| !contieneSoloLetras(apellido))
+        {
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El nombre y apellido solo deben contener letras."
+            );
             return;
         }
 
         if (email == null) {
-            mensajeError(req, "El correo electrónico es obligatorio.");
-            redirigirA("/employees", req, resp);
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "El correo electrónico es obligatorio."
+            );
+
             return;
         }
 
         if (idTipoDoc == null || numeroDoc == null) {
-            mensajeError(req, "Debe seleccionar tipo de documento e ingresar el número.");
-            redirigirA("/employees", req, resp);
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "Debe seleccionar tipo de documento e ingresar el número."
+            );
+
             return;
         }
 
         if (idCargo == null) {
-            mensajeError(req, "Debe seleccionar un cargo.");
-            redirigirA("/employees", req, resp);
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    "Debe seleccionar un cargo."
+            );
+
             return;
         }
 
+        // validar documento según tipo seleccionado
         try {
-            TipoDocumento tipoDoc = catalogoDAO.findTipoDocumentoById(idTipoDoc);
+
+            TipoDocumento tipoDoc =
+                    catalogoDAO.findTipoDocumentoById(idTipoDoc);
+
             if (tipoDoc == null) {
-                mensajeError(req, "El tipo de documento seleccionado no es válido.");
-                redirigirA("/employees", req, resp);
+
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        "El tipo de documento seleccionado no es válido."
+                );
+
                 return;
             }
 
-            DocumentoValidator.ResultadoValidacion validacion = DocumentoValidator.validar(tipoDoc, numeroDoc);
+            DocumentoValidator.ResultadoValidacion validacion =
+                    DocumentoValidator.validar(tipoDoc, numeroDoc);
+
             if (!validacion.isValido()) {
-                mensajeError(req, validacion.getMensaje());
-                redirigirA("/employees", req, resp);
+
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        validacion.getMensaje()
+                );
+
                 return;
             }
 
             Cargo cargo = catalogoDAO.findCargoById(idCargo);
+
             if (cargo == null) {
-                mensajeError(req, "El cargo seleccionado no es válido.");
-                redirigirA("/employees", req, resp);
+
+                volverAlFormulario(
+                        req,
+                        resp,
+                        esNuevo,
+                        id,
+                        "El cargo seleccionado no es válido."
+                );
+
                 return;
             }
 
+            // construir objeto empleado
             Empleado empleado = new Empleado();
+
             empleado.setId(esNuevo ? IdGenerator.parEmpleado() : id);
+
             empleado.setNombre(nombre.trim());
             empleado.setApellido(apellido.trim());
+
             empleado.setTipoDocumento(tipoDoc);
             empleado.setNumeroDocumento(numeroDoc.trim());
+
             empleado.setEmail(email.trim().toLowerCase());
+
             empleado.setTelefono(telefono);
             empleado.setCargo(cargo);
 
+            // guardar en base de datos
             empleadoDAO.save(empleado);
 
-            String accion = esNuevo ? "registrado" : "actualizado";
-            LOGGER.info("Empleado " + accion + ": " + empleado.getId() + " | " + empleado.getNombreCompleto());
-            mensajeExito(req, "Empleado " + empleado.getNombreCompleto() + " " + accion + " correctamente.");
+            String accion = esNuevo
+                    ? "registrado"
+                    : "actualizado";
+
+            LOGGER.info(
+                    "Empleado " + accion + ": "
+                            + empleado.getId()
+                            + " | "
+                            + empleado.getNombreCompleto()
+            );
+
+            mensajeExito(
+                    req,
+                    "Empleado "
+                            + empleado.getNombreCompleto()
+                            + " "
+                            + accion
+                            + " correctamente."
+            );
+
             redirigirA("/employees", req, resp);
 
         } catch (SQLException e) {
+
             LOGGER.log(Level.SEVERE, "Error al guardar empleado", e);
+
             String msg;
-            if (e.getMessage() != null && e.getMessage().contains("UNIQUE")) {
-                msg = "El número de documento o correo ya está registrado en el sistema.";
+
+            // detectar restricciones únicas de BD
+            if (e.getMessage() != null
+                    && e.getMessage().contains("UNIQUE")) {
+
+                msg = "El número de documento o correo ya está "
+                        + "registrado en el sistema.";
+
             } else {
-                msg = "Error al guardar el empleado. Intenta nuevamente.";
+
+                msg = "Error al guardar el empleado. "
+                        + "Intenta nuevamente.";
             }
-            mensajeError(req, msg);
-            redirigirA("/employees", req, resp);
+
+            volverAlFormulario(
+                    req,
+                    resp,
+                    esNuevo,
+                    id,
+                    msg
+            );
         }
     }
 
@@ -323,5 +529,85 @@ public class EmployeesController extends AbstractController {
         redirigirA("/employees", req, resp);
     }
 
-    // Helpers privados eliminados (ahora el estado es efímero en el modal)
+    // ───────────────── helpers privados ───────────────
+
+    private void cargarCatalogosFormulario(HttpServletRequest req)
+            throws SQLException {
+
+        req.setAttribute(
+                "tiposDocumento",
+                catalogoDAO.findAllTipoDocumentos()
+        );
+
+        req.setAttribute(
+                "cargos",
+                catalogoDAO.findAllCargos()
+        );
+    }
+
+    // recargar formulario manteniendo datos ingresados
+    private void volverAlFormulario(HttpServletRequest req,
+                                    HttpServletResponse resp,
+                                    boolean esNuevo,
+                                    String id,
+                                    String errorMsg)
+            throws ServletException, IOException {
+
+        // formError: exclusivo para errores inline — el navbar no lo renderiza
+        req.setAttribute("formError", errorMsg);
+
+        req.setAttribute("modoEdicion", !esNuevo);
+
+        try {
+
+            cargarCatalogosFormulario(req);
+
+            if (!esNuevo && id != null) {
+
+                Empleado original = empleadoDAO.findById(id);
+
+                req.setAttribute(
+                        "empleado",
+                        original != null
+                                ? original
+                                : new Empleado()
+                );
+
+            } else {
+
+                req.setAttribute(
+                        "empleado",
+                        construirDesdeRequest(req)
+                );
+            }
+
+        } catch (SQLException e) {
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al recargar formulario de empleado",
+                    e
+            );
+        }
+
+        irA(
+                ViewRoutes.EMPLOYEES_INDEX + "?form=true",
+                req,
+                resp
+        );
+    }
+
+    // construir empleado temporal desde request
+    private Empleado construirDesdeRequest(HttpServletRequest req) {
+
+        Empleado e = new Empleado();
+
+        e.setNombre(param(req, "nombre", ""));
+        e.setApellido(param(req, "apellido", ""));
+        e.setNumeroDocumento(param(req, "numeroDocumento", ""));
+        e.setEmail(param(req, "email", ""));
+        e.setTelefono(param(req, "telefono"));
+
+        return e;
+    }
 }

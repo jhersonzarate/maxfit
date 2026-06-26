@@ -39,9 +39,6 @@ public class UsuarioDAO {
 
     // buscar usuario por ID
     private static final String SQL_FIND_BY_ID = SQL_SELECT_BASE + "WHERE u.id = ?";
-    // buscar usuario por empleado vinculado
-    private static final String SQL_FIND_BY_EMPLEADO =
-            SQL_SELECT_BASE + "WHERE u.id_empleado = ?";
 
     // listar todos los usuarios
     private static final String SQL_FIND_ALL = SQL_SELECT_BASE + "ORDER BY c.id DESC";
@@ -64,7 +61,7 @@ public class UsuarioDAO {
     // eliminar usuario
     private static final String SQL_DELETE = "DELETE FROM Usuarios WHERE id = ?";
 
-    // verificar si el usuario tiene transacciones vinculadas.
+    // verificar si el usuario tiene transacciones (contratos o pagos registrados)
     private static final String SQL_HAS_TRANSACCIONES =
             "SELECT ISNULL((SELECT COUNT(*) FROM Contratos WHERE id_empleado = (SELECT id_empleado FROM Usuarios WHERE id = ?)), 0) + " +
             "ISNULL((SELECT COUNT(*) FROM Clases WHERE id_empleado = (SELECT id_empleado FROM Usuarios WHERE id = ?)), 0)";
@@ -90,16 +87,18 @@ public class UsuarioDAO {
         return null;
     }
 
-    // buscar usuario por empleado vinculado — para validar que no tenga cuenta ya
+    // buscar usuario por ID de empleado vinculado
     public Usuario findByEmpleadoId(String idEmpleado) throws SQLException {
         if (idEmpleado == null) return null;
+        String sql = SQL_SELECT_BASE + "WHERE u.id_empleado = ?";
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_FIND_BY_EMPLEADO)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, idEmpleado);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? mapRow(rs) : null;
+                if (rs.next()) return mapRow(rs);
             }
         }
+        return null;
     }
 
     // buscar usuario por ID

@@ -19,7 +19,8 @@ import java.util.logging.Logger;
 @WebServlet("/tipodocumento")
 public class TipoDocumentoController extends AbstractController {
 
-    private static final Logger LOGGER = Logger.getLogger(TipoDocumentoController.class.getName());
+    private static final Logger LOGGER =
+            Logger.getLogger(TipoDocumentoController.class.getName());
 
     private final CatalogoDAO catalogoDAO = new CatalogoDAO();
     private final ClienteDAO clienteDAO = new ClienteDAO();
@@ -34,38 +35,32 @@ public class TipoDocumentoController extends AbstractController {
         transferirFlashMessages(req);
 
         switch (getAction(req)) {
+            case "new":  mostrarForm(req, resp, null);            break;
+            case "edit": mostrarForm(req, resp, param(req,"id")); break;
             default:     mostrarLista(req, resp);
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req,
-            HttpServletResponse resp)
+                          HttpServletResponse resp)
             throws ServletException, IOException {
 
-        if (!esAdmin(req)) {
-            forbidden(resp);
-            return;
-        }
+        if (!esAdmin(req)) { forbidden(resp); return; }
 
         switch (getAction(req)) {
-            case "save":
-                guardar(req, resp);
-                break;
-            case "toggle":
-                toggleEstado(req, resp);
-                break;
+            case "save":   guardar(req, resp);      break;
+            case "toggle": toggleEstado(req, resp); break;
             case "delete":
                 eliminar(req, resp);
                 break;
-            default:
-                redirigirA("/tipodocumento", req, resp);
+            default:       redirigirA("/tipodocumento", req, resp);
         }
     }
 
     // ── Lista ──────────────────────────────────────────────────
     private void mostrarLista(HttpServletRequest req,
-            HttpServletResponse resp)
+                              HttpServletResponse resp)
             throws ServletException, IOException {
         try {
             req.setAttribute("tiposDocumento",
@@ -78,25 +73,57 @@ public class TipoDocumentoController extends AbstractController {
         }
     }
 
+    // ── Formulario ─────────────────────────────────────────────
+    private void mostrarForm(HttpServletRequest req,
+                             HttpServletResponse resp,
+                             String id)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("modoForm", true);
+
+            if (id != null) {
+                TipoDocumento td = catalogoDAO.findTipoDocumentoById(id);
+                if (td == null) {
+                    mensajeError(req, "No se encontró el tipo de documento.");
+                    redirigirA("/tipodocumento", req, resp);
+                    return;
+                }
+                req.setAttribute("entidad", td);
+                req.setAttribute("modoEdicion", true);
+            } else {
+                req.setAttribute("entidad", new TipoDocumento());
+                req.setAttribute("modoEdicion", false);
+            }
+
+            // ✅ NO se carga la lista aquí
+            irA(ViewRoutes.TIPODOCUMENTO_INDEX, req, resp);
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al cargar form TipoDocumento", e);
+            mensajeError(req, "Error al cargar el formulario.");
+            redirigirA("/tipodocumento", req, resp);
+        }
+    }
+
     // ── Guardar ────────────────────────────────────────────────
     private void guardar(HttpServletRequest req,
-            HttpServletResponse resp)
+                         HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String id = param(req, "id");
-        String nombre = param(req, "nombreDocumento");
+        String id        = param(req, "id");
+        String nombre    = param(req, "nombreDocumento");
         String abreviado = param(req, "abreviado");
         String tamMaxStr = param(req, "tamañoMax");
         String tamMinStr = param(req, "tamañoMin");
         String esAlfaStr = param(req, "esAlfanumerico");
-        String estado = param(req, "estado", AppConfig.ESTADO_ACTIVO);
-        boolean esNuevo = (id == null || id.isBlank());
+        String estado    = param(req, "estado", AppConfig.ESTADO_ACTIVO);
+        boolean esNuevo  = (id == null || id.isBlank());
 
-        // Error de validación → vuelve a la lista con error
+        // ✅ Error de validación → vuelve al formulario
         if (nombre == null || nombre.isBlank()
                 || abreviado == null || abreviado.isBlank()) {
             mensajeError(req, "Nombre y abreviado son obligatorios.");
-            redirigirA("/tipodocumento", req, resp);
+            mostrarForm(req, resp, esNuevo ? null : id);
             return;
         }
 
@@ -118,12 +145,12 @@ public class TipoDocumentoController extends AbstractController {
             tamMin = Integer.parseInt(tamMinStr != null ? tamMinStr.trim() : "");
             if (tamMin <= 0 || tamMax <= 0 || tamMin > tamMax) {
                 mensajeError(req, "Los tamaños deben ser positivos y min ≤ max.");
-                redirigirA("/tipodocumento", req, resp);
+                mostrarForm(req, resp, esNuevo ? null : id);
                 return;
             }
         } catch (NumberFormatException e) {
             mensajeError(req, "Tamaños inválidos.");
-            redirigirA("/tipodocumento", req, resp);
+            mostrarForm(req, resp, esNuevo ? null : id);
             return;
         }
 
@@ -175,8 +202,8 @@ public class TipoDocumentoController extends AbstractController {
             LOGGER.log(Level.SEVERE, "Error al guardar TipoDocumento", e);
             mensajeError(req, e.getMessage() != null
                     && e.getMessage().contains("PRIMARY")
-                            ? "Ya existe un tipo con ese ID o abreviado."
-                            : "Error al guardar. Intenta nuevamente.");
+                    ? "Ya existe un tipo con ese ID o abreviado."
+                    : "Error al guardar. Intenta nuevamente.");
         }
 
         redirigirA("/tipodocumento", req, resp);
@@ -184,7 +211,7 @@ public class TipoDocumentoController extends AbstractController {
 
     // ── Toggle estado ──────────────────────────────────────────
     private void toggleEstado(HttpServletRequest req,
-            HttpServletResponse resp)
+                              HttpServletResponse resp)
             throws IOException {
 
         String id = param(req, "id");
@@ -209,8 +236,7 @@ public class TipoDocumentoController extends AbstractController {
             catalogoDAO.updateEstadoTipoDocumento(id, nuevoEstado);
 
             String accion = AppConfig.ESTADO_ACTIVO.equals(nuevoEstado)
-                    ? "activado"
-                    : "desactivado";
+                    ? "activado" : "desactivado";
 
             LOGGER.info("TipoDocumento " + accion + ": " + id);
             mensajeExito(req, "\"" + td.getNombreDocumento()
@@ -224,10 +250,9 @@ public class TipoDocumentoController extends AbstractController {
 
         redirigirA("/tipodocumento", req, resp);
     }
-
     // ── Eliminar ───────────────────────────────────────────────
     private void eliminar(HttpServletRequest req,
-            HttpServletResponse resp)
+                          HttpServletResponse resp)
             throws IOException {
 
         String id = param(req, "id");

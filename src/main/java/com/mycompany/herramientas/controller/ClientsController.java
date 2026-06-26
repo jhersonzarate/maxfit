@@ -400,11 +400,18 @@ public class ClientsController extends AbstractController {
                 cliente.setNumeroDocumento(numeroDoc);
             } else {
                 cliente.setId(id);
-                // Por seguridad, recuperamos el documento original de la base de datos
-                Cliente clienteOriginal = clienteDAO.findById(id);
-                if (clienteOriginal != null) {
-                    cliente.setTipoDocumento(clienteOriginal.getTipoDocumento());
-                    cliente.setNumeroDocumento(clienteOriginal.getNumeroDocumento());
+                // En edición también actualizamos tipo y número de documento
+                TipoDocumento tipoDocEdicion = catalogoDAO.findTipoDocumentoById(idTipoDoc);
+                if (tipoDocEdicion != null) {
+                    cliente.setTipoDocumento(tipoDocEdicion);
+                    cliente.setNumeroDocumento(numeroDoc);
+                } else {
+                    // Si no viene tipo doc válido, preservamos el original
+                    Cliente clienteOriginal = clienteDAO.findById(id);
+                    if (clienteOriginal != null) {
+                        cliente.setTipoDocumento(clienteOriginal.getTipoDocumento());
+                        cliente.setNumeroDocumento(clienteOriginal.getNumeroDocumento());
+                    }
                 }
             }
 

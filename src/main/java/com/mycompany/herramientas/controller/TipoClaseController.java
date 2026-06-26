@@ -17,19 +17,17 @@ import java.util.logging.Logger;
 @WebServlet("/tipoclase")
 public class TipoClaseController extends AbstractController {
 
-    private static final Logger LOGGER = Logger.getLogger(TipoClaseController.class.getName());
+    private static final Logger LOGGER =
+            Logger.getLogger(TipoClaseController.class.getName());
 
     private final CatalogoDAO catalogoDAO = new CatalogoDAO();
 
     @Override
     protected void doGet(HttpServletRequest req,
-            HttpServletResponse resp)
+                         HttpServletResponse resp)
             throws ServletException, IOException {
 
-        if (!esAdmin(req)) {
-            forbidden(resp);
-            return;
-        }
+        if (!esAdmin(req)) { forbidden(resp); return; }
         transferirFlashMessages(req);
 
         switch (getAction(req)) {
@@ -46,32 +44,22 @@ public class TipoClaseController extends AbstractController {
 
     @Override
     protected void doPost(HttpServletRequest req,
-            HttpServletResponse resp)
+                          HttpServletResponse resp)
             throws ServletException, IOException {
 
-        if (!esAdmin(req)) {
-            forbidden(resp);
-            return;
-        }
+        if (!esAdmin(req)) { forbidden(resp); return; }
 
         switch (getAction(req)) {
-            case "save":
-                guardar(req, resp);
-                break;
-            case "toggle":
-                toggleEstado(req, resp);
-                break;
-            case "delete":
-                delete(req, resp);
-                break;
-            default:
-                redirigirA("/tipoclase", req, resp);
+            case "save":   guardar(req, resp);      break;
+            case "toggle": toggleEstado(req, resp); break;
+            case "delete": delete(req, resp);       break;
+            default:       redirigirA("/tipoclase", req, resp);
         }
     }
 
     // ── Lista ──────────────────────────────────────────────────
     private void mostrarLista(HttpServletRequest req,
-            HttpServletResponse resp)
+                              HttpServletResponse resp)
             throws ServletException, IOException {
         try {
             req.setAttribute("tiposClase",
@@ -86,8 +74,8 @@ public class TipoClaseController extends AbstractController {
 
     // ── Formulario ─────────────────────────────────────────────
     private void mostrarForm(HttpServletRequest req,
-            HttpServletResponse resp,
-            String id)
+                             HttpServletResponse resp,
+                             String id)
             throws ServletException, IOException {
         try {
             req.setAttribute("modoForm", true);
@@ -118,10 +106,10 @@ public class TipoClaseController extends AbstractController {
 
     // ── Guardar ────────────────────────────────────────────────
     private void guardar(HttpServletRequest req,
-            HttpServletResponse resp)
+                         HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String id = param(req, "id");
+        String id     = param(req, "id");
         String nombre = param(req, "nombre");
         String estado = param(req, "estado", AppConfig.ESTADO_ACTIVO);
         boolean esNuevo = (id == null || id.isBlank());
@@ -154,8 +142,7 @@ public class TipoClaseController extends AbstractController {
             String sufijo = nombre.trim()
                     .toUpperCase()
                     .replaceAll("[^A-Z0-9]", "");
-            if (sufijo.length() > 8)
-                sufijo = sufijo.substring(0, 8);
+            if (sufijo.length() > 8) sufijo = sufijo.substring(0, 8);
             tc.setId("TCL-" + sufijo);
         } else {
             tc.setId(id);
@@ -179,8 +166,8 @@ public class TipoClaseController extends AbstractController {
             LOGGER.log(Level.SEVERE, "Error al guardar TipoClase", e);
             mensajeError(req, e.getMessage() != null
                     && e.getMessage().contains("PRIMARY")
-                            ? "Ya existe un tipo de clase con ese ID."
-                            : "Error al guardar. Intenta nuevamente.");
+                    ? "Ya existe un tipo de clase con ese ID."
+                    : "Error al guardar. Intenta nuevamente.");
         }
 
         redirigirA("/tipoclase", req, resp);
@@ -188,7 +175,7 @@ public class TipoClaseController extends AbstractController {
 
     // ── Toggle estado ──────────────────────────────────────────
     private void toggleEstado(HttpServletRequest req,
-            HttpServletResponse resp)
+                              HttpServletResponse resp)
             throws IOException {
 
         String id = param(req, "id");
@@ -213,8 +200,7 @@ public class TipoClaseController extends AbstractController {
             catalogoDAO.updateEstadoTipoClase(id, nuevoEstado);
 
             String accion = AppConfig.ESTADO_ACTIVO.equals(nuevoEstado)
-                    ? "activado"
-                    : "desactivado";
+                    ? "activado" : "desactivado";
 
             LOGGER.info("TipoClase " + accion + ": " + id);
             mensajeExito(req, "\"" + tc.getNombre()
@@ -228,10 +214,9 @@ public class TipoClaseController extends AbstractController {
 
         redirigirA("/tipoclase", req, resp);
     }
-
     // ── Eliminar ───────────────────────────────────────────────
     private void delete(HttpServletRequest req,
-            HttpServletResponse resp)
+                        HttpServletResponse resp)
             throws IOException {
 
         String id = param(req, "id");

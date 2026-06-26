@@ -142,19 +142,6 @@ public class CatalogoDAO {
         }
     }
 
-    private static final String SQL_EXISTS_NOMBRE_METODO =
-            "SELECT COUNT(*) FROM MetodosPago WHERE LOWER(nombre_metodo) = LOWER(?) AND id <> ?";
-
-    public boolean existeNombreMetodoPago(String nombre, String excludeId) throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_EXISTS_NOMBRE_METODO)) {
-            ps.setString(1, nombre.trim());
-            ps.setString(2, excludeId != null ? excludeId : "");
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
-            }
-        }
-    }
     // actualiza solo el estado de un tipo de documento
     public boolean updateEstadoTipoDocumento(String id, String estado)
             throws SQLException {
@@ -184,7 +171,6 @@ public class CatalogoDAO {
             return ok;
         }
     }
-
     // ═══════════════════════════════════════════════════════════
     // CARGOS (RF-13)
     // ═══════════════════════════════════════════════════════════
@@ -321,7 +307,6 @@ public class CatalogoDAO {
             return ok;
         }
     }
-
     // ═══════════════════════════════════════════════════════════
     // METODOS DE PAGO (RF-06)
     // ═══════════════════════════════════════════════════════════
@@ -630,11 +615,12 @@ public class CatalogoDAO {
 
             ps.setString(1, estado);
             ps.setString(2, id);
-            boolean ok = (ps.executeUpdate() > 0);
+            boolean ok = ps.executeUpdate() > 0;
             if (ok) LOGGER.info("TipoClase " + id + " → " + estado);
             return ok;
         }
     }
+
 
     public boolean deleteTipoClase(String id) throws SQLException {
         String sql = "DELETE FROM TipoClases WHERE id = ?";
@@ -647,8 +633,20 @@ public class CatalogoDAO {
             return ok;
         }
     }
-
     // ─── helpers privados ──────────────────────────────────────
+
+    // verifica si ya existe un método de pago con el mismo nombre (excluye el propio al editar)
+    public boolean existeNombreMetodoPago(String nombre, String excludeId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM MetodosPago WHERE LOWER(nombre_metodo) = LOWER(?) AND id <> ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre.trim());
+            ps.setString(2, excludeId != null ? excludeId : "");
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
 
     private TipoDocumento mapTipoDocumento(ResultSet rs)
             throws SQLException {

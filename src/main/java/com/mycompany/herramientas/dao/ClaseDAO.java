@@ -143,7 +143,6 @@ public class ClaseDAO {
         }
         return false;
     }
-
     // ─── privados ──────────────────────────────────────────────
 
     private void insert(Connection con, Clase c) throws SQLException {

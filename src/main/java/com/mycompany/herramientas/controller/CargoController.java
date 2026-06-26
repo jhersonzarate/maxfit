@@ -33,6 +33,7 @@ public class CargoController extends AbstractController {
         switch (getAction(req)) {
             case "new":  mostrarForm(req, resp, null);             break;
             case "edit": mostrarForm(req, resp, param(req, "id")); break;
+            case "delete": delete(req, resp);       break;
             default:     mostrarLista(req, resp);
         }
     }
@@ -47,7 +48,6 @@ public class CargoController extends AbstractController {
         switch (getAction(req)) {
             case "save":   guardar(req, resp);      break;
             case "toggle": toggleEstado(req, resp); break;
-            case "delete": delete(req, resp);       break;
             default:       redirigirA("/cargo", req, resp);
         }
     }
@@ -112,7 +112,6 @@ public class CargoController extends AbstractController {
             mostrarForm(req, resp, esNuevo ? null : id);
             return;
         }
-
         try {
             // Verificar que no exista otro cargo con el mismo nombre
             for (Cargo c : catalogoDAO.findAllCargos()) {

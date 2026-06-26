@@ -170,7 +170,7 @@ public class UsersController extends AbstractController {
         String email        = param(req, "email");
         String rawPassword  = param(req, "password");       // solo en creación
         String idRol        = param(req, "idRol");
-        String idEmpleado   = param(req, "idEmpleado");
+        String idEmpleado   = param(req, "idEmpleado");     // puede ser null
 
         boolean esNuevo = (id == null || id.isBlank());
 
@@ -258,7 +258,6 @@ public class UsersController extends AbstractController {
 
             // persistir en BD
             usuarioDAO.save(usuario);
-
             String accion = esNuevo ? "creado" : "actualizado";
             LOGGER.info("Usuario " + accion + ": " + usuario.getEmail()
                     + " | rol: " + idRol);
@@ -370,7 +369,7 @@ public class UsersController extends AbstractController {
         redirigirA("/users", req, resp);
     }
 
-    // ─── eliminar usuario ──────────────────────────────────────
+    // ─── eliminar usuario ────────────────────────────────
 
     // elimina el usuario solo si no tiene transacciones vinculadas
     private void eliminarUsuario(HttpServletRequest req, HttpServletResponse resp)

@@ -504,7 +504,7 @@ public class SchedulesController extends AbstractController {
             }
 
             // compara contra TODOS los horarios del día (sala única)
-            List<Horario> horariosDelDia = horarioDAO.findProgramadosByDia(diaSemana);
+            List<Horario> horariosDelDia = horarioDAO.findByDia(diaSemana);
             for (Horario h : horariosDelDia) {
                 // condición estándar de superposición: InicioA < FinB && InicioB < FinA
                 if (horaInicio.isBefore(h.getHoraFin()) && h.getHoraInicio().isBefore(horaFin)) {
