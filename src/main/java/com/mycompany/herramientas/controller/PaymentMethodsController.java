@@ -246,14 +246,57 @@ public class PaymentMethodsController extends AbstractController {
         String nombre = param(req, "nombre");
         String estado = param(req, "estado");
 
+        boolean esNuevo = (id == null || id.trim().isEmpty());
+
         if (nombre == null || nombre.trim().isEmpty()) {
             mensajeError(req, "El nombre del método de pago es requerido.");
             redirigirA("/payment-methods?action=new", req, resp);
             return;
         }
+        //validacion para evitar Numeros en nombreApellido
+        if (!contieneSoloLetras(nombre)) {
 
-        boolean esNuevo = (id == null || id.trim().isEmpty());
-        MetodoPago mp = new MetodoPago();
+            mensajeError(req, "El nombre solo puede contener letras.");
+            redirigirA("/payment-methods?action=new", req, resp);
+            return;
+        }
+
+        // validar longitud mínima y máxima
+        if (nombre.trim().length() < 3 || nombre.trim().length() > 50) {
+            mensajeError(req, "El nombre debe tener entre 3 y 50 caracteres.");
+            redirigirA("/payment-methods", req, resp);
+            return;
+        }
+
+        try {
+            // validar nombre duplicado ANTES de guardar
+            if (catalogoDAO.existeNombreMetodoPago(nombre, esNuevo ? null : id)) {
+                mensajeError(req, "Ya existe un método de pago con el nombre \"" + nombre + "\".");
+                redirigirA("/payment-methods", req, resp);
+                return;
+
+            }
+            MetodoPago mp = new MetodoPago();
+            mp.setId(esNuevo ? IdGenerator.parMetodoPago() : id);
+            mp.setNombre(nombre.trim());
+            mp.setEstado(estado != null && estado.equals("activo") ? "activo" : "inactivo");
+
+            if (esNuevo) {
+                catalogoDAO.insertMetodoPago(mp);
+            } else {
+                catalogoDAO.updateMetodoPago(mp);
+            }
+            mensajeExito(req, "Método de pago \"" + nombre + "\" guardado correctamente.");
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al guardar método de pago", e);
+            mensajeError(req, "Error en la base de datos. Intenta nuevamente.");
+        }
+
+        redirigirA("/payment-methods", req, resp);
+    }
+/*
+                MetodoPago mp = new MetodoPago();
         mp.setId(esNuevo ? IdGenerator.parMetodoPago() : id);
         mp.setNombre(nombre.trim());
         mp.setEstado(estado != null && estado.equals("activo") ? "activo" : "inactivo");
@@ -278,7 +321,7 @@ public class PaymentMethodsController extends AbstractController {
 
         redirigirA("/payment-methods", req, resp);
     }
-
+*/
     // ─── POST: eliminar método ────────────────────────────────
 
     private void eliminarMetodoPago(HttpServletRequest req, HttpServletResponse resp)

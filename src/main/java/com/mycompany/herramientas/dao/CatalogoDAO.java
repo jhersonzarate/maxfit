@@ -126,6 +126,19 @@ public class CatalogoDAO {
         }
     }
 
+    private static final String SQL_EXISTS_NOMBRE_METODO =
+            "SELECT COUNT(*) FROM MetodosPago WHERE LOWER(nombre_metodo) = LOWER(?) AND id <> ?";
+
+    public boolean existeNombreMetodoPago(String nombre, String excludeId) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_EXISTS_NOMBRE_METODO)) {
+            ps.setString(1, nombre.trim());
+            ps.setString(2, excludeId != null ? excludeId : "");
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
     // actualiza solo el estado de un tipo de documento
     public boolean updateEstadoTipoDocumento(String id, String estado)
             throws SQLException {

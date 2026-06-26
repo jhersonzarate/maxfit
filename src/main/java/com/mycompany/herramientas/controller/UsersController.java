@@ -163,17 +163,21 @@ public class UsersController extends AbstractController {
         String email        = param(req, "email");
         String rawPassword  = param(req, "password");       // solo en creación
         String idRol        = param(req, "idRol");
-        String idEmpleado   = param(req, "idEmpleado");     // puede ser null
+        String idEmpleado   = param(req, "idEmpleado");
 
         boolean esNuevo = (id == null || id.isBlank());
 
         // validar campos obligatorios
-        if (email == null) {
+        if (email == null || email.isBlank()) {
             volverAlFormulario(req, resp, esNuevo, id, "El correo es obligatorio.");
             return;
         }
-        if (idRol == null) {
+        if (idRol == null || idRol.isBlank()) {
             volverAlFormulario(req, resp, esNuevo, id, "Debe seleccionar un rol.");
+            return;
+        }
+        if (idEmpleado == null || idEmpleado.isBlank()) {
+            volverAlFormulario(req, resp, esNuevo, id, "Debe seleccionar un empleado.");
             return;
         }
         // contraseña obligatoria solo al crear
@@ -192,7 +196,7 @@ public class UsersController extends AbstractController {
                 return;
             }
 
-            // verificar empleado vinculado (campo opcional)
+            // verificar empleado vinculado
             Empleado empleado = null;
             if (idEmpleado != null && !idEmpleado.isBlank()) {
                 empleado = empleadoDAO.findById(idEmpleado);
@@ -227,8 +231,27 @@ public class UsersController extends AbstractController {
                 usuario.setEstado(existente.getEstado());
             }
 
+            // verificar email duplicado antes de guardar
+            Usuario emailExistente = usuarioDAO.findByEmail(email);
+            if (emailExistente != null && !emailExistente.getId().equals(id == null ? "" : id)) {
+                volverAlFormulario(req, resp, esNuevo, id,
+                        "El correo " + email + " ya está registrado en otro usuario.");
+                return;
+            }
+
+            // verificar que el empleado no tenga ya una cuenta asignada
+            if (idEmpleado != null && !idEmpleado.isBlank()) {
+                Usuario empExistente = usuarioDAO.findByEmpleadoId(idEmpleado);
+                if (empExistente != null && !empExistente.getId().equals(id == null ? "" : id)) {
+                    volverAlFormulario(req, resp, esNuevo, id,
+                            "El empleado seleccionado ya tiene una cuenta asignada.");
+                    return;
+                }
+            }
+
             // persistir en BD
             usuarioDAO.save(usuario);
+
             String accion = esNuevo ? "creado" : "actualizado";
             LOGGER.info("Usuario " + accion + ": " + usuario.getEmail()
                     + " | rol: " + idRol);
