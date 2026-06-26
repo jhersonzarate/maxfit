@@ -873,10 +873,11 @@
                                                         <%-- Toggle estado (no si es mi propia cuenta) --%>
                                                         <c:if test="${not esMiCuenta}">
                                                             <c:set var="toggleMsg" value="${usr.activo ? 'Desactivar' : 'Activar'}"/>
+                                                            <c:set var="toggleAction" value="${usr.activo ? 'deactivate' : 'activate'}"/>
                                                             <form action="${pageContext.request.contextPath}/users"
                                                             method="post"
                                                             class="toggle-form"
-                                                            onsubmit="return confirm('¿${toggleMsg} la cuenta de ${usr.email}?');">
+                                                                  onsubmit="openActionModal(event, '${toggleAction}', '${fn:escapeXml(usr.email)}'); return false;">
                                                                 <input type="hidden" name="action" value="toggleEstado">
                                                                 <input type="hidden" name="id"     value="<c:out value='${usr.id}'/>">
                                                                 <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
@@ -923,6 +924,34 @@
                                                                              0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
                                                                 </svg>
                                                             </button>
+                                                        </c:if>
+
+                                                        <%-- Eliminar (no si es mi cuenta) --%>
+                                                        <c:if test="${not esMiCuenta}">
+                                                            <form action="${pageContext.request.contextPath}/users"
+                                                                  method="post"
+                                                                  style="display:inline;"
+                                                                  onsubmit="openActionModal(event, 'delete', '${fn:escapeXml(usr.email)}'); return false;">
+                                                                <input type="hidden" name="action" value="delete">
+                                                                <input type="hidden" name="id" value="<c:out value='${usr.id}'/>">
+                                                                <input type="hidden" name="_csrf"  value="${sessionScope._csrfToken}">
+                                                                <button type="submit"
+                                                                        class="btn btn-danger btn-sm btn-icon"
+                                                                        title="Eliminar usuario">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107
+                                                                                 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0
+                                                                                 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772
+                                                                                 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12
+                                                                                 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0
+                                                                                 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964
+                                                                                 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09
+                                                                                 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                                                                    </svg>
+                                                                </button>
+                                                            </form>
                                                         </c:if>
 
                                                     </div>
@@ -1011,6 +1040,63 @@
         </div><%-- /page-content --%>
     </div><%-- /app-main --%>
 </div><%-- /app-shell --%>
+
+<%-- Modal de Confirmación --%>
+<div id="actionModal" class="pm-modal-overlay">
+    <div class="pm-modal" style="max-width:400px;text-align:center;padding:2rem 1.5rem;">
+        <div style="margin-bottom:1.5rem;">
+            <div id="actionModalIconContainer" style="width:80px;height:80px;border-radius:50%;border:3px solid;
+                 display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                <span id="actionModalIcon" style="font-size:3.5rem;line-height:1;font-family:var(--font-display);padding-bottom:0.5rem;"></span>
+            </div>
+        </div>
+        <h2 style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--clr-text);margin-bottom:0.75rem;">¿Estás seguro?</h2>
+        <p id="actionModalText" style="color:var(--clr-text-dim);font-size:0.95rem;margin-bottom:1.75rem;line-height:1.5;"></p>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button type="button" class="btn" id="btnConfirmAction" onclick="confirmAction()" style="min-width:120px;font-weight:bold;"></button>
+            <button type="button" class="btn btn-secondary" onclick="closeActionModal()" style="min-width:120px;font-weight:bold;background:#473f3f;border-color:#473f3f;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var formToSubmit = null;
+
+    function openActionModal(event, type, name) {
+        event.preventDefault();
+        formToSubmit = event.currentTarget.closest('form');
+        var ic = document.getElementById('actionModalIconContainer');
+        var icon = document.getElementById('actionModalIcon');
+        var text = document.getElementById('actionModalText');
+        var btn  = document.getElementById('btnConfirmAction');
+        if (type === 'delete') {
+            ic.style.borderColor = '#f87171'; ic.style.background = 'rgba(248,113,113,0.1)';
+            icon.style.color = '#f87171'; icon.textContent = '!';
+            text.innerHTML = 'Se eliminar\u00e1 permanentemente la cuenta de<br><strong>' + name + '</strong><br><br><span style="font-size:0.8rem">Solo si no est\u00e1 relacionado a contratos, clases u horarios.</span>';
+            btn.className = 'btn btn-primary'; btn.textContent = 'S\u00ed, eliminar';
+        } else if (type === 'deactivate') {
+            ic.style.borderColor = '#fbbf24'; ic.style.background = 'rgba(251,191,36,0.1)';
+            icon.style.color = '#fbbf24'; icon.textContent = '!';
+            text.innerHTML = 'Se desactivar\u00e1 la cuenta de<br><strong>' + name + '</strong>';
+            btn.className = 'btn btn-primary'; btn.textContent = 'S\u00ed, desactivar';
+        } else if (type === 'activate') {
+            ic.style.borderColor = '#34d399'; ic.style.background = 'rgba(52,211,153,0.1)';
+            icon.style.color = '#34d399'; icon.textContent = '\u2713';
+            text.innerHTML = 'Se activar\u00e1 la cuenta de<br><strong>' + name + '</strong>';
+            btn.className = 'btn btn-primary'; btn.textContent = 'S\u00ed, activar';
+        }
+        document.getElementById('actionModal').classList.add('is-open');
+    }
+
+    function closeActionModal() {
+        formToSubmit = null;
+        document.getElementById('actionModal').classList.remove('is-open');
+    }
+
+    function confirmAction() {
+        if (formToSubmit) formToSubmit.submit();
+    }
+</script>
 
 </body>
 </html>

@@ -1077,7 +1077,7 @@
                                         <div style="margin-bottom: 1.25rem;">
                                             <label for="pmModalNombre"
                                                 style="display:block; font-size: 0.75rem; font-weight:600; color:var(--clr-text-dim); margin-bottom: 0.3rem;">Nombre
-                                                del Método *</label>
+                                                del Método de Pago *</label>
                                             <input type="text" id="pmModalNombre" name="nombre" required maxlength="50"
                                                 style="width: 100%; padding: 0.65rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--clr-border); background: var(--clr-surface); color: var(--clr-text);">
                                         </div>

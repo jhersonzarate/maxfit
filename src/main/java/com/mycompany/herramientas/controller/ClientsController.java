@@ -400,11 +400,18 @@ public class ClientsController extends AbstractController {
                 cliente.setNumeroDocumento(numeroDoc);
             } else {
                 cliente.setId(id);
-                // Por seguridad, recuperamos el documento original de la base de datos
-                Cliente clienteOriginal = clienteDAO.findById(id);
-                if (clienteOriginal != null) {
-                    cliente.setTipoDocumento(clienteOriginal.getTipoDocumento());
-                    cliente.setNumeroDocumento(clienteOriginal.getNumeroDocumento());
+                // En edición también actualizamos tipo y número de documento
+                TipoDocumento tipoDocEdicion = catalogoDAO.findTipoDocumentoById(idTipoDoc);
+                if (tipoDocEdicion != null) {
+                    cliente.setTipoDocumento(tipoDocEdicion);
+                    cliente.setNumeroDocumento(numeroDoc);
+                } else {
+                    // Si no viene tipo doc válido, preservamos el original
+                    Cliente clienteOriginal = clienteDAO.findById(id);
+                    if (clienteOriginal != null) {
+                        cliente.setTipoDocumento(clienteOriginal.getTipoDocumento());
+                        cliente.setNumeroDocumento(clienteOriginal.getNumeroDocumento());
+                    }
                 }
             }
 
@@ -421,28 +428,31 @@ public class ClientsController extends AbstractController {
                             : null
             );
 
-            // parseo fecha si fue enviada
-            if (fechaNacStr != null && !fechaNacStr.isBlank()) {
+            // validación de fecha de nacimiento (obligatoria)
+            if (fechaNacStr == null || fechaNacStr.isBlank()) {
+                volverAlFormulario(req, resp, esNuevo, id, "La fecha de nacimiento es obligatoria.");
+                return;
+            }
 
-                try {
-                    LocalDate fechaNacimiento = LocalDate.parse(fechaNacStr);
+            try {
+                LocalDate fechaNacimiento = LocalDate.parse(fechaNacStr);
 
-                    // Regla de negocio: Fecha no puede ser futura
-                    if (fechaNacimiento.isAfter(LocalDate.now())) {
-                        volverAlFormulario(req, resp, esNuevo, id, "La fecha de nacimiento no puede estar en el futuro.");
-                        return;
-                    }
+                // Regla de negocio: Fecha no puede ser futura
+                if (fechaNacimiento.isAfter(LocalDate.now())) {
+                    volverAlFormulario(req, resp, esNuevo, id, "La fecha de nacimiento no puede estar en el futuro.");
+                    return;
+                }
 
-                    // Regla de negocio: Mayoría de edad (18 años)
-                    long edad = java.time.temporal.ChronoUnit.YEARS.between(fechaNacimiento, LocalDate.now());
-                    if (edad < 18) {
-                        volverAlFormulario(req, resp, esNuevo, id, "El cliente debe ser mayor de edad (18 años o más).");
-                        return;
-                    }
+                // Regla de negocio: Mayoría de edad (18 años)
+                long edad = java.time.temporal.ChronoUnit.YEARS.between(fechaNacimiento, LocalDate.now());
+                if (edad < 18) {
+                    volverAlFormulario(req, resp, esNuevo, id, "El cliente debe ser mayor de edad (18 años o más).");
+                    return;
+                }
 
-                    cliente.setFechaNacimiento(fechaNacimiento);
+                cliente.setFechaNacimiento(fechaNacimiento);
 
-                } catch (java.time.format.DateTimeParseException e) {
+            } catch (java.time.format.DateTimeParseException e) {
 
                     volverAlFormulario(
                             req,
@@ -454,7 +464,6 @@ public class ClientsController extends AbstractController {
 
                     return;
                 }
-            }
 
             // Regla de negocio: Duplicidad de DNI
             if (esNuevo) {

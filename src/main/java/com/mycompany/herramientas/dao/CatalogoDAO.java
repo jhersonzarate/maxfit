@@ -31,6 +31,7 @@ public class CatalogoDAO {
             "SELECT id, nombre_documento, abreviado, tamañoMax, " +
             "       tamañoMin, esAlfanumerico, estado " +
             "FROM TipoDocumentos " +
+            "WHERE estado = 'activo' " +
             "ORDER BY nombre_documento";
 
         try (Connection con = DatabaseConnection.getConnection();
@@ -48,7 +49,22 @@ public class CatalogoDAO {
     public List<TipoDocumento> findAllTipoDocumentosConEstado()
             throws SQLException {
 
-        return findAllTipoDocumentos(); // ya incluye estado
+        List<TipoDocumento> lista = new ArrayList<>();
+        String sql =
+            "SELECT id, nombre_documento, abreviado, tamañoMax, " +
+            "       tamañoMin, esAlfanumerico, estado " +
+            "FROM TipoDocumentos " +
+            "ORDER BY nombre_documento";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapTipoDocumento(rs));
+            }
+        }
+        return lista;
     }
 
     // busca un tipo de documento por id — devuelve null si no existe
@@ -159,9 +175,25 @@ public class CatalogoDAO {
     // CARGOS (RF-13)
     // ═══════════════════════════════════════════════════════════
 
-    // devuelve todos los cargos — para selects
+    // devuelve todos los cargos activos — para selects
     public List<Cargo> findAllCargos() throws SQLException {
-        return findAllCargosConEstado();
+        List<Cargo> lista = new ArrayList<>();
+        String sql =
+            "SELECT id, nombre, estado FROM Cargos WHERE estado = 'activo' ORDER BY nombre";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(new Cargo(
+                    rs.getString("id"),
+                    rs.getString("nombre"),
+                    rs.getString("estado")
+                ));
+            }
+        }
+        return lista;
     }
 
     // devuelve todos los cargos con estado — para admin
@@ -602,6 +634,19 @@ public class CatalogoDAO {
         }
     }
     // ─── helpers privados ──────────────────────────────────────
+
+    // verifica si ya existe un método de pago con el mismo nombre (excluye el propio al editar)
+    public boolean existeNombreMetodoPago(String nombre, String excludeId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM MetodosPago WHERE LOWER(nombre_metodo) = LOWER(?) AND id <> ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre.trim());
+            ps.setString(2, excludeId != null ? excludeId : "");
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
 
     private TipoDocumento mapTipoDocumento(ResultSet rs)
             throws SQLException {

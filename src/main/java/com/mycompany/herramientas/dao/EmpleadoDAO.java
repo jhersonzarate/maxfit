@@ -9,6 +9,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 // DAO para la tabla Empleados (RF-12, RF-13)
 // nota: la tabla NO tiene columna estado — si se necesita desactivar empleados
@@ -187,5 +188,21 @@ public class EmpleadoDAO {
         e.setTipoDocumento(td);
         e.setCargo(cargo);
         return e;
+    }
+
+    public boolean isTipoDocumentoEnUso(String idTipoDocumento) {
+        String sql = "SELECT COUNT(*) FROM Empleados WHERE id_TipoDocumento = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, idTipoDocumento);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error al verificar uso de TipoDocumento en empleados", e);
+        }
+        return false;
     }
 }

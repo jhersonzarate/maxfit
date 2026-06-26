@@ -31,17 +31,14 @@ public class TipoClaseController extends AbstractController {
         transferirFlashMessages(req);
 
         switch (getAction(req)) {
-            case "save":
-                guardar(req, resp);
+            case "new":
+                mostrarForm(req, resp, null);
                 break;
-            case "toggle":
-                toggleEstado(req, resp);
-                break;
-            case "delete":
-                delete(req, resp);
+            case "edit":
+                mostrarForm(req, resp, param(req, "id"));
                 break;
             default:
-                redirigirA("/tipoclase", req, resp);
+                mostrarLista(req, resp);
         }
     }
 
@@ -55,6 +52,7 @@ public class TipoClaseController extends AbstractController {
         switch (getAction(req)) {
             case "save":   guardar(req, resp);      break;
             case "toggle": toggleEstado(req, resp); break;
+            case "delete": delete(req, resp);       break;
             default:       redirigirA("/tipoclase", req, resp);
         }
     }

@@ -503,6 +503,19 @@ public class SchedulesController extends AbstractController {
                 return;
             }
 
+            // compara contra TODOS los horarios del día (sala única)
+            List<Horario> horariosDelDia = horarioDAO.findByDia(diaSemana);
+            for (Horario h : horariosDelDia) {
+                // condición estándar de superposición: InicioA < FinB && InicioB < FinA
+                if (horaInicio.isBefore(h.getHoraFin()) && h.getHoraInicio().isBefore(horaFin)) {
+                    mensajeError(req, "La sala ya está ocupada el " + h.getNombreDia()
+                            + " de " + h.getRangoHorario()
+                            + " por la clase \"" + h.getClase().getNombreClase() + "\".");
+                    redirigirA("/schedules?action=horarios&id=" + claseId, req, resp);
+                    return;
+                }
+            }
+
             Horario horario = new Horario();
             horario.setId(IdGenerator.parHorario());
             horario.setClase(clase);

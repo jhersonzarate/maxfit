@@ -308,7 +308,7 @@
                                                     <div class="cell-name__avatar ${fn:split(avColors,',')[avIdx]}">
                                                         <c:out value="${fn:substring(tc.nombre,0,1)}"/>
                                                     </div>
-                                                    <span style="font-weight:500; color:var(--clr-text);">
+                                                    <span style="font-weight:500; color:var(--clr-text); font-size:0.875rem;">
                                                         <c:out value="${tc.nombre}"/>
                                                     </span>
                                                 </div>

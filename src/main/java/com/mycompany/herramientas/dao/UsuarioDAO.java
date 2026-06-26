@@ -58,6 +58,14 @@ public class UsuarioDAO {
     // contar usuarios
     private static final String SQL_COUNT_ALL = "SELECT COUNT(*) FROM Usuarios";
 
+    // eliminar usuario
+    private static final String SQL_DELETE = "DELETE FROM Usuarios WHERE id = ?";
+
+    // verificar si el usuario tiene transacciones (contratos o pagos registrados)
+    private static final String SQL_HAS_TRANSACCIONES =
+            "SELECT ISNULL((SELECT COUNT(*) FROM Contratos WHERE id_empleado = (SELECT id_empleado FROM Usuarios WHERE id = ?)), 0) + " +
+            "ISNULL((SELECT COUNT(*) FROM Clases WHERE id_empleado = (SELECT id_empleado FROM Usuarios WHERE id = ?)), 0)";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     // buscar usuario por email
@@ -76,6 +84,20 @@ public class UsuarioDAO {
             }
         }
 
+        return null;
+    }
+
+    // buscar usuario por ID de empleado vinculado
+    public Usuario findByEmpleadoId(String idEmpleado) throws SQLException {
+        if (idEmpleado == null) return null;
+        String sql = SQL_SELECT_BASE + "WHERE u.id_empleado = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, idEmpleado);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        }
         return null;
     }
 
@@ -164,6 +186,27 @@ public class UsuarioDAO {
         }
 
         return 0;
+    }
+
+    // verificar si el usuario tiene transacciones vinculadas
+    public boolean hasTransacciones(String id) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(SQL_HAS_TRANSACCIONES)) {
+            ps.setString(1, id);
+            ps.setString(2, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    // eliminar usuario por ID
+    public void delete(String id) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(SQL_DELETE)) {
+            ps.setString(1, id);
+            ps.executeUpdate();
+        }
     }
 
     // ─── métodos privados ──────────────────────────────────────

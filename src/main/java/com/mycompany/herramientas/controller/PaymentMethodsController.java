@@ -252,6 +252,20 @@ public class PaymentMethodsController extends AbstractController {
             return;
         }
 
+        //validacion para evitar numeros en el nombre
+        if (!contieneSoloLetras(nombre)) {
+            mensajeError(req, "El nombre solo puede contener letras.");
+            redirigirA("/payment-methods", req, resp);
+            return;
+        }
+
+        // validar longitud mínima y máxima
+        if (nombre.trim().length() < 3 || nombre.trim().length() > 50) {
+            mensajeError(req, "El nombre debe tener entre 3 y 50 caracteres.");
+            redirigirA("/payment-methods", req, resp);
+            return;
+        }
+
         boolean esNuevo = (id == null || id.trim().isEmpty());
         MetodoPago mp = new MetodoPago();
         mp.setId(esNuevo ? IdGenerator.parMetodoPago() : id);
@@ -259,6 +273,12 @@ public class PaymentMethodsController extends AbstractController {
         mp.setEstado(estado != null && estado.equals("activo") ? "activo" : "inactivo");
 
         try {
+            // validar nombre duplicado ANTES de guardar
+            if (catalogoDAO.existeNombreMetodoPago(nombre, esNuevo ? null : id)) {
+                mensajeError(req, "Ya existe un método de pago con el nombre \"" + nombre + "\".");
+                redirigirA("/payment-methods", req, resp);
+                return;
+            }
             boolean exito = true;
             if (esNuevo) {
                 catalogoDAO.insertMetodoPago(mp);
