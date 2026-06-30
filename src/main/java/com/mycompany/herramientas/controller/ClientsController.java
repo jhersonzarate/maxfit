@@ -417,8 +417,7 @@ public class ClientsController extends AbstractController {
 
             cliente.setNombre(nombre);
             cliente.setApellido(apellido);
-            cliente.setTipoDocumento(tipoDoc);
-            cliente.setNumeroDocumento(numeroDoc);
+
             cliente.setEmail(email);
             cliente.setTelefono(telefono);
 
