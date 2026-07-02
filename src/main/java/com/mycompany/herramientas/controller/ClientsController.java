@@ -442,10 +442,10 @@ public class ClientsController extends AbstractController {
                     return;
                 }
 
-                // Regla de negocio: Mayoría de edad (18 años)
+                // Regla de negocio: Edad mínima (14 años)
                 long edad = java.time.temporal.ChronoUnit.YEARS.between(fechaNacimiento, LocalDate.now());
-                if (edad < 18) {
-                    volverAlFormulario(req, resp, esNuevo, id, "El cliente debe ser mayor de edad (18 años o más).");
+                if (edad < 14) {
+                    volverAlFormulario(req, resp, esNuevo, id, "El cliente debe tener al menos 14 años.");
                     return;
                 }
 
@@ -669,12 +669,31 @@ public class ClientsController extends AbstractController {
         c.setTelefono(param(req, "telefono"));
 
         String genero = param(req, "genero");
-
         c.setGenero(
                 esGeneroValido(genero)
                         ? genero
                         : null
         );
+
+        String fechaNacStr = param(req, "fechaNacimiento");
+        if (fechaNacStr != null && !fechaNacStr.isBlank()) {
+            try {
+                c.setFechaNacimiento(java.time.LocalDate.parse(fechaNacStr));
+            } catch (Exception e) {
+                // Ignorar error de parseo
+            }
+        }
+
+        String idTipoDocStr = param(req, "idTipoDocumento");
+        if (idTipoDocStr != null && !idTipoDocStr.isBlank()) {
+            try {
+                TipoDocumento td = new TipoDocumento();
+                td.setId(idTipoDocStr);
+                c.setTipoDocumento(td);
+            } catch (NumberFormatException e) {
+                // Ignorar
+            }
+        }
 
         return c;
     }

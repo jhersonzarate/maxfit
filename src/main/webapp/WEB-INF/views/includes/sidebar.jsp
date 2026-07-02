@@ -24,6 +24,7 @@
              or fn:contains(currentUri,'/tipodocumento')
              or fn:contains(currentUri,'/tipoclase')
              or fn:contains(currentUri,'/cargo')
+             or fn:contains(currentUri,'/memberships')
              or fn:contains(currentUri,'/reports')}"/>
 
 <aside class="app-sidebar" role="navigation" aria-label="Navegación principal">
@@ -151,21 +152,7 @@
                     <span class="sidebar-nav__label">Asistencia</span>
                 </a>
 
-                <a href="${ctx}/memberships"
-                   class="sidebar-nav__item ${fn:contains(currentUri,'/memberships') ? 'active' : ''}"
-                   aria-label="Membresías">
-                    <span class="sidebar-nav__icon" aria-hidden="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                             stroke="currentColor" stroke-width="1.8">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75
-                                     3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0
-                                     19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25
-                                     0 0 0 4.5 19.5Z"/>
-                        </svg>
-                    </span>
-                    <span class="sidebar-nav__label">Membresías</span>
-                </a>
+
 
             </div>
         </c:if>
@@ -375,7 +362,25 @@
     <span class="sidebar-nav__label">Cargos</span>
 </a>
 
-                    <%-- 6. Métodos de Pago --%>
+                    <%-- 6. Membresías --%>
+                    <a href="${ctx}/memberships"
+                       class="sidebar-nav__item sidebar-nav__sub-item
+                         ${fn:contains(currentUri,'/memberships') ? 'active' : ''}"
+                       aria-label="Membresías">
+                        <span class="sidebar-nav__icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75
+                                         3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0
+                                         19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25
+                                         0 0 0 4.5 19.5Z"/>
+                            </svg>
+                        </span>
+                        <span class="sidebar-nav__label">Membresías</span>
+                    </a>
+
+                    <%-- 7. Métodos de Pago --%>
                     <a href="${ctx}/payment-methods"
                        class="sidebar-nav__item sidebar-nav__sub-item
                          ${fn:contains(currentUri,'/payment-methods') ? 'active' : ''}"
@@ -393,7 +398,7 @@
                         <span class="sidebar-nav__label">Métodos de Pago</span>
                     </a>
 
-                    <%-- 7. Reportes — SIEMPRE AL FINAL --%>
+                    <%-- 8. Reportes — SIEMPRE AL FINAL --%>
                     <a href="${ctx}/reports"
                        class="sidebar-nav__item sidebar-nav__sub-item
                          ${fn:contains(currentUri,'/reports') ? 'active' : ''}"

@@ -366,6 +366,19 @@ public class SchedulesController extends AbstractController {
             return;
         }
 
+        if (!esNuevo) {
+            try {
+                int inscritos = inscripcionDAO.countInscritos(id);
+                if (capacidad < inscritos) {
+                    volverAlFormularioClase(req, resp, esNuevo, id,
+                            "La capacidad máxima no puede ser menor a la cantidad de alumnos inscritos (" + inscritos + ").");
+                    return;
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Error al contar inscritos para validar capacidad", e);
+            }
+        }
+
         try {
             Empleado empleado   = empleadoDAO.findById(idEmpleado);
             TipoClase tipoClase = catalogoDAO.findTipoClaseById(idTipoClase);

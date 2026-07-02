@@ -234,7 +234,7 @@
                                                name="fechaNacimiento"
                                                class="form-control"
                                                required
-                                               max="<%= java.time.LocalDate.now().minusYears(18).toString() %>"
+                                               max="<%= java.time.LocalDate.now().minusYears(14).toString() %>"
                                                value="<c:out value='${cliente.fechaNacimiento}'/>"/>
                                     </div>
                                 </div>
