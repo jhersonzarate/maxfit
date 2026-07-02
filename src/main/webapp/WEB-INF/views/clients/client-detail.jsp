@@ -86,7 +86,7 @@
 
         /* Card de contrato activo — destacada */
         .active-contract-card {
-            background: linear-gradient(135deg, #0e1a10 0%, #0d160e 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
             border: 1px solid rgba(34,197,94,0.22);
             border-radius: var(--radius-lg);
             padding: 1.1rem 1.25rem;
