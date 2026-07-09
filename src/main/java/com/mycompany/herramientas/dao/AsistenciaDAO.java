@@ -6,7 +6,9 @@ import com.mycompany.herramientas.model.*;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 // DAO para la tabla Asistencia (RF-05)
@@ -67,6 +69,11 @@ public class AsistenciaDAO {
         "INSERT INTO Asistencia (id, id_contrato, fecha, estado, hora_ingreso) " +
         "VALUES (?, ?, ?, ?, ?)";
 
+    private static final String SQL_CONTEO_POR_RANGO =
+        "SELECT fecha, COUNT(*) AS total FROM Asistencia " +
+        "WHERE fecha >= ? AND fecha <= ? AND estado = 'asistio' " +
+        "GROUP BY fecha ORDER BY fecha ASC";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     public List<Asistencia> findAll() throws SQLException {
@@ -77,6 +84,59 @@ public class AsistenciaDAO {
             while (rs.next()) lista.add(mapRow(rs));
         }
         return lista;
+    }
+
+    public Map<LocalDate, Integer> getConteoAsistenciaPorRango(LocalDate inicio, LocalDate fin) throws SQLException {
+        Map<LocalDate, Integer> conteo = new LinkedHashMap<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_CONTEO_POR_RANGO)) {
+            ps.setDate(1, java.sql.Date.valueOf(inicio));
+            ps.setDate(2, java.sql.Date.valueOf(fin));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    conteo.put(rs.getDate("fecha").toLocalDate(), rs.getInt("total"));
+                }
+            }
+        }
+        return conteo;
+    }
+
+    public String[] getDiaPicoAsistencia() throws SQLException {
+        String sql = "SELECT fecha, COUNT(*) as total FROM Asistencia WHERE estado = 'asistio' GROUP BY fecha";
+        java.util.Map<java.time.DayOfWeek, Integer> totalPorDia = new java.util.HashMap<>();
+        java.util.Map<java.time.DayOfWeek, Integer> diasDistintos = new java.util.HashMap<>();
+        
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                LocalDate date = rs.getDate("fecha").toLocalDate();
+                int total = rs.getInt("total");
+                java.time.DayOfWeek dow = date.getDayOfWeek();
+                
+                totalPorDia.put(dow, totalPorDia.getOrDefault(dow, 0) + total);
+                diasDistintos.put(dow, diasDistintos.getOrDefault(dow, 0) + 1);
+            }
+        }
+        
+        java.time.DayOfWeek peakDay = null;
+        int maxTotal = -1;
+        for (java.util.Map.Entry<java.time.DayOfWeek, Integer> entry : totalPorDia.entrySet()) {
+            if (entry.getValue() > maxTotal) {
+                maxTotal = entry.getValue();
+                peakDay = entry.getKey();
+            }
+        }
+        
+        if (peakDay == null) {
+            return new String[]{"Ninguno", "0"};
+        }
+        
+        int average = maxTotal / diasDistintos.get(peakDay);
+        String dayName = peakDay.getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es", "ES"));
+        dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
+        
+        return new String[]{dayName, String.valueOf(average)};
     }
 
     public List<Asistencia> findByContratoId(String contratoId) throws SQLException {

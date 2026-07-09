@@ -22,8 +22,12 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
 
 // reportes globales del sistema para administrador
 @WebServlet("/reports")
@@ -315,41 +319,79 @@ public class ReportsController extends AbstractController {
             );
         }
 
-        // historial reciente de asistencias
+        // Filtros para el gráfico
+        int year = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+        
+        String mesParam = req.getParameter("mes");
+        String semanaParam = req.getParameter("semana");
+        
+        int month = (mesParam != null && !mesParam.isEmpty()) ? Integer.parseInt(mesParam) : currentMonth;
+        int week = (semanaParam != null && !semanaParam.isEmpty()) ? Integer.parseInt(semanaParam) : 1;
+
+        YearMonth ym = YearMonth.of(year, month);
+        LocalDate startOfMonth = ym.atDay(1);
+        LocalDate startOfWeek = startOfMonth.plusDays((week - 1) * 7);
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+        if (startOfWeek.getMonthValue() != month) {
+            startOfWeek = startOfMonth;
+            endOfWeek = ym.atEndOfMonth();
+        } else if (endOfWeek.getMonthValue() != month) {
+            endOfWeek = ym.atEndOfMonth();
+        }
+
         try {
+            Map<LocalDate, Integer> conteo = asistenciaDAO.getConteoAsistenciaPorRango(startOfWeek, endOfWeek);
 
-            List<Asistencia> historial =
-                    asistenciaDAO.findRecientes(
-                            MAX_ASISTENCIAS_REPORTE
-                    );
+            // Determinar el Lunes de la semana para que el gráfico sea siempre de Lunes a Domingo
+            LocalDate mondayOfWeek = startOfWeek;
+            while (mondayOfWeek.getDayOfWeek() != java.time.DayOfWeek.MONDAY) {
+                mondayOfWeek = mondayOfWeek.minusDays(1);
+            }
 
-            req.setAttribute(
-                    "historialAsistencia",
-                    historial
-            );
+            StringBuilder labelsJson = new StringBuilder("[");
+            StringBuilder dataJson = new StringBuilder("[");
 
-            req.setAttribute(
-                    "totalHistorial",
-                    historial.size()
-            );
+            LocalDate current = mondayOfWeek;
+            for (int i = 0; i < 7; i++) {
+                if (i > 0) {
+                    labelsJson.append(",");
+                    dataJson.append(",");
+                }
+                String dayName = current.getDayOfWeek().getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
+                dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
+                labelsJson.append("\"").append(dayName).append("\"");
+                
+                if (!current.isBefore(startOfWeek) && !current.isAfter(endOfWeek)) {
+                    dataJson.append(conteo.getOrDefault(current, 0));
+                } else {
+                    dataJson.append(0);
+                }
+                
+                current = current.plusDays(1);
+            }
+            labelsJson.append("]");
+            dataJson.append("]");
+
+            req.setAttribute("chartLabels", labelsJson.toString());
+            req.setAttribute("chartData", dataJson.toString());
+            req.setAttribute("filtroMes", month);
+            req.setAttribute("filtroSemana", week);
+            
+            String[] diaPico = asistenciaDAO.getDiaPicoAsistencia();
+            req.setAttribute("diaPicoNombre", diaPico[0]);
+            req.setAttribute("diaPicoPromedio", diaPico[1]);
+            
+            List<Asistencia> recientes = asistenciaDAO.findRecientes(1);
+            req.setAttribute("asistenciasRecientes", recientes);
 
         } catch (SQLException e) {
-
-            LOGGER.log(
-                    Level.WARNING,
-                    "Error al cargar historial de asistencia",
-                    e
-            );
-
-            req.setAttribute(
-                    "historialAsistencia",
-                    Collections.emptyList()
-            );
-
-            req.setAttribute(
-                    "totalHistorial",
-                    0
-            );
+            LOGGER.log(Level.WARNING, "Error al cargar datos para gráfico de asistencia", e);
+            req.setAttribute("chartLabels", "[]");
+            req.setAttribute("chartData", "[]");
+            req.setAttribute("diaPicoNombre", "Ninguno");
+            req.setAttribute("diaPicoPromedio", "0");
         }
 
         req.setAttribute("vistaActiva", "asistencia");

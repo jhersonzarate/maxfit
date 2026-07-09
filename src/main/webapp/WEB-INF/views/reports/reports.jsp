@@ -2095,9 +2095,7 @@
                                                                                                         <div
                                                                                                             class="report-kpi-card__header">
                                                                                                             <span
-                                                                                                                class="report-kpi-card__label">Registros
-                                                                                                                en
-                                                                                                                historial</span>
+                                                                                                                class="report-kpi-card__label">Día pico</span>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__badge">
                                                                                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -2108,23 +2106,19 @@
                                                                                                                     <path
                                                                                                                         stroke-linecap="round"
                                                                                                                         stroke-linejoin="round"
-                                                                                                                        d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625
-                                                 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875
-                                                 0 0 1 0-3.75Z" />
+                                                                                                                        d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
                                                                                                                 </svg>
                                                                                                             </div>
                                                                                                         </div>
                                                                                                         <div
                                                                                                             class="report-kpi-card__value">
                                                                                                             <c:out
-                                                                                                                value="${totalHistorial}" />
+                                                                                                                value="${diaPicoNombre}" />
                                                                                                         </div>
                                                                                                         <div
                                                                                                             class="report-kpi-card__meta">
-                                                                                                            Mostrando
-                                                                                                            últimos
                                                                                                             <c:out
-                                                                                                                value="${maxAsistencias}" />
+                                                                                                                value="${diaPicoPromedio}" /> personas aprox.
                                                                                                         </div>
                                                                                                     </div>
 
@@ -2153,9 +2147,9 @@
                                                                                                             style="font-size:1.1rem; padding-top:0.1rem;">
                                                                                                             <c:choose>
                                                                                                                 <c:when
-                                                                                                                    test="${not empty historialAsistencia}">
+                                                                                                                    test="${not empty asistenciasRecientes}">
                                                                                                                     <c:out
-                                                                                                                        value="${historialAsistencia[0].fecha}" />
+                                                                                                                        value="${asistenciasRecientes[0].fecha}" />
                                                                                                                 </c:when>
                                                                                                                 <c:otherwise>
                                                                                                                     —
@@ -2172,206 +2166,48 @@
 
                                                                                                 </div>
 
-                                                                                                <%-- Tabla de historial
-                                                                                                    --%>
-                                                                                                    <div
-                                                                                                        class="report-card">
-                                                                                                        <div
-                                                                                                            class="report-card__header">
-                                                                                                            <div
-                                                                                                                class="report-card__header-left">
-                                                                                                                <div
-                                                                                                                    class="report-card__icon green-icon">
-                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                        fill="none"
-                                                                                                                        viewBox="0 0 24 24"
-                                                                                                                        stroke="currentColor"
-                                                                                                                        stroke-width="1.8">
-                                                                                                                        <path
-                                                                                                                            stroke-linecap="round"
-                                                                                                                            stroke-linejoin="round"
-                                                                                                                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                                                                                    </svg>
-                                                                                                                </div>
-                                                                                                                <span
-                                                                                                                    class="report-card__title">Historial
-                                                                                                                    de
-                                                                                                                    asistencias</span>
+                                                                                                <%-- Gráfico de Asistencias --%>
+                                                                                                <div class="report-card" style="padding: 1.5rem;">
+                                                                                                    <div class="report-card__header">
+                                                                                                        <div class="report-card__header-left">
+                                                                                                            <div class="report-card__icon green-icon">
+                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                                                                </svg>
                                                                                                             </div>
-                                                                                                            <div
-                                                                                                                style="display:flex; align-items:center; gap:0.65rem;">
-                                                                                                                <span
-                                                                                                                    class="stat-chip chip--green">
-                                                                                                                    <c:out
-                                                                                                                        value="${totalHistorial}" />
-                                                                                                                    registros
-                                                                                                                </span>
-                                                                                                                <a href="${pageContext.request.contextPath}/attendance?action=hist"
-                                                                                                                    class="btn btn-ghost btn-sm">
-                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                        fill="none"
-                                                                                                                        viewBox="0 0 24 24"
-                                                                                                                        stroke="currentColor"
-                                                                                                                        stroke-width="1.8">
-                                                                                                                        <path
-                                                                                                                            stroke-linecap="round"
-                                                                                                                            stroke-linejoin="round"
-                                                                                                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                                                                                                                    </svg>
-                                                                                                                    Módulo
-                                                                                                                    asistencia
-                                                                                                                </a>
-                                                                                                            </div>
+                                                                                                            <span class="report-card__title">Asistencias por Día</span>
                                                                                                         </div>
+                                                                                                        <form action="${pageContext.request.contextPath}/reports" method="GET" style="display:flex; gap:0.5rem; align-items:center;">
+                                                                                                            <input type="hidden" name="action" value="asistencia">
+                                                                                                            <select name="mes" class="form-control" style="width: auto;">
+                                                                                                                <option value="1" ${filtroMes == 1 ? 'selected' : ''}>Enero</option>
+                                                                                                                <option value="2" ${filtroMes == 2 ? 'selected' : ''}>Febrero</option>
+                                                                                                                <option value="3" ${filtroMes == 3 ? 'selected' : ''}>Marzo</option>
+                                                                                                                <option value="4" ${filtroMes == 4 ? 'selected' : ''}>Abril</option>
+                                                                                                                <option value="5" ${filtroMes == 5 ? 'selected' : ''}>Mayo</option>
+                                                                                                                <option value="6" ${filtroMes == 6 ? 'selected' : ''}>Junio</option>
+                                                                                                                <option value="7" ${filtroMes == 7 ? 'selected' : ''}>Julio</option>
+                                                                                                                <option value="8" ${filtroMes == 8 ? 'selected' : ''}>Agosto</option>
+                                                                                                                <option value="9" ${filtroMes == 9 ? 'selected' : ''}>Septiembre</option>
+                                                                                                                <option value="10" ${filtroMes == 10 ? 'selected' : ''}>Octubre</option>
+                                                                                                                <option value="11" ${filtroMes == 11 ? 'selected' : ''}>Noviembre</option>
+                                                                                                                <option value="12" ${filtroMes == 12 ? 'selected' : ''}>Diciembre</option>
+                                                                                                            </select>
+                                                                                                            <select name="semana" class="form-control" style="width: auto;">
+                                                                                                                <option value="1" ${filtroSemana == 1 ? 'selected' : ''}>Semana 1</option>
+                                                                                                                <option value="2" ${filtroSemana == 2 ? 'selected' : ''}>Semana 2</option>
+                                                                                                                <option value="3" ${filtroSemana == 3 ? 'selected' : ''}>Semana 3</option>
+                                                                                                                <option value="4" ${filtroSemana == 4 ? 'selected' : ''}>Semana 4</option>
+                                                                                                                <option value="5" ${filtroSemana == 5 ? 'selected' : ''}>Semana 5</option>
+                                                                                                            </select>
+                                                                                                            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+                                                                                                        </form>
+                                                                                                    </div>
 
-                                                                                                        <%-- Cabecera de
-                                                                                                            columnas
-                                                                                                            --%>
-                                                                                                            <div style="display:flex; align-items:center; gap:0.85rem;
-                                    padding:0.5rem 1.25rem;
-                                    background:var(--clr-surface);
-                                    border-bottom:1px solid var(--clr-border-light);">
-                                                                                                                <span
-                                                                                                                    style="width:24px; flex-shrink:0;"></span>
-                                                                                                                <span
-                                                                                                                    style="width:8px; flex-shrink:0;"></span>
-                                                                                                                <span
-                                                                                                                    style="flex:1; font-size:0.65rem; font-weight:700;
-                                         letter-spacing:0.10em; text-transform:uppercase;
-                                         color:var(--clr-text-dim);">
-                                                                                                                    Cliente
-                                                                                                                </span>
-                                                                                                                <span
-                                                                                                                    style="font-size:0.65rem; font-weight:700;
-                                         letter-spacing:0.10em; text-transform:uppercase;
-                                         color:var(--clr-text-dim); flex-shrink:0; max-width:130px; width:130px;">
-                                                                                                                    Membresía
-                                                                                                                </span>
-                                                                                                                <span
-                                                                                                                    style="font-size:0.65rem; font-weight:700;
-                                         letter-spacing:0.10em; text-transform:uppercase;
-                                         color:var(--clr-text-dim); flex-shrink:0; min-width:86px;">
-                                                                                                                    Fecha
-                                                                                                                </span>
-                                                                                                                <span
-                                                                                                                    style="font-size:0.65rem; font-weight:700;
-                                         letter-spacing:0.10em; text-transform:uppercase;
-                                         color:var(--clr-text-dim); flex-shrink:0;">
-                                                                                                                    Hora
-                                                                                                                </span>
-                                                                                                                <span
-                                                                                                                    style="font-size:0.65rem; font-weight:700;
-                                         letter-spacing:0.10em; text-transform:uppercase;
-                                         color:var(--clr-text-dim); flex-shrink:0; min-width:72px; text-align:center;">
-                                                                                                                    Estado
-                                                                                                                </span>
-                                                                                                            </div>
-
-                                                                                                            <c:choose>
-                                                                                                                <c:when
-                                                                                                                    test="${not empty historialAsistencia}">
-                                                                                                                    <c:forEach
-                                                                                                                        var="asi"
-                                                                                                                        items="${historialAsistencia}"
-                                                                                                                        varStatus="loop">
-                                                                                                                        <div
-                                                                                                                            class="attendance-row">
-                                                                                                                            <span
-                                                                                                                                class="attendance-row__num">
-                                                                                                                                <c:out
-                                                                                                                                    value="${loop.index + 1}" />
-                                                                                                                            </span>
-                                                                                                                            <span
-                                                                                                                                class="attendance-row__dot
-                                            ${asi.isFalto() ? 'falto' : ''}
-                                            ${asi.isPendiente() ? 'pendiente' : ''}">
-                                                                                                                            </span>
-                                                                                                                            <span
-                                                                                                                                class="attendance-row__nombre">
-                                                                                                                                <c:out
-                                                                                                                                    value="${asi.contrato.cliente.nombreCompleto}" />
-                                                                                                                            </span>
-                                                                                                                            <span
-                                                                                                                                class="attendance-row__membresia">
-                                                                                                                                <c:if
-                                                                                                                                    test="${asi.contrato != null and asi.contrato.membresia != null}">
-                                                                                                                                    <c:out
-                                                                                                                                        value="${asi.contrato.membresia.nombreMembresia}" />
-                                                                                                                                </c:if>
-                                                                                                                            </span>
-                                                                                                                            <span
-                                                                                                                                class="attendance-row__fecha">
-                                                                                                                                <c:out
-                                                                                                                                    value="${asi.fecha}" />
-                                                                                                                            </span>
-                                                                                                                            <span
-                                                                                                                                class="attendance-row__hora">
-                                                                                                                                <c:out
-                                                                                                                                    value="${asi.horaIngresoFormateada}" />
-                                                                                                                            </span>
-                                                                                                                            <span
-                                                                                                                                style="flex-shrink:0; min-width:72px; text-align:center;">
-                                                                                                                                <span
-                                                                                                                                    class="badge-estado badge-estado--${asi.estado}">
-                                                                                                                                    <c:out
-                                                                                                                                        value="${asi.estado}" />
-                                                                                                                                </span>
-                                                                                                                            </span>
-                                                                                                                        </div>
-                                                                                                                    </c:forEach>
-
-                                                                                                                    <div style="display:flex; align-items:center; justify-content:space-between;
-                                            padding:0.75rem 1.25rem; border-top:1px solid var(--clr-border-light);
-                                            background:rgba(255,255,255,0.012);">
-                                                                                                                        <span
-                                                                                                                            style="font-size:0.75rem; color:var(--clr-text-dim);">
-                                                                                                                            Mostrando
-                                                                                                                            los
-                                                                                                                            últimos
-                                                                                                                            <strong
-                                                                                                                                style="color:var(--clr-text-muted);">
-                                                                                                                                <c:out
-                                                                                                                                    value="${maxAsistencias}" />
-                                                                                                                            </strong>
-                                                                                                                            registros
-                                                                                                                            de
-                                                                                                                            asistencia
-                                                                                                                        </span>
-                                                                                                                        <a href="${pageContext.request.contextPath}/attendance?action=hist"
-                                                                                                                            class="btn btn-secondary btn-sm">
-                                                                                                                            Ver
-                                                                                                                            historial
-                                                                                                                            completo
-                                                                                                                        </a>
-                                                                                                                    </div>
-                                                                                                                </c:when>
-
-                                                                                                                <c:otherwise>
-                                                                                                                    <div
-                                                                                                                        class="report-empty">
-                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                            fill="none"
-                                                                                                                            viewBox="0 0 24 24"
-                                                                                                                            stroke="currentColor"
-                                                                                                                            stroke-width="1.5">
-                                                                                                                            <path
-                                                                                                                                stroke-linecap="round"
-                                                                                                                                stroke-linejoin="round"
-                                                                                                                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                                                                                        </svg>
-                                                                                                                        <p>No
-                                                                                                                            hay
-                                                                                                                            registros
-                                                                                                                            de
-                                                                                                                            asistencia
-                                                                                                                            todavía.
-                                                                                                                        </p>
-                                                                                                                    </div>
-                                                                                                                </c:otherwise>
-                                                                                                            </c:choose>
-                                                                                                    </div><%--
-                                                                                                        /report-card
-                                                                                                        --%>
+                                                                                                    <div style="width: 100%; height: 400px; margin-top: 1rem;">
+                                                                                                        <canvas id="asistenciaChart"></canvas>
+                                                                                                    </div>
+                                                                                                </div>
 
                                                                                         </c:when>
 
@@ -3457,6 +3293,58 @@
                                                             </div><%-- /page-content --%>
                                                     </div><%-- /app-main --%>
                                             </div><%-- /app-shell --%>
+
+                                            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                                            <script>
+                                                document.addEventListener("DOMContentLoaded", function() {
+                                                    if (document.getElementById('asistenciaChart')) {
+                                                        var ctx = document.getElementById('asistenciaChart').getContext('2d');
+                                                        var labels = ${chartLabels != null ? chartLabels : '[]'};
+                                                        var data = ${chartData != null ? chartData : '[]'};
+                                                        
+                                                        new Chart(ctx, {
+                                                            type: 'bar',
+                                                            data: {
+                                                                labels: labels,
+                                                                datasets: [{
+                                                                    label: 'Personas Asistieron',
+                                                                    data: data,
+                                                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                                                    borderWidth: 1,
+                                                                    borderRadius: 4
+                                                                }]
+                                                            },
+                                                            options: {
+                                                                responsive: true,
+                                                                maintainAspectRatio: false,
+                                                                scales: {
+                                                                    y: {
+                                                                        beginAtZero: true,
+                                                                        ticks: {
+                                                                            precision: 0
+                                                                        },
+                                                                        grid: {
+                                                                            color: 'rgba(0,0,0,0.05)'
+                                                                        }
+                                                                    },
+                                                                    x: {
+                                                                        grid: {
+                                                                            display: false
+                                                                        }
+                                                                    }
+                                                                },
+                                                                plugins: {
+                                                                    legend: {
+                                                                        display: true,
+                                                                        position: 'top'
+                                                                    }
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            </script>
 
                                         </body>
 
