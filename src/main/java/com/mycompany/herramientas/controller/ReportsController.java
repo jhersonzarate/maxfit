@@ -466,6 +466,32 @@ public class ReportsController extends AbstractController {
                     contratosActivos.size()
             );
 
+            java.util.Map<String, Integer> conteoPorPlan = new java.util.HashMap<>();
+            for (Contrato c : contratosActivos) {
+                if (c.getMembresia() != null) {
+                    String nombre = c.getMembresia().getNombreMembresia();
+                    conteoPorPlan.put(nombre, conteoPorPlan.getOrDefault(nombre, 0) + 1);
+                }
+            }
+
+            StringBuilder labelsJson = new StringBuilder("[");
+            StringBuilder dataJson = new StringBuilder("[");
+            boolean first = true;
+            for (java.util.Map.Entry<String, Integer> entry : conteoPorPlan.entrySet()) {
+                if (!first) {
+                    labelsJson.append(",");
+                    dataJson.append(",");
+                }
+                labelsJson.append("\"").append(entry.getKey()).append("\"");
+                dataJson.append(entry.getValue());
+                first = false;
+            }
+            labelsJson.append("]");
+            dataJson.append("]");
+
+            req.setAttribute("membresiasChartLabels", labelsJson.toString());
+            req.setAttribute("membresiasChartData", dataJson.toString());
+
         } catch (SQLException e) {
 
             LOGGER.log(

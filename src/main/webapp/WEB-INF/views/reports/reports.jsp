@@ -2150,6 +2150,14 @@
                                                                                                                     test="${not empty asistenciasRecientes}">
                                                                                                                     <c:out
                                                                                                                         value="${asistenciasRecientes[0].fecha}" />
+                                                                                                                    -
+                                                                                                                    <c:out
+                                                                                                                        value="${asistenciasRecientes[0].horaIngresoFormateada}" />
+                                                                                                                    <br>
+                                                                                                                    <span style="font-size:0.85rem; color:var(--clr-text-dim);">
+                                                                                                                        <c:out
+                                                                                                                            value="${asistenciasRecientes[0].contrato.cliente.nombreCompleto}" />
+                                                                                                                    </span>
                                                                                                                 </c:when>
                                                                                                                 <c:otherwise>
                                                                                                                     —
@@ -2388,47 +2396,8 @@
                                                                                                                     <c:choose>
                                                                                                                         <c:when
                                                                                                                             test="${not empty membresias}">
-                                                                                                                            <div
-                                                                                                                                class="membresia-report-list">
-                                                                                                                                <c:forEach
-                                                                                                                                    var="mem"
-                                                                                                                                    items="${membresias}"
-                                                                                                                                    varStatus="loop">
-                                                                                                                                    <div
-                                                                                                                                        class="membresia-report-row">
-                                                                                                                                        <span
-                                                                                                                                            class="membresia-report-row__rank">
-                                                                                                                                            <c:out
-                                                                                                                                                value="${loop.index + 1}" />
-                                                                                                                                        </span>
-                                                                                                                                        <div
-                                                                                                                                            class="membresia-report-row__info">
-                                                                                                                                            <p
-                                                                                                                                                class="membresia-report-row__nombre">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${mem.nombreMembresia}" />
-                                                                                                                                            </p>
-                                                                                                                                            <p
-                                                                                                                                                class="membresia-report-row__dur">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${mem.duracionMeses}" />
-                                                                                                                                                mes(es)
-                                                                                                                                                ·
-                                                                                                                                                <span
-                                                                                                                                                    class="cell-id">
-                                                                                                                                                    <c:out
-                                                                                                                                                        value="${mem.id}" />
-                                                                                                                                                </span>
-                                                                                                                                            </p>
-                                                                                                                                        </div>
-                                                                                                                                        <span
-                                                                                                                                            class="membresia-report-row__precio">
-                                                                                                                                            <fmt:formatNumber
-                                                                                                                                                value="${mem.precio}"
-                                                                                                                                                pattern="#,##0.00" />
-                                                                                                                                        </span>
-                                                                                                                                    </div>
-                                                                                                                                </c:forEach>
+                                                                                                                            <div style="padding: 1.5rem; display: flex; justify-content: center; height: 300px;">
+                                                                                                                                <canvas id="membresiasChart"></canvas>
                                                                                                                             </div>
                                                                                                                             <div
                                                                                                                                 style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
@@ -3338,6 +3307,41 @@
                                                                     legend: {
                                                                         display: true,
                                                                         position: 'top'
+                                                                    }
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+
+                                                    if (document.getElementById('membresiasChart')) {
+                                                        var ctxMem = document.getElementById('membresiasChart').getContext('2d');
+                                                        var labelsMem = ${membresiasChartLabels != null ? membresiasChartLabels : '[]'};
+                                                        var dataMem = ${membresiasChartData != null ? membresiasChartData : '[]'};
+                                                        
+                                                        new Chart(ctxMem, {
+                                                            type: 'doughnut',
+                                                            data: {
+                                                                labels: labelsMem,
+                                                                datasets: [{
+                                                                    data: dataMem,
+                                                                    backgroundColor: [
+                                                                        'rgba(255, 99, 132, 0.8)',
+                                                                        'rgba(54, 162, 235, 0.8)',
+                                                                        'rgba(255, 206, 86, 0.8)',
+                                                                        'rgba(75, 192, 192, 0.8)',
+                                                                        'rgba(153, 102, 255, 0.8)',
+                                                                        'rgba(255, 159, 64, 0.8)'
+                                                                    ],
+                                                                    borderColor: 'rgba(255, 255, 255, 1)',
+                                                                    borderWidth: 2
+                                                                }]
+                                                            },
+                                                            options: {
+                                                                responsive: true,
+                                                                maintainAspectRatio: false,
+                                                                plugins: {
+                                                                    legend: {
+                                                                        position: 'right'
                                                                     }
                                                                 }
                                                             }
