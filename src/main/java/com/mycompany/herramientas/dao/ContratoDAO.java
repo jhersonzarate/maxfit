@@ -6,8 +6,14 @@ import com.mycompany.herramientas.model.*;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Logger;
 
 // DAO para la tabla Contratos (RF-03)
@@ -99,6 +105,14 @@ public class ContratoDAO {
         "UPDATE Contratos SET estado = ? " +
         "WHERE estado = ? AND fecha_fin < ?";
 
+    // ingresos agrupados por año/mes desde una fecha de corte — para el gráfico de tendencia
+    private static final String SQL_INGRESOS_POR_MES =
+        "SELECT YEAR(fecha_inicio) AS anio, MONTH(fecha_inicio) AS mes, " +
+        "       SUM(monto_pagado) AS total " +
+        "FROM Contratos " +
+        "WHERE fecha_inicio >= ? " +
+        "GROUP BY YEAR(fecha_inicio), MONTH(fecha_inicio)";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     public List<Contrato> findAll() throws SQLException {
@@ -170,6 +184,21 @@ public class ContratoDAO {
              PreparedStatement ps = con.prepareStatement(SQL_FIND_ALL_ACTIVOS);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
+        }
+        return lista;
+    }
+
+    // contratos filtrados por estado (activo/vencido/cancelado), más recientes
+    // primero por fecha_fin — usado en el PDF de reportes (listado de vencidos)
+    public List<Contrato> findByEstado(String estado) throws SQLException {
+        List<Contrato> lista = new ArrayList<>();
+        String sql = SQL_SELECT_BASE + "WHERE con.estado = ? ORDER BY con.fecha_fin DESC";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, estado);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
         }
         return lista;
     }
@@ -268,6 +297,49 @@ public class ContratoDAO {
             ps.setDate(3, Date.valueOf(hoy));
             return ps.executeUpdate();
         }
+    }
+
+    // ingresos de los últimos N meses (incluye el mes actual), en orden cronológico.
+    // rellena con BigDecimal.ZERO los meses sin contratos registrados — usado en
+    // el gráfico de tendencia del reporte de Contratos (vista web y PDF).
+    public LinkedHashMap<String, BigDecimal> getIngresosUltimosMeses(int meses) throws SQLException {
+
+        LocalDate hoy = LocalDate.now();
+        LocalDate desde = hoy.withDayOfMonth(1).minusMonths(meses - 1L);
+
+        Map<YearMonth, BigDecimal> totalesPorMes = new HashMap<>();
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_INGRESOS_POR_MES)) {
+
+            ps.setDate(1, Date.valueOf(desde));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    YearMonth ym = YearMonth.of(rs.getInt("anio"), rs.getInt("mes"));
+                    totalesPorMes.put(ym, rs.getBigDecimal("total"));
+                }
+            }
+        }
+
+        // arma el resultado en orden cronológico, incluyendo meses sin ingresos
+        LinkedHashMap<String, BigDecimal> resultado = new LinkedHashMap<>();
+        DateTimeFormatter etiquetaMes = DateTimeFormatter.ofPattern("MMM", new Locale("es", "PE"));
+
+        for (int i = meses - 1; i >= 0; i--) {
+            YearMonth ym = YearMonth.from(hoy.minusMonths(i));
+            String etiqueta = capitalizar(ym.atDay(1).format(etiquetaMes));
+            BigDecimal total = totalesPorMes.getOrDefault(ym, BigDecimal.ZERO);
+            resultado.put(etiqueta, total);
+        }
+
+        return resultado;
+    }
+
+    private String capitalizar(String texto) {
+        if (texto == null || texto.isEmpty()) return texto;
+        String limpio = texto.replace(".", "");
+        return Character.toUpperCase(limpio.charAt(0)) + limpio.substring(1);
     }
 
     // ─── privados ──────────────────────────────────────────────

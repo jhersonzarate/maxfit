@@ -920,6 +920,27 @@
                                                         color: var(--clr-text-dim);
                                                     }
 
+                                                    /* ── Botón exportar PDF ──────────────────────────────── */
+                                                    .btn-export-pdf {
+                                                        display: inline-flex;
+                                                        align-items: center;
+                                                        gap: 0.4rem;
+                                                        padding: 0.55rem 1rem;
+                                                        background: var(--clr-red);
+                                                        color: #fff;
+                                                        border-radius: var(--radius-md);
+                                                        font-size: 0.78rem;
+                                                        font-weight: 600;
+                                                        text-decoration: none;
+                                                        border: none;
+                                                        cursor: pointer;
+                                                        transition: background var(--transition);
+                                                    }
+
+                                                    .btn-export-pdf:hover {
+                                                        background: var(--clr-red-hover);
+                                                    }
+
                                                     /* ── Strip resumen de ingresos ──────────────────────── */
                                                     .ingresos-highlight {
                                                         background: var(--clr-surface);
@@ -1257,6 +1278,19 @@
                                                                                     --%>
                                                                                     <c:when
                                                                                         test="${vistaActiva eq 'contratos'}">
+
+                                                                                        <%-- Barra de acciones --%>
+                                                                                        <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+                                                                                            <a href="${pageContext.request.contextPath}/reports?action=contratos&formato=pdf"
+                                                                                               class="btn-export-pdf">
+                                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                                                                     stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
+                                                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                                                                </svg>
+                                                                                                Exportar PDF
+                                                                                            </a>
+                                                                                        </div>
 
                                                                                         <%-- KPIs de contratos --%>
                                                                                             <div
@@ -2042,6 +2076,27 @@
                                                                                                     </div><%--
                                                                                                         /report-two-col
                                                                                                         --%>
+
+                                                                                        <%-- Ingresos últimos 6 meses --%>
+                                                                                        <div class="report-card" style="margin-top:1rem;">
+                                                                                            <div class="report-card__header">
+                                                                                                <div class="report-card__header-left">
+                                                                                                    <div class="report-card__icon">
+                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                                                                             stroke="currentColor" stroke-width="1.8">
+                                                                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                  d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                                                                                        </svg>
+                                                                                                    </div>
+                                                                                                    <span class="report-card__title">Ingresos últimos 6 meses</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div style="padding:1.25rem; height:260px; position:relative;">
+                                                                                                <canvas id="contratosIngresosChart"
+                                                                                                        role="img"
+                                                                                                        aria-label="Gráfico de barras de ingresos mensuales de los últimos 6 meses"></canvas>
+                                                                                            </div>
+                                                                                        </div>
 
                                                                                     </c:when>
 
@@ -3264,8 +3319,56 @@
                                             </div><%-- /app-shell --%>
 
                                             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                                            <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
                                             <script>
                                                 document.addEventListener("DOMContentLoaded", function() {
+                                                    if (document.getElementById('contratosIngresosChart')) {
+                                                        var ctxIng = document.getElementById('contratosIngresosChart').getContext('2d');
+                                                        var labelsIng = ${contratosIngresosLabels != null ? contratosIngresosLabels : '[]'};
+                                                        var dataIng = ${contratosIngresosData != null ? contratosIngresosData : '[]'};
+
+                                                        new Chart(ctxIng, {
+                                                            type: 'bar',
+                                                            data: {
+                                                                labels: labelsIng,
+                                                                datasets: [{
+                                                                    label: 'Ingresos (S/.)',
+                                                                    data: dataIng,
+                                                                    backgroundColor: 'rgba(230, 48, 39, 0.75)',
+                                                                    borderColor: 'rgba(230, 48, 39, 1)',
+                                                                    borderWidth: 1,
+                                                                    borderRadius: 4,
+                                                                    maxBarThickness: 40
+                                                                }]
+                                                            },
+                                                            options: {
+                                                                responsive: true,
+                                                                maintainAspectRatio: false,
+                                                                scales: {
+                                                                    y: {
+                                                                        beginAtZero: true,
+                                                                        ticks: {
+                                                                            callback: function(value) { return 'S/.' + value.toLocaleString(); }
+                                                                        },
+                                                                        grid: {
+                                                                            color: 'rgba(0,0,0,0.05)'
+                                                                        }
+                                                                    },
+                                                                    x: {
+                                                                        grid: {
+                                                                            display: false
+                                                                        }
+                                                                    }
+                                                                },
+                                                                plugins: {
+                                                                    legend: {
+                                                                        display: false
+                                                                    }
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+
                                                     if (document.getElementById('asistenciaChart')) {
                                                         var ctx = document.getElementById('asistenciaChart').getContext('2d');
                                                         var labels = ${chartLabels != null ? chartLabels : '[]'};
@@ -3318,6 +3421,7 @@
                                                         var labelsMem = ${membresiasChartLabels != null ? membresiasChartLabels : '[]'};
                                                         var dataMem = ${membresiasChartData != null ? membresiasChartData : '[]'};
                                                         
+                                                        Chart.register(ChartDataLabels);
                                                         new Chart(ctxMem, {
                                                             type: 'doughnut',
                                                             data: {
@@ -3342,6 +3446,33 @@
                                                                 plugins: {
                                                                     legend: {
                                                                         position: 'right'
+                                                                    },
+                                                                    datalabels: {
+                                                                        color: '#fff',
+                                                                        font: {
+                                                                            weight: 'bold',
+                                                                            size: 14
+                                                                        },
+                                                                        formatter: function(value, context) {
+                                                                            var total = context.chart._metasets[context.datasetIndex].total;
+                                                                            if (total === 0) return null;
+                                                                            var percentage = +(value / total * 100).toFixed(1) + '%';
+                                                                            return percentage;
+                                                                        }
+                                                                    },
+                                                                    tooltip: {
+                                                                        callbacks: {
+                                                                            label: function(context) {
+                                                                                var label = context.label || '';
+                                                                                if (label) {
+                                                                                    label += ': ';
+                                                                                }
+                                                                                var value = context.parsed;
+                                                                                var total = context.chart._metasets[context.datasetIndex].total;
+                                                                                var percentage = +(value / total * 100).toFixed(1) + '%';
+                                                                                return label + value + ' (' + percentage + ')';
+                                                                            }
+                                                                        }
                                                                     }
                                                                 }
                                                             }

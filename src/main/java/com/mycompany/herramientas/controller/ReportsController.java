@@ -10,7 +10,9 @@ import com.mycompany.herramientas.dao.MembresiaDAO;
 import com.mycompany.herramientas.model.Asistencia;
 import com.mycompany.herramientas.model.Contrato;
 import com.mycompany.herramientas.model.Membresia;
+import com.mycompany.herramientas.service.ReportPdfService;
 import com.mycompany.herramientas.view.ViewRoutes;
+import com.lowagie.text.DocumentException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,6 +23,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -45,6 +48,7 @@ public class ReportsController extends AbstractController {
     private final EmpleadoDAO   empleadoDAO   = new EmpleadoDAO();
     private final ClaseDAO      claseDAO      = new ClaseDAO();
     private final MembresiaDAO  membresiaDAO  = new MembresiaDAO();
+    private final ReportPdfService reportPdfService = new ReportPdfService();
 
     // ─── GET ──────────────────────────────────────────────────
 
@@ -61,7 +65,11 @@ public class ReportsController extends AbstractController {
 
         switch (action) {
             case "contratos":
-                reporteContratos(req, resp);
+                if ("pdf".equals(param(req, "formato"))) {
+                    exportarContratosPdf(req, resp);
+                } else {
+                    reporteContratos(req, resp);
+                }
                 break;
             case "asistencia":
                 reporteAsistencia(req, resp);
@@ -244,6 +252,44 @@ public class ReportsController extends AbstractController {
                     "ingresosMes",
                     BigDecimal.ZERO
             );
+        }
+
+        // tendencia de ingresos últimos 6 meses (para el gráfico Chart.js)
+        try {
+
+            LinkedHashMap<String, BigDecimal> ingresosPorMes =
+                    contratoDAO.getIngresosUltimosMeses(6);
+
+            StringBuilder labelsJson = new StringBuilder("[");
+            StringBuilder dataJson = new StringBuilder("[");
+            boolean primero = true;
+
+            for (Map.Entry<String, BigDecimal> entry : ingresosPorMes.entrySet()) {
+                if (!primero) {
+                    labelsJson.append(",");
+                    dataJson.append(",");
+                }
+                labelsJson.append("\"").append(entry.getKey()).append("\"");
+                dataJson.append(entry.getValue());
+                primero = false;
+            }
+
+            labelsJson.append("]");
+            dataJson.append("]");
+
+            req.setAttribute("contratosIngresosLabels", labelsJson.toString());
+            req.setAttribute("contratosIngresosData", dataJson.toString());
+
+        } catch (SQLException e) {
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Error al cargar tendencia de ingresos",
+                    e
+            );
+
+            req.setAttribute("contratosIngresosLabels", "[]");
+            req.setAttribute("contratosIngresosData", "[]");
         }
 
         // contratos próximos a vencer
@@ -522,6 +568,66 @@ public class ReportsController extends AbstractController {
     }
 
     // ─── helpers privados ────────────────────────────────────
+
+    private void exportarContratosPdf(HttpServletRequest req,
+                                       HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        try {
+
+            int activos = contratoDAO.countByEstado(AppConfig.CONTRATO_ACTIVO);
+            int vencidos = contratoDAO.countByEstado(AppConfig.CONTRATO_VENCIDO);
+            int cancelados = contratoDAO.countByEstado(AppConfig.CONTRATO_CANCELADO);
+            int total = activos + vencidos + cancelados;
+
+            BigDecimal ingresosMes = contratoDAO.getIngresosMesActual();
+            LinkedHashMap<String, BigDecimal> ingresosPorMes = contratoDAO.getIngresosUltimosMeses(6);
+            List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
+            List<Contrato> listaActivos = contratoDAO.findAllActivos();
+            List<Contrato> listaVencidos = contratoDAO.findByEstado(AppConfig.CONTRATO_VENCIDO);
+
+            ReportPdfService.ContratosReportData data = new ReportPdfService.ContratosReportData(
+                    activos,
+                    vencidos,
+                    cancelados,
+                    total,
+                    ingresosMes,
+                    ingresosPorMes,
+                    proximos,
+                    listaActivos,
+                    listaVencidos,
+                    LocalDate.now(),
+                    getSessionUserName(req)
+            );
+
+            // ruta absoluta en disco del logo — si no existe todavía, el
+            // servicio dibuja un wordmark de texto "MAXFIT" en su lugar
+            String logoRealPath = req.getServletContext().getRealPath("/static/img/logo.png");
+
+            byte[] pdf = reportPdfService.generarPdfContratos(data, logoRealPath);
+
+            resp.reset();
+            resp.setContentType("application/pdf");
+            resp.setHeader(
+                    "Content-Disposition",
+                    "attachment; filename=\"reporte-contratos-" + LocalDate.now() + ".pdf\""
+            );
+            resp.setContentLength(pdf.length);
+            resp.getOutputStream().write(pdf);
+            resp.getOutputStream().flush();
+
+        } catch (SQLException | DocumentException e) {
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Error al generar PDF de contratos",
+                    e
+            );
+
+            mensajeError(req, "No se pudo generar el PDF del reporte. Intenta nuevamente.");
+            redirigirA("/reports?action=contratos", req, resp);
+        }
+    }
 
     private void cargarKpisGlobales(HttpServletRequest req) {
 
