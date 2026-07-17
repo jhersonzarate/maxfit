@@ -113,6 +113,17 @@ public class ContratoDAO {
         "WHERE fecha_inicio >= ? " +
         "GROUP BY YEAR(fecha_inicio), MONTH(fecha_inicio)";
 
+    // agregados por rango de fechas — usados por el filtro de periodo (mensual/anual)
+    private static final String SQL_INGRESOS_RANGO =
+        "SELECT ISNULL(SUM(monto_pagado), 0) FROM Contratos " +
+        "WHERE fecha_inicio BETWEEN ? AND ?";
+
+    private static final String SQL_COUNT_NUEVOS_RANGO =
+        "SELECT COUNT(*) FROM Contratos WHERE fecha_inicio BETWEEN ? AND ?";
+
+    private static final String SQL_COUNT_VENCIDOS_RANGO =
+        "SELECT COUNT(*) FROM Contratos WHERE estado = 'vencido' AND fecha_fin BETWEEN ? AND ?";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     public List<Contrato> findAll() throws SQLException {
@@ -301,18 +312,29 @@ public class ContratoDAO {
 
     // ingresos de los últimos N meses (incluye el mes actual), en orden cronológico.
     // rellena con BigDecimal.ZERO los meses sin contratos registrados — usado en
-    // el gráfico de tendencia del reporte de Contratos (vista web y PDF).
+    // el gráfico de tendencia del reporte de Contratos cuando NO hay periodo elegido.
     public LinkedHashMap<String, BigDecimal> getIngresosUltimosMeses(int meses) throws SQLException {
-
         LocalDate hoy = LocalDate.now();
         LocalDate desde = hoy.withDayOfMonth(1).minusMonths(meses - 1L);
+        return getIngresosPorMesesEnRango(desde, hoy);
+    }
+
+    // versión generalizada: ingresos mes a mes entre dos fechas cualquiera (inclusive),
+    // rellenando con cero los meses sin contratos. Usada para el filtro de periodo:
+    // "mensual" pide un rango de 6 meses terminando en el mes elegido; "anual" pide
+    // los 12 meses del año elegido.
+    public LinkedHashMap<String, BigDecimal> getIngresosPorMesesEnRango(LocalDate desde,
+                                                                          LocalDate hasta) throws SQLException {
+
+        YearMonth ymDesde = YearMonth.from(desde);
+        YearMonth ymHasta = YearMonth.from(hasta);
 
         Map<YearMonth, BigDecimal> totalesPorMes = new HashMap<>();
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_INGRESOS_POR_MES)) {
 
-            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(1, Date.valueOf(ymDesde.atDay(1)));
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -322,18 +344,60 @@ public class ContratoDAO {
             }
         }
 
-        // arma el resultado en orden cronológico, incluyendo meses sin ingresos
         LinkedHashMap<String, BigDecimal> resultado = new LinkedHashMap<>();
         DateTimeFormatter etiquetaMes = DateTimeFormatter.ofPattern("MMM", new Locale("es", "PE"));
 
-        for (int i = meses - 1; i >= 0; i--) {
-            YearMonth ym = YearMonth.from(hoy.minusMonths(i));
+        for (YearMonth ym = ymDesde; !ym.isAfter(ymHasta); ym = ym.plusMonths(1)) {
             String etiqueta = capitalizar(ym.atDay(1).format(etiquetaMes));
             BigDecimal total = totalesPorMes.getOrDefault(ym, BigDecimal.ZERO);
             resultado.put(etiqueta, total);
         }
 
         return resultado;
+    }
+
+    // suma de monto_pagado (por fecha_inicio) dentro de un rango — usado por el filtro de periodo
+    public BigDecimal getIngresosPorRango(LocalDate desde, LocalDate hasta) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_INGRESOS_RANGO)) {
+            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal val = rs.getBigDecimal(1);
+                    return val != null ? val : BigDecimal.ZERO;
+                }
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    // contratos nuevos (fecha_inicio) dentro de un rango — usado por el filtro de periodo
+    public int countNuevosPorRango(LocalDate desde, LocalDate hasta) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_COUNT_NUEVOS_RANGO)) {
+            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    // contratos que vencieron (fecha_fin, estado actual = vencido) dentro de un rango.
+    // aproximación: refleja el estado ACTUAL, no hay historial de estados en el esquema
+    // (un contrato reactivado o cancelado después de vencer no se contaría aquí).
+    public int countVencidosPorRango(LocalDate desde, LocalDate hasta) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_COUNT_VENCIDOS_RANGO)) {
+            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
     }
 
     private String capitalizar(String texto) {

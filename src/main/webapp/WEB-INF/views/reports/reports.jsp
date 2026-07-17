@@ -941,6 +941,47 @@
                                                         background: var(--clr-red-hover);
                                                     }
 
+                                                    .btn-export-pdf--disabled {
+                                                        background: var(--clr-surface-2);
+                                                        color: var(--clr-text-dim);
+                                                        cursor: not-allowed;
+                                                        pointer-events: none;
+                                                    }
+
+                                                    /* ── Filtro de periodo (mensual/anual) ──────────────────── */
+                                                    .filtro-periodo {
+                                                        display: flex;
+                                                        align-items: center;
+                                                        gap: 0.5rem;
+                                                        flex-wrap: wrap;
+                                                    }
+
+                                                    .filtro-select {
+                                                        padding: 0.5rem 0.7rem;
+                                                        border-radius: var(--radius-md);
+                                                        border: 1px solid var(--clr-border);
+                                                        background: var(--clr-surface);
+                                                        color: var(--clr-text);
+                                                        font-size: 0.78rem;
+                                                        font-weight: 500;
+                                                    }
+
+                                                    .btn-filtro-aplicar {
+                                                        padding: 0.5rem 1rem;
+                                                        border-radius: var(--radius-md);
+                                                        border: none;
+                                                        background: var(--clr-text);
+                                                        color: #fff;
+                                                        font-size: 0.78rem;
+                                                        font-weight: 600;
+                                                        cursor: pointer;
+                                                        transition: background var(--transition);
+                                                    }
+
+                                                    .btn-filtro-aplicar:hover {
+                                                        background: var(--clr-text-dim);
+                                                    }
+
                                                     /* ── Strip resumen de ingresos ──────────────────────── */
                                                     .ingresos-highlight {
                                                         background: var(--clr-surface);
@@ -1280,8 +1321,55 @@
                                                                                         test="${vistaActiva eq 'contratos'}">
 
                                                                                         <%-- Barra de acciones --%>
-                                                                                        <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
-                                                                                            <a href="${pageContext.request.contextPath}/reports?action=contratos&formato=pdf"
+                                                                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
+
+                                                                                            <form method="get" action="${pageContext.request.contextPath}/reports" class="filtro-periodo">
+                                                                                                <input type="hidden" name="action" value="contratos" />
+
+                                                                                                <select name="tipo" class="filtro-select" onchange="this.form.submit()">
+                                                                                                    <option value="mensual" ${periodoTipo eq 'mensual' ? 'selected' : ''}>Mensual</option>
+                                                                                                    <option value="anual" ${periodoTipo eq 'anual' ? 'selected' : ''}>Anual</option>
+                                                                                                </select>
+
+                                                                                                <c:if test="${periodoTipo eq 'mensual'}">
+                                                                                                    <select name="mes" class="filtro-select">
+                                                                                                        <option value="1" ${periodoMes eq 1 ? 'selected' : ''}>Enero</option>
+                                                                                                        <option value="2" ${periodoMes eq 2 ? 'selected' : ''}>Febrero</option>
+                                                                                                        <option value="3" ${periodoMes eq 3 ? 'selected' : ''}>Marzo</option>
+                                                                                                        <option value="4" ${periodoMes eq 4 ? 'selected' : ''}>Abril</option>
+                                                                                                        <option value="5" ${periodoMes eq 5 ? 'selected' : ''}>Mayo</option>
+                                                                                                        <option value="6" ${periodoMes eq 6 ? 'selected' : ''}>Junio</option>
+                                                                                                        <option value="7" ${periodoMes eq 7 ? 'selected' : ''}>Julio</option>
+                                                                                                        <option value="8" ${periodoMes eq 8 ? 'selected' : ''}>Agosto</option>
+                                                                                                        <option value="9" ${periodoMes eq 9 ? 'selected' : ''}>Septiembre</option>
+                                                                                                        <option value="10" ${periodoMes eq 10 ? 'selected' : ''}>Octubre</option>
+                                                                                                        <option value="11" ${periodoMes eq 11 ? 'selected' : ''}>Noviembre</option>
+                                                                                                        <option value="12" ${periodoMes eq 12 ? 'selected' : ''}>Diciembre</option>
+                                                                                                    </select>
+                                                                                                </c:if>
+
+                                                                                                <select name="anio" class="filtro-select">
+                                                                                                    <c:forEach var="a" begin="${anioHoy - 4}" end="${anioHoy}">
+                                                                                                        <option value="${a}" ${periodoAnio eq a ? 'selected' : ''}><c:out value="${a}" /></option>
+                                                                                                    </c:forEach>
+                                                                                                </select>
+
+                                                                                                <button type="submit" class="btn-filtro-aplicar">Aplicar</button>
+                                                                                            </form>
+
+                                                                                            <c:choose>
+                                                                                                <c:when test="${periodoSinDatos}">
+                                                                                                    <span class="btn-export-pdf btn-export-pdf--disabled" title="No hay datos para este periodo">
+                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                                                                             stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
+                                                                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                                                                        </svg>
+                                                                                                        Sin datos
+                                                                                                    </span>
+                                                                                                </c:when>
+                                                                                                <c:otherwise>
+                                                                                                    <a href="${pageContext.request.contextPath}/reports?action=contratos&formato=pdf&tipo=${periodoTipo}&mes=${periodoMes}&anio=${periodoAnio}"
                                                                                                class="btn-export-pdf">
                                                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                                                                      stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
@@ -1290,6 +1378,8 @@
                                                                                                 </svg>
                                                                                                 Exportar PDF
                                                                                             </a>
+                                                                                                </c:otherwise>
+                                                                                            </c:choose>
                                                                                         </div>
 
                                                                                         <%-- KPIs de contratos --%>
@@ -1302,8 +1392,7 @@
                                                                                                         <div
                                                                                                             class="report-kpi-card__header">
                                                                                                             <span
-                                                                                                                class="report-kpi-card__label">Contratos
-                                                                                                                activos</span>
+                                                                                                                class="report-kpi-card__label">Contratos activos (hoy)</span>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__badge">
                                                                                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -1337,8 +1426,7 @@
                                                                                                             <div
                                                                                                                 class="report-kpi-card__header">
                                                                                                                 <span
-                                                                                                                    class="report-kpi-card__label">Contratos
-                                                                                                                    vencidos</span>
+                                                                                                                    class="report-kpi-card__label">Contratos vencidos (hoy)</span>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__badge">
                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -1374,7 +1462,7 @@
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__header">
                                                                                                                     <span
-                                                                                                                        class="report-kpi-card__label">Cancelados</span>
+                                                                                                                        class="report-kpi-card__label">Cancelados (hoy)</span>
                                                                                                                     <div
                                                                                                                         class="report-kpi-card__badge">
                                                                                                                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -1412,8 +1500,7 @@
                                                                                                                     <div
                                                                                                                         class="report-kpi-card__header">
                                                                                                                         <span
-                                                                                                                            class="report-kpi-card__label">Total
-                                                                                                                            contratos</span>
+                                                                                                                            class="report-kpi-card__label">Total contratos (hoy)</span>
                                                                                                                         <div
                                                                                                                             class="report-kpi-card__badge">
                                                                                                                             <svg xmlns="http://www.w3.org/2000/svg"
@@ -1493,9 +1580,7 @@
                                                                                                                             <div
                                                                                                                                 class="report-kpi-card__header">
                                                                                                                                 <span
-                                                                                                                                    class="report-kpi-card__label">Ingresos
-                                                                                                                                    del
-                                                                                                                                    mes</span>
+                                                                                                                                    class="report-kpi-card__label">Ingresos <c:out value="${periodoLabel}" /></span>
                                                                                                                                 <div
                                                                                                                                     class="report-kpi-card__badge">
                                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -1527,9 +1612,7 @@
                                                                                                                             </div>
                                                                                                                             <div
                                                                                                                                 class="report-kpi-card__meta">
-                                                                                                                                Facturado
-                                                                                                                                este
-                                                                                                                                mes
+                                                                                                                                Facturado en el periodo
                                                                                                                             </div>
                                                                                                                         </div>
 
@@ -1571,13 +1654,11 @@
                                                                                                                             </svg>
                                                                                                                         </div>
                                                                                                                         <span
-                                                                                                                            class="report-card__title">Distribución
-                                                                                                                            de
-                                                                                                                            contratos</span>
+                                                                                                                            class="report-card__title">Distribución de contratos (hoy)</span>
                                                                                                                     </div>
                                                                                                                     <span
                                                                                                                         class="stat-chip">
-                                                                                                                        Total:
+                                                                                                                        Total hoy:
                                                                                                                         <c:out
                                                                                                                             value="${contratosTotal}" />
                                                                                                                     </span>
@@ -1906,6 +1987,15 @@
                                                                                                                         del
                                                                                                                         mes
                                                                                                                         --%>
+                                                                                                                        <c:if test="${periodoSinDatos}">
+                                                                                                                            <div style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem 1rem; margin-bottom:0.75rem; border-radius:var(--radius-md); background:rgba(217,119,6,0.08); border:1px solid rgba(217,119,6,0.25); color:var(--clr-warning); font-size:0.8rem;">
+                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;flex-shrink:0;">
+                                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                                                                                                                </svg>
+                                                                                                                                No hay contratos registrados en <c:out value="${periodoLabel}" />.
+                                                                                                                            </div>
+                                                                                                                        </c:if>
+
                                                                                                                         <div
                                                                                                                             class="ingresos-highlight">
                                                                                                                             <div
@@ -1932,10 +2022,7 @@
                                                                                                                                 class="ingresos-highlight__info">
                                                                                                                                 <p
                                                                                                                                     class="ingresos-highlight__label">
-                                                                                                                                    Ingresos
-                                                                                                                                    del
-                                                                                                                                    mes
-                                                                                                                                    actual
+                                                                                                                                    Ingresos — <c:out value="${periodoLabel}" />
                                                                                                                                 </p>
                                                                                                                                 <p
                                                                                                                                     class="ingresos-highlight__amount">
@@ -1945,14 +2032,20 @@
                                                                                                                                 </p>
                                                                                                                                 <p
                                                                                                                                     class="ingresos-highlight__meta">
-                                                                                                                                    Suma
-                                                                                                                                    de
-                                                                                                                                    <strong>monto_pagado</strong>
-                                                                                                                                    en
-                                                                                                                                    contratos
-                                                                                                                                    del
-                                                                                                                                    mes
+                                                                                                                                    Suma de <strong>monto_pagado</strong> en el periodo seleccionado
                                                                                                                                 </p>
+                                                                                                                            </div>
+                                                                                                                        </div>
+
+                                                                                                                        <%-- Nuevos / vencidos en el periodo --%>
+                                                                                                                        <div style="display:flex; gap:0.6rem; margin-bottom:1.25rem;">
+                                                                                                                            <div style="flex:1; background:var(--clr-surface); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:0.65rem 0.85rem;">
+                                                                                                                                <p style="font-size:0.68rem; color:var(--clr-text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 0.15rem;">Contratos nuevos</p>
+                                                                                                                                <p style="font-size:1.1rem; font-weight:700; color:var(--clr-success); margin:0;"><c:out value="${contratosNuevosPeriodo}" /></p>
+                                                                                                                            </div>
+                                                                                                                            <div style="flex:1; background:var(--clr-surface); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:0.65rem 0.85rem;">
+                                                                                                                                <p style="font-size:0.68rem; color:var(--clr-text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 0.15rem;">Contratos vencidos</p>
+                                                                                                                                <p style="font-size:1.1rem; font-weight:700; color:var(--clr-warning); margin:0;"><c:out value="${contratosVencidosPeriodo}" /></p>
                                                                                                                             </div>
                                                                                                                         </div>
 
@@ -2088,7 +2181,7 @@
                                                                                                                   d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
                                                                                                         </svg>
                                                                                                     </div>
-                                                                                                    <span class="report-card__title">Ingresos últimos 6 meses</span>
+                                                                                                    <span class="report-card__title">Tendencia de ingresos</span>
                                                                                                 </div>
                                                                                             </div>
                                                                                             <div style="padding:1.25rem; height:260px; position:relative;">

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 
 // reportes globales del sistema para administrador
@@ -229,68 +230,8 @@ public class ReportsController extends AbstractController {
                 total > 0 ? (cancelados * 100 / total) : 0
         );
 
-        // ingresos del mes actual
-        try {
-
-            BigDecimal ingresos =
-                    contratoDAO.getIngresosMesActual();
-
-            req.setAttribute(
-                    "ingresosMes",
-                    ingresos
-            );
-
-        } catch (SQLException e) {
-
-            LOGGER.log(
-                    Level.WARNING,
-                    "Error al calcular ingresos del mes",
-                    e
-            );
-
-            req.setAttribute(
-                    "ingresosMes",
-                    BigDecimal.ZERO
-            );
-        }
-
-        // tendencia de ingresos últimos 6 meses (para el gráfico Chart.js)
-        try {
-
-            LinkedHashMap<String, BigDecimal> ingresosPorMes =
-                    contratoDAO.getIngresosUltimosMeses(6);
-
-            StringBuilder labelsJson = new StringBuilder("[");
-            StringBuilder dataJson = new StringBuilder("[");
-            boolean primero = true;
-
-            for (Map.Entry<String, BigDecimal> entry : ingresosPorMes.entrySet()) {
-                if (!primero) {
-                    labelsJson.append(",");
-                    dataJson.append(",");
-                }
-                labelsJson.append("\"").append(entry.getKey()).append("\"");
-                dataJson.append(entry.getValue());
-                primero = false;
-            }
-
-            labelsJson.append("]");
-            dataJson.append("]");
-
-            req.setAttribute("contratosIngresosLabels", labelsJson.toString());
-            req.setAttribute("contratosIngresosData", dataJson.toString());
-
-        } catch (SQLException e) {
-
-            LOGGER.log(
-                    Level.WARNING,
-                    "Error al cargar tendencia de ingresos",
-                    e
-            );
-
-            req.setAttribute("contratosIngresosLabels", "[]");
-            req.setAttribute("contratosIngresosData", "[]");
-        }
+        // ingresos del mes actual, tendencia y KPIs del periodo filtrado (mensual/anual)
+        cargarDatosPeriodo(req);
 
         // contratos próximos a vencer
         try {
@@ -569,6 +510,114 @@ public class ReportsController extends AbstractController {
 
     // ─── helpers privados ────────────────────────────────────
 
+    // lee tipo=mensual|anual, mes, anio de la request (con defaults al mes/año
+    // actuales) y calcula ingresos/nuevos/vencidos del periodo + la tendencia
+    // mensual para el gráfico. Usado tanto por la vista web como por el PDF,
+    // para que ambos muestren siempre el mismo periodo seleccionado.
+    private void cargarDatosPeriodo(HttpServletRequest req) {
+
+        LocalDate hoy = LocalDate.now();
+
+        String tipo = param(req, "tipo", "mensual");
+        if (!"anual".equals(tipo)) {
+            tipo = "mensual";
+        }
+
+        int anio = paramInt(req, "anio", hoy.getYear());
+        int mes = paramInt(req, "mes", hoy.getMonthValue());
+        if (mes < 1 || mes > 12) {
+            mes = hoy.getMonthValue();
+        }
+
+        LocalDate desde;
+        LocalDate hasta;
+        LocalDate desdeChart;
+        LocalDate hastaChart;
+        String label;
+
+        if ("anual".equals(tipo)) {
+
+            desde = LocalDate.of(anio, 1, 1);
+            hasta = LocalDate.of(anio, 12, 31);
+            desdeChart = desde;
+            hastaChart = hasta;
+            label = "Año " + anio;
+
+        } else {
+
+            YearMonth ym = YearMonth.of(anio, mes);
+            desde = ym.atDay(1);
+            hasta = ym.atEndOfMonth();
+            desdeChart = ym.minusMonths(5).atDay(1);
+            hastaChart = hasta;
+
+            DateTimeFormatter fmtMes = DateTimeFormatter.ofPattern("MMMM yyyy", new Locale("es", "PE"));
+            String nombreMes = ym.atDay(1).format(fmtMes);
+            label = nombreMes.substring(0, 1).toUpperCase(Locale.ROOT) + nombreMes.substring(1);
+        }
+
+        try {
+
+            BigDecimal ingresosPeriodo = contratoDAO.getIngresosPorRango(desde, hasta);
+            int nuevosPeriodo = contratoDAO.countNuevosPorRango(desde, hasta);
+            int vencidosPeriodo = contratoDAO.countVencidosPorRango(desde, hasta);
+
+            req.setAttribute("ingresosMes", ingresosPeriodo); // compat con la tarjeta KPI existente
+            req.setAttribute("ingresosPeriodo", ingresosPeriodo);
+            req.setAttribute("contratosNuevosPeriodo", nuevosPeriodo);
+            req.setAttribute("contratosVencidosPeriodo", vencidosPeriodo);
+
+            boolean sinDatos = nuevosPeriodo == 0
+                    && vencidosPeriodo == 0
+                    && ingresosPeriodo.compareTo(BigDecimal.ZERO) == 0;
+
+            req.setAttribute("periodoSinDatos", sinDatos);
+
+            LinkedHashMap<String, BigDecimal> ingresosPorMes =
+                    contratoDAO.getIngresosPorMesesEnRango(desdeChart, hastaChart);
+
+            StringBuilder labelsJson = new StringBuilder("[");
+            StringBuilder dataJson = new StringBuilder("[");
+            boolean primero = true;
+
+            for (Map.Entry<String, BigDecimal> entry : ingresosPorMes.entrySet()) {
+                if (!primero) {
+                    labelsJson.append(",");
+                    dataJson.append(",");
+                }
+                labelsJson.append("\"").append(entry.getKey()).append("\"");
+                dataJson.append(entry.getValue());
+                primero = false;
+            }
+
+            labelsJson.append("]");
+            dataJson.append("]");
+
+            req.setAttribute("contratosIngresosLabels", labelsJson.toString());
+            req.setAttribute("contratosIngresosData", dataJson.toString());
+
+        } catch (SQLException e) {
+
+            LOGGER.log(Level.WARNING, "Error al cargar datos del periodo", e);
+
+            req.setAttribute("ingresosMes", BigDecimal.ZERO);
+            req.setAttribute("ingresosPeriodo", BigDecimal.ZERO);
+            req.setAttribute("contratosNuevosPeriodo", 0);
+            req.setAttribute("contratosVencidosPeriodo", 0);
+            req.setAttribute("contratosIngresosLabels", "[]");
+            req.setAttribute("contratosIngresosData", "[]");
+            req.setAttribute("periodoSinDatos", true);
+        }
+
+        req.setAttribute("periodoTipo", tipo);
+        req.setAttribute("periodoMes", mes);
+        req.setAttribute("periodoAnio", anio);
+        req.setAttribute("periodoLabel", label);
+        req.setAttribute("periodoDesde", desde);
+        req.setAttribute("periodoHasta", hasta);
+        req.setAttribute("anioHoy", hoy.getYear());
+    }
+
     private void exportarContratosPdf(HttpServletRequest req,
                                        HttpServletResponse resp)
             throws ServletException, IOException {
@@ -580,8 +629,44 @@ public class ReportsController extends AbstractController {
             int cancelados = contratoDAO.countByEstado(AppConfig.CONTRATO_CANCELADO);
             int total = activos + vencidos + cancelados;
 
-            BigDecimal ingresosMes = contratoDAO.getIngresosMesActual();
-            LinkedHashMap<String, BigDecimal> ingresosPorMes = contratoDAO.getIngresosUltimosMeses(6);
+            // usa el mismo helper que la vista web para que el PDF refleje
+            // exactamente el periodo (mensual/anual) que el usuario tenía seleccionado
+            cargarDatosPeriodo(req);
+
+            boolean periodoSinDatos = Boolean.TRUE.equals(req.getAttribute("periodoSinDatos"));
+
+            if (periodoSinDatos) {
+                mensajeError(req, "No hay datos para el periodo seleccionado ("
+                        + req.getAttribute("periodoLabel") + "). No se generó el PDF.");
+                redirigirA("/reports?action=contratos&tipo=" + req.getAttribute("periodoTipo")
+                        + "&mes=" + req.getAttribute("periodoMes")
+                        + "&anio=" + req.getAttribute("periodoAnio"), req, resp);
+                return;
+            }
+
+            BigDecimal ingresosPeriodo = (BigDecimal) req.getAttribute("ingresosPeriodo");
+            int nuevosPeriodo = (int) req.getAttribute("contratosNuevosPeriodo");
+            int vencidosPeriodo = (int) req.getAttribute("contratosVencidosPeriodo");
+            String periodoLabel = (String) req.getAttribute("periodoLabel");
+
+            // el gráfico de tendencia del PDF usa la misma ventana que el gráfico
+            // web (6 meses terminando en el mes elegido, o los 12 del año elegido)
+            String tipoPeriodo = (String) req.getAttribute("periodoTipo");
+            int anioSel = (int) req.getAttribute("periodoAnio");
+            int mesSel = (int) req.getAttribute("periodoMes");
+            LocalDate desdeChart;
+            LocalDate hastaChart;
+            if ("anual".equals(tipoPeriodo)) {
+                desdeChart = LocalDate.of(anioSel, 1, 1);
+                hastaChart = LocalDate.of(anioSel, 12, 31);
+            } else {
+                YearMonth ym = YearMonth.of(anioSel, mesSel);
+                desdeChart = ym.minusMonths(5).atDay(1);
+                hastaChart = ym.atEndOfMonth();
+            }
+            LinkedHashMap<String, BigDecimal> ingresosParaGrafico =
+                    contratoDAO.getIngresosPorMesesEnRango(desdeChart, hastaChart);
+
             List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
             List<Contrato> listaActivos = contratoDAO.findAllActivos();
             List<Contrato> listaVencidos = contratoDAO.findByEstado(AppConfig.CONTRATO_VENCIDO);
@@ -591,13 +676,16 @@ public class ReportsController extends AbstractController {
                     vencidos,
                     cancelados,
                     total,
-                    ingresosMes,
-                    ingresosPorMes,
+                    ingresosPeriodo,
+                    ingresosParaGrafico,
                     proximos,
                     listaActivos,
                     listaVencidos,
                     LocalDate.now(),
-                    getSessionUserName(req)
+                    getSessionUserName(req),
+                    periodoLabel,
+                    nuevosPeriodo,
+                    vencidosPeriodo
             );
 
             // ruta absoluta en disco del logo — si no existe todavía, el

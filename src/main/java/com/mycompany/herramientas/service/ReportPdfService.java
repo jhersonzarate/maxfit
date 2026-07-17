@@ -40,12 +40,15 @@ public class ReportPdfService {
     private static final Color COLOR_TEXTO  = new Color(0x11, 0x18, 0x27);
     private static final Color COLOR_MUTED  = new Color(0x6B, 0x72, 0x80);
     private static final Color COLOR_ROJO   = new Color(0xE6, 0x30, 0x27);
+    private static final Color COLOR_ROJO_OSCURO = new Color(0xC0, 0x39, 0x2B);
+    private static final Color COLOR_BANNER = new Color(0x11, 0x18, 0x27);
     private static final Color COLOR_VERDE  = new Color(0x16, 0xA3, 0x4A);
     private static final Color COLOR_AMBAR  = new Color(0xD9, 0x77, 0x06);
     private static final Color COLOR_AZUL   = new Color(0x25, 0x63, 0xEB);
     private static final Color COLOR_BORDE  = new Color(0xE5, 0xE7, 0xEB);
     private static final Color COLOR_BORDE_LIGHT = new Color(0xF0, 0xF1, 0xF3);
     private static final Color COLOR_SURFACE = new Color(0xF9, 0xFA, 0xFB);
+    private static final Color COLOR_BANNER_SUBTEXTO = new Color(0xFF, 0xFF, 0xFF);
 
     // ─── tipografías ─────────────────────────────────────────────
 
@@ -56,6 +59,11 @@ public class ReportPdfService {
     private static final Font FONT_TABLA_HEADER = new Font(Font.HELVETICA, 9, Font.BOLD, COLOR_MUTED);
     private static final Font FONT_TABLA_CELDA  = new Font(Font.HELVETICA, 9, Font.NORMAL, COLOR_TEXTO);
     private static final Font FONT_TEXTO_MUTED  = new Font(Font.HELVETICA, 9, Font.ITALIC, COLOR_MUTED);
+
+    // tipografías del banner del encabezado (texto claro sobre fondo rojo)
+    private static final Font FONT_BANNER_LOGO  = new Font(Font.HELVETICA, 20, Font.BOLD, Color.WHITE);
+    private static final Font FONT_BANNER_TITULO = new Font(Font.HELVETICA, 19, Font.BOLD, Color.WHITE);
+    private static final Font FONT_BANNER_SUB   = new Font(Font.HELVETICA, 10, Font.NORMAL, COLOR_BANNER_SUBTEXTO);
 
     private final ReportChartService chartService = new ReportChartService();
 
@@ -74,7 +82,10 @@ public class ReportPdfService {
             List<Contrato> listaActivos,
             List<Contrato> listaVencidos,
             LocalDate fechaReporte,
-            String generadoPor
+            String generadoPor,
+            String periodoLabel,
+            int contratosNuevosPeriodo,
+            int contratosVencidosPeriodo
     ) {}
 
     // cuántas filas máximo se listan por tabla de contratos (activos/vencidos)
@@ -118,11 +129,15 @@ public class ReportPdfService {
         PdfPTable header = new PdfPTable(2);
         header.setWidthPercentage(100);
         header.setWidths(new float[]{1.3f, 2f});
+        header.setSpacingAfter(18);
 
         // celda del logo (o wordmark de texto si no hay imagen disponible)
+        // fondo rojo MaxFit — banner de marca en vez del blanco plano
         PdfPCell logoCell = new PdfPCell();
         logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setBackgroundColor(COLOR_BANNER);
         logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setPadding(18);
 
         boolean logoCargado = false;
 
@@ -139,8 +154,8 @@ public class ReportPdfService {
         }
 
         if (!logoCargado) {
-            Font fMax = new Font(Font.HELVETICA, 20, Font.BOLD, COLOR_ROJO);
-            Font fFit = new Font(Font.HELVETICA, 20, Font.BOLD, COLOR_TEXTO);
+            Font fMax = new Font(Font.HELVETICA, 20, Font.BOLD, Color.WHITE);
+            Font fFit = new Font(Font.HELVETICA, 20, Font.BOLD, COLOR_ROJO);
             Paragraph wordmark = new Paragraph();
             wordmark.add(new Chunk("MAX", fMax));
             wordmark.add(new Chunk("FIT", fFit));
@@ -149,46 +164,69 @@ public class ReportPdfService {
 
         header.addCell(logoCell);
 
-        // celda del título + fecha, alineada a la derecha
+        // celda del título + fecha, alineada a la derecha, mismo fondo negro
         PdfPCell tituloCell = new PdfPCell();
         tituloCell.setBorder(Rectangle.NO_BORDER);
+        tituloCell.setBackgroundColor(COLOR_BANNER);
         tituloCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         tituloCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tituloCell.setPadding(18);
 
-        Paragraph titulo = new Paragraph("Reporte de contratos", FONT_TITULO);
+        Paragraph titulo = new Paragraph("Reporte de contratos", FONT_BANNER_TITULO);
         titulo.setAlignment(Element.ALIGN_RIGHT);
+
+        Paragraph periodo = new Paragraph(data.periodoLabel(), FONT_BANNER_SUB);
+        periodo.setAlignment(Element.ALIGN_RIGHT);
+        periodo.setSpacingBefore(2);
 
         DateTimeFormatter fmtFecha =
                 DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "PE"));
 
         Paragraph fecha = new Paragraph(
                 "Generado el " + data.fechaReporte().format(fmtFecha),
-                FONT_SUBTITULO
+                new Font(Font.HELVETICA, 8, Font.NORMAL, COLOR_BANNER_SUBTEXTO)
         );
         fecha.setAlignment(Element.ALIGN_RIGHT);
-        fecha.setSpacingBefore(2);
+        fecha.setSpacingBefore(1);
 
         tituloCell.addElement(titulo);
+        tituloCell.addElement(periodo);
         tituloCell.addElement(fecha);
 
         header.addCell(tituloCell);
 
         doc.add(header);
-        doc.add(new Paragraph(" "));
     }
 
     private void agregarKpis(Document doc, ContratosReportData data) throws DocumentException {
 
         PdfPTable kpis = new PdfPTable(4);
         kpis.setWidthPercentage(100);
-        kpis.setSpacingAfter(16);
+        kpis.setSpacingAfter(10);
 
-        kpis.addCell(celdaKpi("Activos", String.valueOf(data.activos()), COLOR_VERDE));
-        kpis.addCell(celdaKpi("Vencidos", String.valueOf(data.vencidos()), COLOR_AMBAR));
-        kpis.addCell(celdaKpi("Cancelados", String.valueOf(data.cancelados()), COLOR_ROJO));
-        kpis.addCell(celdaKpi("Ingresos del mes", formatoMoneda(data.ingresosMes()), COLOR_AZUL));
+        kpis.addCell(celdaKpi("Activos (hoy)", String.valueOf(data.activos()), COLOR_VERDE));
+        kpis.addCell(celdaKpi("Vencidos (hoy)", String.valueOf(data.vencidos()), COLOR_AMBAR));
+        kpis.addCell(celdaKpi("Cancelados (hoy)", String.valueOf(data.cancelados()), COLOR_ROJO));
+        kpis.addCell(celdaKpi("Ingresos — " + data.periodoLabel(), formatoMoneda(data.ingresosMes()), COLOR_AZUL));
 
         doc.add(kpis);
+
+        // segunda fila: KPIs del periodo filtrado (mensual/anual)
+        Paragraph notaPeriodo = new Paragraph(
+                "Resumen del periodo: " + data.periodoLabel(),
+                FONT_TABLA_HEADER
+        );
+        notaPeriodo.setSpacingAfter(6);
+        doc.add(notaPeriodo);
+
+        PdfPTable kpisPeriodo = new PdfPTable(2);
+        kpisPeriodo.setWidthPercentage(100);
+        kpisPeriodo.setSpacingAfter(16);
+
+        kpisPeriodo.addCell(celdaKpi("Contratos nuevos", String.valueOf(data.contratosNuevosPeriodo()), COLOR_VERDE));
+        kpisPeriodo.addCell(celdaKpi("Contratos vencidos", String.valueOf(data.contratosVencidosPeriodo()), COLOR_AMBAR));
+
+        doc.add(kpisPeriodo);
     }
 
     private PdfPCell celdaKpi(String etiqueta, String valor, Color colorValor) {
@@ -225,7 +263,7 @@ public class ReportPdfService {
         tabla.setSpacingAfter(16);
 
         tabla.addCell(celdaGrafico("Contratos por estado", pngEstado));
-        tabla.addCell(celdaGrafico("Ingresos últimos 6 meses", pngIngresos));
+        tabla.addCell(celdaGrafico("Tendencia de ingresos", pngIngresos));
 
         doc.add(tabla);
     }
