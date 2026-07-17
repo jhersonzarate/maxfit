@@ -132,6 +132,28 @@ public class ContratoDAO {
     private static final String SQL_COUNT_VENCIDOS_RANGO =
         "SELECT COUNT(*) FROM Contratos WHERE estado = 'vencido' AND fecha_fin BETWEEN ? AND ?";
 
+    // contratos vigentes al cierre de un periodo (no cancelados, con fecha_inicio/fecha_fin
+    // que cubren esa fecha) — usado para el KPI "Activos" del reporte/PDF de un periodo
+    // pasado, ya que no hay historial de estados y "estado = activo" solo refleja HOY
+    private static final String SQL_COUNT_ACTIVOS_AL_CIERRE =
+        "SELECT COUNT(*) FROM Contratos " +
+        "WHERE fecha_inicio <= ? AND fecha_fin >= ? AND estado <> 'cancelado'";
+
+    // listados (no solo conteo) para las tablas del PDF filtradas por periodo.
+    // Las 3 se ordenan igual, por con.fecha_inicio ASC (fecha de creación del contrato),
+    // para que las tablas del reporte tengan un orden consistente entre sí.
+    private static final String SQL_FIND_NUEVOS_RANGO =
+        SQL_SELECT_BASE + "WHERE con.fecha_inicio BETWEEN ? AND ? ORDER BY con.fecha_inicio ASC";
+
+    private static final String SQL_FIND_VENCIDOS_RANGO =
+        SQL_SELECT_BASE + "WHERE con.estado = 'vencido' AND con.fecha_fin BETWEEN ? AND ? ORDER BY con.fecha_inicio ASC";
+
+    // listado completo de contratos vigentes al cierre de un periodo — misma
+    // condición que SQL_COUNT_ACTIVOS_AL_CIERRE, pero trayendo las filas completas
+    private static final String SQL_FIND_ACTIVOS_AL_CIERRE =
+        SQL_SELECT_BASE + "WHERE con.fecha_inicio <= ? AND con.fecha_fin >= ? " +
+        "AND con.estado <> 'cancelado' ORDER BY con.fecha_inicio ASC";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     public List<Contrato> findAll() throws SQLException {
@@ -468,6 +490,68 @@ public class ContratoDAO {
             }
         }
         return 0;
+    }
+
+    // contratos vigentes al cierre de un periodo (fecha_inicio <= hasta y fecha_fin >= hasta,
+    // excluyendo cancelados) — reemplaza "activos HOY" en reportes de un periodo pasado.
+    // aproximación: "estado <> cancelado" usa el estado ACTUAL del contrato, no el que
+    // tenía exactamente en la fecha "hasta" (no hay historial de estados en el esquema).
+    public int countActivosAlCierre(LocalDate hasta) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_COUNT_ACTIVOS_AL_CIERRE)) {
+            ps.setDate(1, Date.valueOf(hasta));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    // listado completo (no solo conteo) de contratos nuevos (fecha_inicio) dentro de
+    // un rango — usado en la tabla "Contratos vendidos" del PDF, para que refleje el
+    // periodo exportado en vez del listado global de activos de HOY
+    public List<Contrato> findNuevosPorRango(LocalDate desde, LocalDate hasta) throws SQLException {
+        List<Contrato> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_NUEVOS_RANGO)) {
+            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
+    // listado completo (no solo conteo) de contratos vencidos (fecha_fin, estado actual
+    // = vencido) dentro de un rango — misma aproximación documentada en countVencidosPorRango
+    public List<Contrato> findVencidosPorRango(LocalDate desde, LocalDate hasta) throws SQLException {
+        List<Contrato> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_VENCIDOS_RANGO)) {
+            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
+    // listado completo (no solo conteo) de contratos vigentes al cierre de un periodo
+    // — misma condición que countActivosAlCierre, usado para la tabla "Contratos vigentes"
+    public List<Contrato> findActivosAlCierre(LocalDate hasta) throws SQLException {
+        List<Contrato> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_ACTIVOS_AL_CIERRE)) {
+            ps.setDate(1, Date.valueOf(hasta));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
     }
 
     private String capitalizar(String texto) {

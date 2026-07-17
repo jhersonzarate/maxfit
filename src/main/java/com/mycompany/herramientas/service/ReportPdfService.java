@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -78,21 +77,19 @@ public class ReportPdfService {
             int total,
             BigDecimal ingresosMes,
             LinkedHashMap<String, BigDecimal> ingresosPorMes,
-            List<Contrato> proximosVencer,
-            List<Contrato> listaActivos,
+            List<Contrato> listaVigentes,
+            List<Contrato> listaVendidos,
             List<Contrato> listaVencidos,
             LocalDate fechaReporte,
             String generadoPor,
             String periodoLabel,
             int contratosNuevosPeriodo,
-            int contratosVencidosPeriodo
+            int contratosVencidosPeriodo,
+            int contratosActivosPeriodo,
+            boolean periodoEsAnual
     ) {}
 
-    // cuántas filas máximo se listan por tabla de contratos (activos/vencidos)
-    // antes de recortar y mostrar la nota "mostrando N de M"
-    private static final int LIMITE_FILAS_TABLA = 25;
-
-    // ─── generación del PDF ──────────────────────────────────────
+    // ─── generación del PDF ──────────────────────────────────────────────────
 
     // logoRealPath: ruta absoluta en disco (via ServletContext.getRealPath).
     // si es null o el archivo no existe, se dibuja un wordmark de texto
@@ -111,8 +108,8 @@ public class ReportPdfService {
         agregarEncabezado(doc, data, logoRealPath);
         agregarKpis(doc, data);
         agregarGraficos(doc, data);
-        agregarTablaProximosVencer(doc, data);
-        agregarTablaContratosPorEstado(doc, "Contratos activos", data.listaActivos());
+        agregarTablaContratosPorEstado(doc, "Contratos vigentes", data.listaVigentes());
+        agregarTablaContratosPorEstado(doc, "Contratos vendidos", data.listaVendidos());
         agregarTablaContratosPorEstado(doc, "Contratos vencidos", data.listaVencidos());
 
         doc.close();
@@ -200,46 +197,40 @@ public class ReportPdfService {
 
     private void agregarKpis(Document doc, ContratosReportData data) throws DocumentException {
 
-        PdfPTable kpis = new PdfPTable(4);
+        PdfPTable kpis = new PdfPTable(2);
         kpis.setWidthPercentage(100);
-        kpis.setSpacingAfter(10);
+        kpis.setSpacingAfter(16);
 
-        kpis.addCell(celdaKpi("Activos (hoy)", String.valueOf(data.activos()), COLOR_VERDE));
-        kpis.addCell(celdaKpi("Vencidos (hoy)", String.valueOf(data.vencidos()), COLOR_AMBAR));
-        kpis.addCell(celdaKpi("Cancelados (hoy)", String.valueOf(data.cancelados()), COLOR_ROJO));
+        kpis.addCell(celdaKpi("Activos — " + data.periodoLabel(), String.valueOf(data.contratosActivosPeriodo()), COLOR_VERDE));
+        kpis.addCell(celdaKpi("Vencidos — " + data.periodoLabel(), String.valueOf(data.contratosVencidosPeriodo()), COLOR_AMBAR));
         kpis.addCell(celdaKpi("Ingresos — " + data.periodoLabel(), formatoMoneda(data.ingresosMes()), COLOR_AZUL));
+        kpis.addCell(celdaKpi("Contratos nuevos — " + data.periodoLabel(), String.valueOf(data.contratosNuevosPeriodo()), COLOR_VERDE));
 
         doc.add(kpis);
-
-        // segunda fila: KPIs del periodo filtrado (mensual/anual)
-        Paragraph notaPeriodo = new Paragraph(
-                "Resumen del periodo: " + data.periodoLabel(),
-                FONT_TABLA_HEADER
-        );
-        notaPeriodo.setSpacingAfter(6);
-        doc.add(notaPeriodo);
-
-        PdfPTable kpisPeriodo = new PdfPTable(2);
-        kpisPeriodo.setWidthPercentage(100);
-        kpisPeriodo.setSpacingAfter(16);
-
-        kpisPeriodo.addCell(celdaKpi("Contratos nuevos", String.valueOf(data.contratosNuevosPeriodo()), COLOR_VERDE));
-        kpisPeriodo.addCell(celdaKpi("Contratos vencidos", String.valueOf(data.contratosVencidosPeriodo()), COLOR_AMBAR));
-
-        doc.add(kpisPeriodo);
     }
 
     private PdfPCell celdaKpi(String etiqueta, String valor, Color colorValor) {
 
         PdfPCell cell = new PdfPCell();
-        cell.setPadding(10);
-        cell.setBorderColor(COLOR_BORDE);
-        cell.setBorderWidth(0.5f);
+        cell.setPadding(14);
+        cell.setPaddingTop(12);
+        cell.setUseVariableBorders(true);
+        cell.setBorderWidthTop(2.2f);
+        cell.setBorderColorTop(colorValor);
+        cell.setBorderWidthLeft(0.5f);
+        cell.setBorderWidthRight(0.5f);
+        cell.setBorderWidthBottom(0.5f);
+        cell.setBorderColorLeft(COLOR_BORDE);
+        cell.setBorderColorRight(COLOR_BORDE);
+        cell.setBorderColorBottom(COLOR_BORDE);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 
         Paragraph label = new Paragraph(etiqueta.toUpperCase(Locale.ROOT), FONT_KPI_LABEL);
+        label.setAlignment(Element.ALIGN_CENTER);
 
-        Paragraph value = new Paragraph(valor, new Font(Font.HELVETICA, 17, Font.BOLD, colorValor));
-        value.setSpacingBefore(3);
+        Paragraph value = new Paragraph(valor, new Font(Font.HELVETICA, 19, Font.BOLD, colorValor));
+        value.setAlignment(Element.ALIGN_CENTER);
+        value.setSpacingBefore(5);
 
         cell.addElement(label);
         cell.addElement(value);
@@ -249,23 +240,58 @@ public class ReportPdfService {
 
     private void agregarGraficos(Document doc, ContratosReportData data) throws DocumentException, IOException {
 
+        // MENSUAL: dona compara Activos (vigentes al cierre del mes) vs Vencidos del mes.
+        // ANUAL: comparar "vigentes al 31 dic" contra "vencidos de todo el año" mezcla una
+        // foto puntual con un acumulado y sale desbalanceado sin ser un error real. En vez
+        // de eso, la dona anual compara Nuevos vs Vencidos: dos totales del año igual de
+        // "acumulados", que cuentan una historia de crecimiento vs. pérdida.
+        String labelPrincipal = data.periodoEsAnual() ? "Nuevos" : "Activos";
+        int valorPrincipal = data.periodoEsAnual() ? data.contratosNuevosPeriodo() : data.contratosActivosPeriodo();
+        String tituloDona = data.periodoEsAnual() ? "Nuevos vs. vencidos (año)" : "Contratos por estado";
+
         byte[] pngEstado = chartService.generarGraficoEstadoContratos(
-                data.activos(), data.vencidos(), data.cancelados(), 260, 190
+                labelPrincipal, valorPrincipal, "Vencidos", data.contratosVencidosPeriodo(), 260, 190
         );
 
-        byte[] pngIngresos = chartService.generarGraficoIngresosMensuales(
-                data.ingresosPorMes(), 340, 190
-        );
+        if (data.periodoEsAnual()) {
 
-        PdfPTable tabla = new PdfPTable(2);
-        tabla.setWidthPercentage(100);
-        tabla.setWidths(new float[]{1f, 1.2f});
-        tabla.setSpacingAfter(16);
+            // ANUAL: 12 categorías en el gráfico de barras necesitan más ancho del que
+            // deja una tabla de 2 columnas — se comprime y se ve deformado. Se separan
+            // en dos filas: la dona sola y centrada (tamaño fijo, sin estirarse), y las
+            // barras a todo el ancho de la página, generadas más anchas (500px en vez de
+            // 340px) para que los 12 meses tengan espacio.
+            PdfPTable filaDona = new PdfPTable(1);
+            filaDona.setWidthPercentage(100);
+            filaDona.setSpacingAfter(12);
+            filaDona.addCell(celdaGrafico(tituloDona, pngEstado));
+            doc.add(filaDona);
 
-        tabla.addCell(celdaGrafico("Contratos por estado", pngEstado));
-        tabla.addCell(celdaGrafico("Tendencia de ingresos", pngIngresos));
+            byte[] pngIngresosAnual = chartService.generarGraficoIngresosMensuales(
+                    data.ingresosPorMes(), 500, 190
+            );
 
-        doc.add(tabla);
+            PdfPTable filaBarras = new PdfPTable(1);
+            filaBarras.setWidthPercentage(100);
+            filaBarras.setSpacingAfter(16);
+            filaBarras.addCell(celdaGrafico("Tendencia de ingresos", pngIngresosAnual));
+            doc.add(filaBarras);
+
+        } else {
+
+            byte[] pngIngresos = chartService.generarGraficoIngresosMensuales(
+                    data.ingresosPorMes(), 340, 190
+            );
+
+            PdfPTable tabla = new PdfPTable(2);
+            tabla.setWidthPercentage(100);
+            tabla.setWidths(new float[]{1f, 1.2f});
+            tabla.setSpacingAfter(16);
+
+            tabla.addCell(celdaGrafico(tituloDona, pngEstado));
+            tabla.addCell(celdaGrafico("Tendencia de ingresos", pngIngresos));
+
+            doc.add(tabla);
+        }
     }
 
     private PdfPCell celdaGrafico(String titulo, byte[] png) throws DocumentException, IOException {
@@ -287,51 +313,8 @@ public class ReportPdfService {
         return cell;
     }
 
-    private void agregarTablaProximosVencer(Document doc, ContratosReportData data) throws DocumentException {
-
-        Paragraph tituloTabla = new Paragraph("Próximos a vencer (7 días)", FONT_SECCION);
-        tituloTabla.setSpacingAfter(8);
-        doc.add(tituloTabla);
-
-        List<Contrato> proximos = data.proximosVencer();
-
-        if (proximos == null || proximos.isEmpty()) {
-            doc.add(new Paragraph("No hay contratos próximos a vencer.", FONT_TEXTO_MUTED));
-            return;
-        }
-
-        PdfPTable tabla = new PdfPTable(4);
-        tabla.setWidthPercentage(100);
-        tabla.setWidths(new float[]{2.2f, 1.6f, 1.2f, 0.8f});
-        tabla.setSpacingAfter(16);
-
-        tabla.addCell(celdaHeader("Cliente"));
-        tabla.addCell(celdaHeader("Plan"));
-        tabla.addCell(celdaHeader("Vence"));
-        tabla.addCell(celdaHeader("Días"));
-
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy", new Locale("es", "PE"));
-        LocalDate hoy = LocalDate.now();
-
-        for (Contrato c : proximos) {
-
-            String nombreCliente = c.getCliente().getNombre() + " " + c.getCliente().getApellido();
-            String plan = c.getMembresia().getNombreMembresia();
-            String vence = c.getFechaFin().format(fmt);
-            long dias = Math.max(0, ChronoUnit.DAYS.between(hoy, c.getFechaFin()));
-
-            tabla.addCell(celdaTexto(nombreCliente));
-            tabla.addCell(celdaTexto(plan));
-            tabla.addCell(celdaTexto(vence));
-            tabla.addCell(celdaTexto(String.valueOf(dias)));
-        }
-
-        doc.add(tabla);
-    }
-
-    // tabla genérica de contratos (activos / vencidos): Cliente, Plan, Inicio, Fin, Monto.
-    // recorta a LIMITE_FILAS_TABLA filas para no disparar el PDF a decenas de páginas;
-    // si hay más, agrega una nota indicando el total real.
+    // tabla genérica de contratos (vigentes / vendidos / vencidos): Cliente, Plan,
+    // Inicio, Fin, Monto. Sin límite de filas: se listan todos los contratos del periodo.
     private void agregarTablaContratosPorEstado(Document doc,
                                                   String titulo,
                                                   List<Contrato> contratos) throws DocumentException {
@@ -360,11 +343,8 @@ public class ReportPdfService {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd MMM yyyy", new Locale("es", "PE"));
 
-        int filas = Math.min(totalReal, LIMITE_FILAS_TABLA);
+        for (Contrato c : contratos) {
 
-        for (int i = 0; i < filas; i++) {
-
-            Contrato c = contratos.get(i);
             String nombreCliente = c.getCliente().getNombre() + " " + c.getCliente().getApellido();
             String plan = c.getMembresia().getNombreMembresia();
             String inicio = c.getFechaInicio().format(fmt);
@@ -379,16 +359,6 @@ public class ReportPdfService {
         }
 
         doc.add(tabla);
-
-        if (totalReal > LIMITE_FILAS_TABLA) {
-            Paragraph nota = new Paragraph(
-                    "Mostrando " + LIMITE_FILAS_TABLA + " de " + totalReal
-                            + " — ve el listado completo en el módulo de Contratos.",
-                    FONT_TEXTO_MUTED
-            );
-            nota.setSpacingBefore(4);
-            doc.add(nota);
-        }
     }
 
     private PdfPCell celdaHeader(String texto) {

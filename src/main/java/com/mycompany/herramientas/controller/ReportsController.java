@@ -775,10 +775,22 @@ public class ReportsController extends AbstractController {
             int nuevosPeriodo = (int) req.getAttribute("contratosNuevosPeriodo");
             int vencidosPeriodo = (int) req.getAttribute("contratosVencidosPeriodo");
             String periodoLabel = (String) req.getAttribute("periodoLabel");
+            String tipoPeriodo = (String) req.getAttribute("periodoTipo");
+            boolean esAnual = "anual".equals(tipoPeriodo);
+
+            LocalDate periodoDesdeSel = (LocalDate) req.getAttribute("periodoDesde");
+            LocalDate periodoHastaSel = (LocalDate) req.getAttribute("periodoHasta");
+
+            // "Activos" siempre es una foto al cierre del periodo (último día del mes,
+            // o 31 dic para anual) — "cuántos contratos quedan vigentes al cerrar el
+            // periodo". Es un dato de ESTADO, deliberadamente distinto de "Nuevos"
+            // (que es un dato de FLUJO: cuántos entraron durante el periodo). No se
+            // cruzan en significado, aunque un mismo contrato pueda contar en ambos.
+            int activosPeriodo = contratoDAO.countActivosAlCierre(periodoHastaSel);
+            List<Contrato> listaVigentes = contratoDAO.findActivosAlCierre(periodoHastaSel);
 
             // el gráfico de tendencia del PDF usa la misma ventana que el gráfico
             // web (6 meses terminando en el mes elegido, o los 12 del año elegido)
-            String tipoPeriodo = (String) req.getAttribute("periodoTipo");
             int anioSel = (int) req.getAttribute("periodoAnio");
             int mesSel = (int) req.getAttribute("periodoMes");
             LocalDate desdeChart;
@@ -794,9 +806,8 @@ public class ReportsController extends AbstractController {
             LinkedHashMap<String, BigDecimal> ingresosParaGrafico =
                     contratoDAO.getIngresosPorMesesEnRango(desdeChart, hastaChart);
 
-            List<Contrato> proximos = contratoDAO.findProximosAVencer(7);
-            List<Contrato> listaActivos = contratoDAO.findAllActivos();
-            List<Contrato> listaVencidos = contratoDAO.findByEstado(AppConfig.CONTRATO_VENCIDO);
+            List<Contrato> listaVendidos = contratoDAO.findNuevosPorRango(periodoDesdeSel, periodoHastaSel);
+            List<Contrato> listaVencidos = contratoDAO.findVencidosPorRango(periodoDesdeSel, periodoHastaSel);
 
             ReportPdfService.ContratosReportData data = new ReportPdfService.ContratosReportData(
                     activos,
@@ -805,14 +816,16 @@ public class ReportsController extends AbstractController {
                     total,
                     ingresosPeriodo,
                     ingresosParaGrafico,
-                    proximos,
-                    listaActivos,
+                    listaVigentes,
+                    listaVendidos,
                     listaVencidos,
                     LocalDate.now(),
                     getSessionUserName(req),
                     periodoLabel,
                     nuevosPeriodo,
-                    vencidosPeriodo
+                    vencidosPeriodo,
+                    activosPeriodo,
+                    esAnual
             );
 
             // ruta absoluta en disco del logo — si no existe todavía, el
