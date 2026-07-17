@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.lowagie.text.DocumentException;
+import com.mycompany.herramientas.service.BoletaPdfService;
+
 // controlador de gestión de contratos
 @WebServlet("/contracts")
 public class ContractsController extends AbstractController {
@@ -45,6 +48,7 @@ public class ContractsController extends AbstractController {
     private final EmpleadoDAO     empleadoDAO     = new EmpleadoDAO();
     private final CatalogoDAO     catalogoDAO     = new CatalogoDAO();
     private final UsuarioDAO      usuarioDAO      = new UsuarioDAO();
+    private final BoletaPdfService boletaPdfService = new BoletaPdfService();
 
     // ─── GET ─────────────────────────────────────────────
 
@@ -68,6 +72,10 @@ public class ContractsController extends AbstractController {
 
             case "view":
                 mostrarDetalle(req, resp);
+                break;
+
+            case "boleta":
+                generarBoleta(req, resp);
                 break;
 
             default:
@@ -95,6 +103,46 @@ public class ContractsController extends AbstractController {
 
             default:
                 redirigirA("/contracts", req, resp);
+        }
+    }
+
+    // ─── generar boleta PDF ──────────────────────────────
+
+    private void generarBoleta(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String id = param(req, "id");
+        if (id == null || id.isBlank()) {
+            mensajeError(req, "ID de contrato requerido");
+            redirigirA("/contracts", req, resp);
+            return;
+        }
+
+        try {
+            Contrato contrato = contratoDAO.findById(id);
+            if (contrato == null) {
+                mensajeError(req, "Contrato no encontrado");
+                redirigirA("/contracts", req, resp);
+                return;
+            }
+
+            // ruta absoluta en disco del logo
+            String logoRealPath = req.getServletContext().getRealPath("/static/img/logo.png");
+
+            byte[] pdf = boletaPdfService.generarBoletaContrato(contrato, logoRealPath);
+
+            resp.reset();
+            resp.setContentType("application/pdf");
+            resp.setHeader(
+                    "Content-Disposition",
+                    "inline; filename=\"boleta-contrato-" + id + ".pdf\""
+            );
+            resp.setContentLength(pdf.length);
+            resp.getOutputStream().write(pdf);
+            resp.getOutputStream().flush();
+
+        } catch (SQLException | DocumentException e) {
+            LOGGER.log(Level.SEVERE, "Error al generar boleta PDF para el contrato: " + id, e);
+            mensajeError(req, "Error al generar boleta PDF");
+            redirigirA("/contracts", req, resp);
         }
     }
 
