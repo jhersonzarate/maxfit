@@ -87,6 +87,10 @@ public class ContratoDAO {
         SQL_SELECT_BASE +
         "WHERE con.estado = 'activo' AND con.fecha_inicio BETWEEN ? AND ? ORDER BY con.fecha_fin ASC";
 
+    private static final String SQL_FIND_POR_RANGO =
+        SQL_SELECT_BASE +
+        "WHERE con.fecha_inicio BETWEEN ? AND ? ORDER BY con.fecha_fin ASC";
+
     private static final String SQL_COUNT_BY_ESTADO =
         "SELECT COUNT(*) FROM Contratos WHERE estado = ?";
 
@@ -243,6 +247,19 @@ public class ContratoDAO {
         List<Contrato> lista = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL_FIND_ACTIVOS_POR_RANGO)) {
+            ps.setDate(1, Date.valueOf(desde));
+            ps.setDate(2, Date.valueOf(hasta));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
+    public List<Contrato> findByRango(LocalDate desde, LocalDate hasta) throws SQLException {
+        List<Contrato> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_POR_RANGO)) {
             ps.setDate(1, Date.valueOf(desde));
             ps.setDate(2, Date.valueOf(hasta));
             try (ResultSet rs = ps.executeQuery()) {

@@ -468,12 +468,12 @@ public class ReportsController extends AbstractController {
 
             List<Contrato> contratosActivos;
             if (desde != null && hasta != null) {
-                contratosActivos = contratoDAO.findActivosByRango(desde, hasta);
+                contratosActivos = contratoDAO.findByRango(desde, hasta);
                 req.setAttribute("filtroRapido", filtroRapido);
                 req.setAttribute("desde", desde.toString());
                 req.setAttribute("hasta", hasta.toString());
             } else {
-                contratosActivos = contratoDAO.findAllActivos();
+                contratosActivos = contratoDAO.findAll();
             }
 
             req.setAttribute(

@@ -1321,112 +1321,216 @@
                                                                                         test="${vistaActiva eq 'contratos'}">
 
                                                                                         <%-- Barra de acciones --%>
-                                                                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
-
-                                                                                            <form method="get" action="${pageContext.request.contextPath}/reports" class="filtro-periodo">
-                                                                                                <input type="hidden" name="action" value="contratos" />
-
-                                                                                                <select name="tipo" class="filtro-select" onchange="this.form.submit()">
-                                                                                                    <option value="mensual" ${periodoTipo eq 'mensual' ? 'selected' : ''}>Mensual</option>
-                                                                                                    <option value="anual" ${periodoTipo eq 'anual' ? 'selected' : ''}>Anual</option>
-                                                                                                </select>
-
-                                                                                                <c:if test="${periodoTipo eq 'mensual'}">
-                                                                                                    <select name="mes" class="filtro-select">
-                                                                                                        <option value="1" ${periodoMes eq 1 ? 'selected' : ''}>Enero</option>
-                                                                                                        <option value="2" ${periodoMes eq 2 ? 'selected' : ''}>Febrero</option>
-                                                                                                        <option value="3" ${periodoMes eq 3 ? 'selected' : ''}>Marzo</option>
-                                                                                                        <option value="4" ${periodoMes eq 4 ? 'selected' : ''}>Abril</option>
-                                                                                                        <option value="5" ${periodoMes eq 5 ? 'selected' : ''}>Mayo</option>
-                                                                                                        <option value="6" ${periodoMes eq 6 ? 'selected' : ''}>Junio</option>
-                                                                                                        <option value="7" ${periodoMes eq 7 ? 'selected' : ''}>Julio</option>
-                                                                                                        <option value="8" ${periodoMes eq 8 ? 'selected' : ''}>Agosto</option>
-                                                                                                        <option value="9" ${periodoMes eq 9 ? 'selected' : ''}>Septiembre</option>
-                                                                                                        <option value="10" ${periodoMes eq 10 ? 'selected' : ''}>Octubre</option>
-                                                                                                        <option value="11" ${periodoMes eq 11 ? 'selected' : ''}>Noviembre</option>
-                                                                                                        <option value="12" ${periodoMes eq 12 ? 'selected' : ''}>Diciembre</option>
-                                                                                                    </select>
-                                                                                                </c:if>
-
-                                                                                                <select name="anio" class="filtro-select">
-                                                                                                    <c:forEach var="a" begin="${anioHoy - 4}" end="${anioHoy}">
-                                                                                                        <option value="${a}" ${periodoAnio eq a ? 'selected' : ''}><c:out value="${a}" /></option>
-                                                                                                    </c:forEach>
-                                                                                                </select>
-
-                                                                                                <button type="submit" class="btn-filtro-aplicar">Aplicar</button>
-                                                                                            </form>
-
-                                                                                            <c:choose>
-                                                                                                <c:when test="${periodoSinDatos}">
-                                                                                                    <span class="btn-export-pdf btn-export-pdf--disabled" title="No hay datos para este periodo">
-                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                                                                             stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
-                                                                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                                                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                                                                                        </svg>
-                                                                                                        Sin datos
-                                                                                                    </span>
-                                                                                                </c:when>
-                                                                                                <c:otherwise>
-                                                                                                    <a href="${pageContext.request.contextPath}/reports?action=contratos&formato=pdf&tipo=${periodoTipo}&mes=${periodoMes}&anio=${periodoAnio}"
-                                                                                               class="btn-export-pdf">
-                                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                                                                     stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
-                                                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                                                                                </svg>
-                                                                                                Exportar PDF
-                                                                                            </a>
-                                                                                                </c:otherwise>
-                                                                                            </c:choose>
-                                                                                        </div>
-
-                                                                                        <%-- KPIs de contratos --%>
                                                                                             <div
-                                                                                                class="report-kpi-grid">
+                                                                                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
 
-                                                                                                <%-- Activos --%>
-                                                                                                    <div
-                                                                                                        class="report-kpi-card c--green">
-                                                                                                        <div
-                                                                                                            class="report-kpi-card__header">
-                                                                                                            <span
-                                                                                                                class="report-kpi-card__label">Contratos activos (hoy)</span>
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__badge">
-                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                    fill="none"
-                                                                                                                    viewBox="0 0 24 24"
-                                                                                                                    stroke="currentColor"
-                                                                                                                    stroke-width="1.8">
-                                                                                                                    <path
-                                                                                                                        stroke-linecap="round"
-                                                                                                                        stroke-linejoin="round"
-                                                                                                                        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                                                                                </svg>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                        <div
-                                                                                                            class="report-kpi-card__value">
-                                                                                                            <c:out
-                                                                                                                value="${contratosActivos}" />
-                                                                                                        </div>
-                                                                                                        <div
-                                                                                                            class="report-kpi-card__meta">
-                                                                                                            <c:out
-                                                                                                                value="${pctActivos}" />
-                                                                                                            % del total
-                                                                                                        </div>
-                                                                                                    </div>
+                                                                                                <form method="get"
+                                                                                                    action="${pageContext.request.contextPath}/reports"
+                                                                                                    class="filtro-periodo">
+                                                                                                    <input type="hidden"
+                                                                                                        name="action"
+                                                                                                        value="contratos" />
 
-                                                                                                    <%-- Vencidos --%>
+                                                                                                    <select name="tipo"
+                                                                                                        class="filtro-select"
+                                                                                                        onchange="this.form.submit()">
+                                                                                                        <option
+                                                                                                            value="mensual"
+                                                                                                            ${periodoTipo
+                                                                                                            eq 'mensual'
+                                                                                                            ? 'selected'
+                                                                                                            : '' }>
+                                                                                                            Mensual
+                                                                                                        </option>
+                                                                                                        <option
+                                                                                                            value="anual"
+                                                                                                            ${periodoTipo
+                                                                                                            eq 'anual'
+                                                                                                            ? 'selected'
+                                                                                                            : '' }>Anual
+                                                                                                        </option>
+                                                                                                    </select>
+
+                                                                                                    <c:if
+                                                                                                        test="${periodoTipo eq 'mensual'}">
+                                                                                                        <select
+                                                                                                            name="mes"
+                                                                                                            class="filtro-select">
+                                                                                                            <option
+                                                                                                                value="1"
+                                                                                                                ${periodoMes
+                                                                                                                eq 1
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Enero
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="2"
+                                                                                                                ${periodoMes
+                                                                                                                eq 2
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Febrero
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="3"
+                                                                                                                ${periodoMes
+                                                                                                                eq 3
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Marzo
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="4"
+                                                                                                                ${periodoMes
+                                                                                                                eq 4
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Abril
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="5"
+                                                                                                                ${periodoMes
+                                                                                                                eq 5
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Mayo
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="6"
+                                                                                                                ${periodoMes
+                                                                                                                eq 6
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Junio
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="7"
+                                                                                                                ${periodoMes
+                                                                                                                eq 7
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Julio
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="8"
+                                                                                                                ${periodoMes
+                                                                                                                eq 8
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Agosto
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="9"
+                                                                                                                ${periodoMes
+                                                                                                                eq 9
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Septiembre
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="10"
+                                                                                                                ${periodoMes
+                                                                                                                eq 10
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Octubre
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="11"
+                                                                                                                ${periodoMes
+                                                                                                                eq 11
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Noviembre
+                                                                                                            </option>
+                                                                                                            <option
+                                                                                                                value="12"
+                                                                                                                ${periodoMes
+                                                                                                                eq 12
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                Diciembre
+                                                                                                            </option>
+                                                                                                        </select>
+                                                                                                    </c:if>
+
+                                                                                                    <select name="anio"
+                                                                                                        class="filtro-select">
+                                                                                                        <c:forEach
+                                                                                                            var="a"
+                                                                                                            begin="${anioHoy - 4}"
+                                                                                                            end="${anioHoy}">
+                                                                                                            <option
+                                                                                                                value="${a}"
+                                                                                                                ${periodoAnio
+                                                                                                                eq a
+                                                                                                                ? 'selected'
+                                                                                                                : '' }>
+                                                                                                                <c:out
+                                                                                                                    value="${a}" />
+                                                                                                            </option>
+                                                                                                        </c:forEach>
+                                                                                                    </select>
+
+                                                                                                    <button
+                                                                                                        type="submit"
+                                                                                                        class="btn-filtro-aplicar">Aplicar</button>
+                                                                                                </form>
+
+                                                                                                <c:choose>
+                                                                                                    <c:when
+                                                                                                        test="${periodoSinDatos}">
+                                                                                                        <span
+                                                                                                            class="btn-export-pdf btn-export-pdf--disabled"
+                                                                                                            title="No hay datos para este periodo">
+                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                fill="none"
+                                                                                                                viewBox="0 0 24 24"
+                                                                                                                stroke="currentColor"
+                                                                                                                stroke-width="1.8"
+                                                                                                                style="width:16px;height:16px;">
+                                                                                                                <path
+                                                                                                                    stroke-linecap="round"
+                                                                                                                    stroke-linejoin="round"
+                                                                                                                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                                                                            </svg>
+                                                                                                            Sin datos
+                                                                                                        </span>
+                                                                                                    </c:when>
+                                                                                                    <c:otherwise>
+                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=contratos&formato=pdf&tipo=${periodoTipo}&mes=${periodoMes}&anio=${periodoAnio}"
+                                                                                                            class="btn-export-pdf">
+                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                fill="none"
+                                                                                                                viewBox="0 0 24 24"
+                                                                                                                stroke="currentColor"
+                                                                                                                stroke-width="1.8"
+                                                                                                                style="width:16px;height:16px;">
+                                                                                                                <path
+                                                                                                                    stroke-linecap="round"
+                                                                                                                    stroke-linejoin="round"
+                                                                                                                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                                                                            </svg>
+                                                                                                            Exportar PDF
+                                                                                                        </a>
+                                                                                                    </c:otherwise>
+                                                                                                </c:choose>
+                                                                                            </div>
+
+                                                                                            <%-- KPIs de contratos --%>
+                                                                                                <div
+                                                                                                    class="report-kpi-grid">
+
+                                                                                                    <%-- Activos --%>
                                                                                                         <div
-                                                                                                            class="report-kpi-card c--red">
+                                                                                                            class="report-kpi-card c--green">
                                                                                                             <div
                                                                                                                 class="report-kpi-card__header">
                                                                                                                 <span
-                                                                                                                    class="report-kpi-card__label">Contratos vencidos (hoy)</span>
+                                                                                                                    class="report-kpi-card__label">Contratos
+                                                                                                                    activos
+                                                                                                                    (hoy)</span>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__badge">
                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -1437,32 +1541,34 @@
                                                                                                                         <path
                                                                                                                             stroke-linecap="round"
                                                                                                                             stroke-linejoin="round"
-                                                                                                                            d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                                                                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                                                                                                     </svg>
                                                                                                                 </div>
                                                                                                             </div>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__value">
                                                                                                                 <c:out
-                                                                                                                    value="${contratosVencidos}" />
+                                                                                                                    value="${contratosActivos}" />
                                                                                                             </div>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__meta">
                                                                                                                 <c:out
-                                                                                                                    value="${pctVencidos}" />
+                                                                                                                    value="${pctActivos}" />
                                                                                                                 % del
                                                                                                                 total
                                                                                                             </div>
                                                                                                         </div>
 
-                                                                                                        <%-- Cancelados
+                                                                                                        <%-- Vencidos
                                                                                                             --%>
                                                                                                             <div
-                                                                                                                class="report-kpi-card c--yellow">
+                                                                                                                class="report-kpi-card c--red">
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__header">
                                                                                                                     <span
-                                                                                                                        class="report-kpi-card__label">Cancelados (hoy)</span>
+                                                                                                                        class="report-kpi-card__label">Contratos
+                                                                                                                        vencidos
+                                                                                                                        (hoy)</span>
                                                                                                                     <div
                                                                                                                         class="report-kpi-card__badge">
                                                                                                                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -1473,34 +1579,34 @@
                                                                                                                             <path
                                                                                                                                 stroke-linecap="round"
                                                                                                                                 stroke-linejoin="round"
-                                                                                                                                d="M6 18 18 6M6 6l12 12" />
+                                                                                                                                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                                                                                                         </svg>
                                                                                                                     </div>
                                                                                                                 </div>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__value">
                                                                                                                     <c:out
-                                                                                                                        value="${contratosCancelados}" />
+                                                                                                                        value="${contratosVencidos}" />
                                                                                                                 </div>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__meta">
                                                                                                                     <c:out
-                                                                                                                        value="${pctCancelados}" />
+                                                                                                                        value="${pctVencidos}" />
                                                                                                                     %
                                                                                                                     del
                                                                                                                     total
                                                                                                                 </div>
                                                                                                             </div>
 
-                                                                                                            <%-- Total
-                                                                                                                general
+                                                                                                            <%-- Cancelados
                                                                                                                 --%>
                                                                                                                 <div
-                                                                                                                    class="report-kpi-card c--blue">
+                                                                                                                    class="report-kpi-card c--yellow">
                                                                                                                     <div
                                                                                                                         class="report-kpi-card__header">
                                                                                                                         <span
-                                                                                                                            class="report-kpi-card__label">Total contratos (hoy)</span>
+                                                                                                                            class="report-kpi-card__label">Cancelados
+                                                                                                                            (hoy)</span>
                                                                                                                         <div
                                                                                                                             class="report-kpi-card__badge">
                                                                                                                             <svg xmlns="http://www.w3.org/2000/svg"
@@ -1511,35 +1617,36 @@
                                                                                                                                 <path
                                                                                                                                     stroke-linecap="round"
                                                                                                                                     stroke-linejoin="round"
-                                                                                                                                    d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625
-                                                 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875
-                                                 0 0 1 0-3.75Z" />
+                                                                                                                                    d="M6 18 18 6M6 6l12 12" />
                                                                                                                             </svg>
                                                                                                                         </div>
                                                                                                                     </div>
                                                                                                                     <div
                                                                                                                         class="report-kpi-card__value">
                                                                                                                         <c:out
-                                                                                                                            value="${contratosTotal}" />
+                                                                                                                            value="${contratosCancelados}" />
                                                                                                                     </div>
                                                                                                                     <div
                                                                                                                         class="report-kpi-card__meta">
-                                                                                                                        Histórico
-                                                                                                                        acumulado
+                                                                                                                        <c:out
+                                                                                                                            value="${pctCancelados}" />
+                                                                                                                        %
+                                                                                                                        del
+                                                                                                                        total
                                                                                                                     </div>
                                                                                                                 </div>
 
-                                                                                                                <%-- Próximos
-                                                                                                                    a
-                                                                                                                    vencer
+                                                                                                                <%-- Total
+                                                                                                                    general
                                                                                                                     --%>
                                                                                                                     <div
-                                                                                                                        class="report-kpi-card c--yellow">
+                                                                                                                        class="report-kpi-card c--blue">
                                                                                                                         <div
                                                                                                                             class="report-kpi-card__header">
                                                                                                                             <span
-                                                                                                                                class="report-kpi-card__label">Vencen
-                                                                                                                                pronto</span>
+                                                                                                                                class="report-kpi-card__label">Total
+                                                                                                                                contratos
+                                                                                                                                (hoy)</span>
                                                                                                                             <div
                                                                                                                                 class="report-kpi-card__badge">
                                                                                                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -1550,37 +1657,35 @@
                                                                                                                                     <path
                                                                                                                                         stroke-linecap="round"
                                                                                                                                         stroke-linejoin="round"
-                                                                                                                                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
-                                                 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
-                                                 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                                                                                                                        d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625
+                                                 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875
+                                                 0 0 1 0-3.75Z" />
                                                                                                                                 </svg>
                                                                                                                             </div>
                                                                                                                         </div>
                                                                                                                         <div
                                                                                                                             class="report-kpi-card__value">
                                                                                                                             <c:out
-                                                                                                                                value="${countProximosVencer}" />
+                                                                                                                                value="${contratosTotal}" />
                                                                                                                         </div>
                                                                                                                         <div
                                                                                                                             class="report-kpi-card__meta">
-                                                                                                                            En
-                                                                                                                            los
-                                                                                                                            próximos
-                                                                                                                            7
-                                                                                                                            días
+                                                                                                                            Histórico
+                                                                                                                            acumulado
                                                                                                                         </div>
                                                                                                                     </div>
 
-                                                                                                                    <%-- Ingresos
-                                                                                                                        del
-                                                                                                                        mes
+                                                                                                                    <%-- Próximos
+                                                                                                                        a
+                                                                                                                        vencer
                                                                                                                         --%>
                                                                                                                         <div
-                                                                                                                            class="report-kpi-card c--red">
+                                                                                                                            class="report-kpi-card c--yellow">
                                                                                                                             <div
                                                                                                                                 class="report-kpi-card__header">
                                                                                                                                 <span
-                                                                                                                                    class="report-kpi-card__label">Ingresos <c:out value="${periodoLabel}" /></span>
+                                                                                                                                    class="report-kpi-card__label">Vencen
+                                                                                                                                    pronto</span>
                                                                                                                                 <div
                                                                                                                                     class="report-kpi-card__badge">
                                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -1591,7 +1696,51 @@
                                                                                                                                         <path
                                                                                                                                             stroke-linecap="round"
                                                                                                                                             stroke-linejoin="round"
-                                                                                                                                            d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198
+                                                                                                                                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
+                                                 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
+                                                 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                                                                                                                    </svg>
+                                                                                                                                </div>
+                                                                                                                            </div>
+                                                                                                                            <div
+                                                                                                                                class="report-kpi-card__value">
+                                                                                                                                <c:out
+                                                                                                                                    value="${countProximosVencer}" />
+                                                                                                                            </div>
+                                                                                                                            <div
+                                                                                                                                class="report-kpi-card__meta">
+                                                                                                                                En
+                                                                                                                                los
+                                                                                                                                próximos
+                                                                                                                                7
+                                                                                                                                días
+                                                                                                                            </div>
+                                                                                                                        </div>
+
+                                                                                                                        <%-- Ingresos
+                                                                                                                            del
+                                                                                                                            mes
+                                                                                                                            --%>
+                                                                                                                            <div
+                                                                                                                                class="report-kpi-card c--red">
+                                                                                                                                <div
+                                                                                                                                    class="report-kpi-card__header">
+                                                                                                                                    <span
+                                                                                                                                        class="report-kpi-card__label">Ingresos
+                                                                                                                                        <c:out
+                                                                                                                                            value="${periodoLabel}" />
+                                                                                                                                    </span>
+                                                                                                                                    <div
+                                                                                                                                        class="report-kpi-card__badge">
+                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                            fill="none"
+                                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                                            stroke="currentColor"
+                                                                                                                                            stroke-width="1.8">
+                                                                                                                                            <path
+                                                                                                                                                stroke-linecap="round"
+                                                                                                                                                stroke-linejoin="round"
+                                                                                                                                                d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198
                                                  1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0
                                                  1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25
                                                  6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621
@@ -1601,49 +1750,54 @@
                                                  1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6
                                                  0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12
                                                  0h.008v.008H6V10.5Z" />
-                                                                                                                                    </svg>
+                                                                                                                                        </svg>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                                <div
+                                                                                                                                    class="report-kpi-card__value is-money">
+                                                                                                                                    <fmt:formatNumber
+                                                                                                                                        value="${ingresosMes}"
+                                                                                                                                        pattern="#,##0.00" />
+                                                                                                                                </div>
+                                                                                                                                <div
+                                                                                                                                    class="report-kpi-card__meta">
+                                                                                                                                    Facturado
+                                                                                                                                    en
+                                                                                                                                    el
+                                                                                                                                    periodo
                                                                                                                                 </div>
                                                                                                                             </div>
-                                                                                                                            <div
-                                                                                                                                class="report-kpi-card__value is-money">
-                                                                                                                                <fmt:formatNumber
-                                                                                                                                    value="${ingresosMes}"
-                                                                                                                                    pattern="#,##0.00" />
-                                                                                                                            </div>
-                                                                                                                            <div
-                                                                                                                                class="report-kpi-card__meta">
-                                                                                                                                Facturado en el periodo
-                                                                                                                            </div>
-                                                                                                                        </div>
 
-                                                                                            </div><%-- /report-kpi-grid
-                                                                                                --%>
+                                                                                                </div><%--
+                                                                                                    /report-kpi-grid
+                                                                                                    --%>
 
-                                                                                                <%-- Layout: gráfico +
-                                                                                                    próximos --%>
-                                                                                                    <div
-                                                                                                        class="report-two-col">
+                                                                                                    <%-- Layout: gráfico
+                                                                                                        + próximos --%>
+                                                                                                        <div
+                                                                                                            class="report-two-col">
 
-                                                                                                        <%-- Distribución
-                                                                                                            de contratos
-                                                                                                            --%>
-                                                                                                            <div
-                                                                                                                class="report-card">
+                                                                                                            <%-- Distribución
+                                                                                                                de
+                                                                                                                contratos
+                                                                                                                --%>
                                                                                                                 <div
-                                                                                                                    class="report-card__header">
+                                                                                                                    class="report-card">
                                                                                                                     <div
-                                                                                                                        class="report-card__header-left">
+                                                                                                                        class="report-card__header">
                                                                                                                         <div
-                                                                                                                            class="report-card__icon">
-                                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                fill="none"
-                                                                                                                                viewBox="0 0 24 24"
-                                                                                                                                stroke="currentColor"
-                                                                                                                                stroke-width="1.8">
-                                                                                                                                <path
-                                                                                                                                    stroke-linecap="round"
-                                                                                                                                    stroke-linejoin="round"
-                                                                                                                                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
+                                                                                                                            class="report-card__header-left">
+                                                                                                                            <div
+                                                                                                                                class="report-card__icon">
+                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                    fill="none"
+                                                                                                                                    viewBox="0 0 24 24"
+                                                                                                                                    stroke="currentColor"
+                                                                                                                                    stroke-width="1.8">
+                                                                                                                                    <path
+                                                                                                                                        stroke-linecap="round"
+                                                                                                                                        stroke-linejoin="round"
+                                                                                                                                        d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
                                                      1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125
                                                      1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125
                                                      1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0
@@ -1651,236 +1805,209 @@
                                                      1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496
                                                      3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125
                                                      1.125 0 0 1-1.125-1.125V4.125Z" />
-                                                                                                                            </svg>
+                                                                                                                                </svg>
+                                                                                                                            </div>
+                                                                                                                            <span
+                                                                                                                                class="report-card__title">Distribución
+                                                                                                                                de
+                                                                                                                                contratos
+                                                                                                                                (hoy)</span>
                                                                                                                         </div>
                                                                                                                         <span
-                                                                                                                            class="report-card__title">Distribución de contratos (hoy)</span>
+                                                                                                                            class="stat-chip">
+                                                                                                                            Total
+                                                                                                                            hoy:
+                                                                                                                            <c:out
+                                                                                                                                value="${contratosTotal}" />
+                                                                                                                        </span>
                                                                                                                     </div>
-                                                                                                                    <span
-                                                                                                                        class="stat-chip">
-                                                                                                                        Total hoy:
-                                                                                                                        <c:out
-                                                                                                                            value="${contratosTotal}" />
-                                                                                                                    </span>
-                                                                                                                </div>
 
-                                                                                                                <%-- Gráfico
-                                                                                                                    de
-                                                                                                                    donut
-                                                                                                                    CSS
-                                                                                                                    --%>
-                                                                                                                    <c:if
-                                                                                                                        test="${contratosTotal > 0}">
-                                                                                                                        <c:set
-                                                                                                                            var="circum"
-                                                                                                                            value="282.74" />
-                                                                                                                        <%-- Activos
-                                                                                                                            --%>
+                                                                                                                    <%-- Gráfico
+                                                                                                                        de
+                                                                                                                        donut
+                                                                                                                        CSS
+                                                                                                                        --%>
+                                                                                                                        <c:if
+                                                                                                                            test="${contratosTotal > 0}">
                                                                                                                             <c:set
-                                                                                                                                var="dashaActivo"
-                                                                                                                                value="${pctActivos * 2.8274}" />
-                                                                                                                            <c:set
-                                                                                                                                var="dashgActivo"
-                                                                                                                                value="${circum - dashaActivo}" />
-                                                                                                                            <%-- Vencidos
-                                                                                                                                (arranca
-                                                                                                                                después
-                                                                                                                                de
-                                                                                                                                activos)
+                                                                                                                                var="circum"
+                                                                                                                                value="282.74" />
+                                                                                                                            <%-- Activos
                                                                                                                                 --%>
                                                                                                                                 <c:set
-                                                                                                                                    var="offsetVencido"
+                                                                                                                                    var="dashaActivo"
+                                                                                                                                    value="${pctActivos * 2.8274}" />
+                                                                                                                                <c:set
+                                                                                                                                    var="dashgActivo"
                                                                                                                                     value="${circum - dashaActivo}" />
-                                                                                                                                <c:set
-                                                                                                                                    var="dashaVencido"
-                                                                                                                                    value="${pctVencidos * 2.8274}" />
-                                                                                                                                <c:set
-                                                                                                                                    var="dashgVencido"
-                                                                                                                                    value="${circum - dashaVencido}" />
+                                                                                                                                <%-- Vencidos
+                                                                                                                                    (arranca
+                                                                                                                                    después
+                                                                                                                                    de
+                                                                                                                                    activos)
+                                                                                                                                    --%>
+                                                                                                                                    <c:set
+                                                                                                                                        var="offsetVencido"
+                                                                                                                                        value="${circum - dashaActivo}" />
+                                                                                                                                    <c:set
+                                                                                                                                        var="dashaVencido"
+                                                                                                                                        value="${pctVencidos * 2.8274}" />
+                                                                                                                                    <c:set
+                                                                                                                                        var="dashgVencido"
+                                                                                                                                        value="${circum - dashaVencido}" />
 
-                                                                                                                                <div
-                                                                                                                                    class="donut-chart-wrap">
                                                                                                                                     <div
-                                                                                                                                        class="donut-chart">
-                                                                                                                                        <svg class="donut-chart__svg"
-                                                                                                                                            viewBox="0 0 120 120"
-                                                                                                                                            xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                            aria-label="Gráfico de distribución de contratos"
-                                                                                                                                            role="img">
-                                                                                                                                            <title>
-                                                                                                                                                Distribución
-                                                                                                                                                de
-                                                                                                                                                contratos
-                                                                                                                                                por
-                                                                                                                                                estado
-                                                                                                                                            </title>
-                                                                                                                                            <%-- Fondo
-                                                                                                                                                --%>
-                                                                                                                                                <circle
-                                                                                                                                                    class="donut-chart__bg"
-                                                                                                                                                    cx="60"
-                                                                                                                                                    cy="60"
-                                                                                                                                                    r="45" />
-                                                                                                                                                <%-- Segmento
-                                                                                                                                                    activos
+                                                                                                                                        class="donut-chart-wrap">
+                                                                                                                                        <div
+                                                                                                                                            class="donut-chart">
+                                                                                                                                            <svg class="donut-chart__svg"
+                                                                                                                                                viewBox="0 0 120 120"
+                                                                                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                                aria-label="Gráfico de distribución de contratos"
+                                                                                                                                                role="img">
+                                                                                                                                                <title>
+                                                                                                                                                    Distribución
+                                                                                                                                                    de
+                                                                                                                                                    contratos
+                                                                                                                                                    por
+                                                                                                                                                    estado
+                                                                                                                                                </title>
+                                                                                                                                                <%-- Fondo
                                                                                                                                                     --%>
                                                                                                                                                     <circle
-                                                                                                                                                        class="donut-chart__seg donut-chart__seg--activos"
+                                                                                                                                                        class="donut-chart__bg"
                                                                                                                                                         cx="60"
                                                                                                                                                         cy="60"
-                                                                                                                                                        r="45"
-                                                                                                                                                        stroke-dasharray="${dashaActivo} ${dashgActivo}"
-                                                                                                                                                        stroke-dashoffset="0" />
+                                                                                                                                                        r="45" />
                                                                                                                                                     <%-- Segmento
-                                                                                                                                                        vencidos
+                                                                                                                                                        activos
                                                                                                                                                         --%>
                                                                                                                                                         <circle
-                                                                                                                                                            class="donut-chart__seg donut-chart__seg--vencidos"
+                                                                                                                                                            class="donut-chart__seg donut-chart__seg--activos"
                                                                                                                                                             cx="60"
                                                                                                                                                             cy="60"
                                                                                                                                                             r="45"
-                                                                                                                                                            stroke-dasharray="${dashaVencido} ${dashgVencido}"
-                                                                                                                                                            stroke-dashoffset="-${dashaActivo}" />
-                                                                                                                                        </svg>
-                                                                                                                                        <div
-                                                                                                                                            class="donut-chart__center">
-                                                                                                                                            <span
-                                                                                                                                                class="donut-chart__center-num">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${contratosTotal}" />
-                                                                                                                                            </span>
-                                                                                                                                            <span
-                                                                                                                                                class="donut-chart__center-label">Total</span>
+                                                                                                                                                            stroke-dasharray="${dashaActivo} ${dashgActivo}"
+                                                                                                                                                            stroke-dashoffset="0" />
+                                                                                                                                                        <%-- Segmento
+                                                                                                                                                            vencidos
+                                                                                                                                                            --%>
+                                                                                                                                                            <circle
+                                                                                                                                                                class="donut-chart__seg donut-chart__seg--vencidos"
+                                                                                                                                                                cx="60"
+                                                                                                                                                                cy="60"
+                                                                                                                                                                r="45"
+                                                                                                                                                                stroke-dasharray="${dashaVencido} ${dashgVencido}"
+                                                                                                                                                                stroke-dashoffset="-${dashaActivo}" />
+                                                                                                                                            </svg>
+                                                                                                                                            <div
+                                                                                                                                                class="donut-chart__center">
+                                                                                                                                                <span
+                                                                                                                                                    class="donut-chart__center-num">
+                                                                                                                                                    <c:out
+                                                                                                                                                        value="${contratosTotal}" />
+                                                                                                                                                </span>
+                                                                                                                                                <span
+                                                                                                                                                    class="donut-chart__center-label">Total</span>
+                                                                                                                                            </div>
                                                                                                                                         </div>
-                                                                                                                                    </div>
 
-                                                                                                                                    <div
-                                                                                                                                        class="donut-legend">
                                                                                                                                         <div
-                                                                                                                                            class="donut-legend-item">
+                                                                                                                                            class="donut-legend">
                                                                                                                                             <div
-                                                                                                                                                class="donut-legend-dot donut-legend-dot--activos">
-                                                                                                                                            </div>
-                                                                                                                                            <div
-                                                                                                                                                class="donut-legend-info">
-                                                                                                                                                <p
-                                                                                                                                                    class="donut-legend-nombre">
-                                                                                                                                                    Activos
-                                                                                                                                                </p>
+                                                                                                                                                class="donut-legend-item">
                                                                                                                                                 <div
-                                                                                                                                                    class="donut-legend-val">
-                                                                                                                                                    <span
-                                                                                                                                                        class="donut-legend-num">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${contratosActivos}" />
-                                                                                                                                                    </span>
-                                                                                                                                                    <span
-                                                                                                                                                        class="donut-legend-pct">
-                                                                                                                                                        (
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${pctActivos}" />
-                                                                                                                                                        %)
-                                                                                                                                                    </span>
+                                                                                                                                                    class="donut-legend-dot donut-legend-dot--activos">
                                                                                                                                                 </div>
-                                                                                                                                            </div>
-                                                                                                                                        </div>
-                                                                                                                                        <div
-                                                                                                                                            class="donut-legend-item">
-                                                                                                                                            <div
-                                                                                                                                                class="donut-legend-dot donut-legend-dot--vencidos">
-                                                                                                                                            </div>
-                                                                                                                                            <div
-                                                                                                                                                class="donut-legend-info">
-                                                                                                                                                <p
-                                                                                                                                                    class="donut-legend-nombre">
-                                                                                                                                                    Vencidos
-                                                                                                                                                </p>
                                                                                                                                                 <div
-                                                                                                                                                    class="donut-legend-val">
-                                                                                                                                                    <span
-                                                                                                                                                        class="donut-legend-num">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${contratosVencidos}" />
-                                                                                                                                                    </span>
-                                                                                                                                                    <span
-                                                                                                                                                        class="donut-legend-pct">
-                                                                                                                                                        (
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${pctVencidos}" />
-                                                                                                                                                        %)
-                                                                                                                                                    </span>
-                                                                                                                                                </div>
-                                                                                                                                            </div>
-                                                                                                                                        </div>
-                                                                                                                                        <div
-                                                                                                                                            class="donut-legend-item">
-                                                                                                                                            <div
-                                                                                                                                                class="donut-legend-dot donut-legend-dot--cancelados">
-                                                                                                                                            </div>
-                                                                                                                                            <div
-                                                                                                                                                class="donut-legend-info">
-                                                                                                                                                <p
-                                                                                                                                                    class="donut-legend-nombre">
-                                                                                                                                                    Cancelados
-                                                                                                                                                </p>
-                                                                                                                                                <div
-                                                                                                                                                    class="donut-legend-val">
-                                                                                                                                                    <span
-                                                                                                                                                        class="donut-legend-num">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${contratosCancelados}" />
-                                                                                                                                                    </span>
-                                                                                                                                                    <span
-                                                                                                                                                        class="donut-legend-pct">
-                                                                                                                                                        (
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${pctCancelados}" />
-                                                                                                                                                        %)
-                                                                                                                                                    </span>
-                                                                                                                                                </div>
-                                                                                                                                            </div>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                </div>
-
-                                                                                                                                <%-- Barras
-                                                                                                                                    de
-                                                                                                                                    porcentaje
-                                                                                                                                    --%>
-                                                                                                                                    <div class="pct-bar-list"
-                                                                                                                                        style="border-top:1px solid var(--clr-border-light);">
-                                                                                                                                        <%-- Activos
-                                                                                                                                            --%>
-                                                                                                                                            <div
-                                                                                                                                                class="pct-bar-item">
-                                                                                                                                                <div
-                                                                                                                                                    class="pct-bar-item__header">
-                                                                                                                                                    <span
-                                                                                                                                                        class="pct-bar-item__label">
+                                                                                                                                                    class="donut-legend-info">
+                                                                                                                                                    <p
+                                                                                                                                                        class="donut-legend-nombre">
+                                                                                                                                                        Activos
+                                                                                                                                                    </p>
+                                                                                                                                                    <div
+                                                                                                                                                        class="donut-legend-val">
                                                                                                                                                         <span
-                                                                                                                                                            class="pct-bar-item__dot"
-                                                                                                                                                            style="background:var(--clr-success);"></span>
-                                                                                                                                                        Contratos
-                                                                                                                                                        activos
-                                                                                                                                                    </span>
-                                                                                                                                                    <span
-                                                                                                                                                        class="pct-bar-item__val">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${contratosActivos}" />
-                                                                                                                                                        /
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${contratosTotal}" />
-                                                                                                                                                    </span>
-                                                                                                                                                </div>
-                                                                                                                                                <div
-                                                                                                                                                    class="pct-bar-bg">
-                                                                                                                                                    <div class="pct-bar-fill"
-                                                                                                                                                        style="width:<c:out value='${pctActivos}'/>%;
-                                                        background:var(--clr-success);">
+                                                                                                                                                            class="donut-legend-num">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${contratosActivos}" />
+                                                                                                                                                        </span>
+                                                                                                                                                        <span
+                                                                                                                                                            class="donut-legend-pct">
+                                                                                                                                                            (
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${pctActivos}" />
+                                                                                                                                                            %)
+                                                                                                                                                        </span>
                                                                                                                                                     </div>
                                                                                                                                                 </div>
                                                                                                                                             </div>
-                                                                                                                                            <%-- Vencidos
+                                                                                                                                            <div
+                                                                                                                                                class="donut-legend-item">
+                                                                                                                                                <div
+                                                                                                                                                    class="donut-legend-dot donut-legend-dot--vencidos">
+                                                                                                                                                </div>
+                                                                                                                                                <div
+                                                                                                                                                    class="donut-legend-info">
+                                                                                                                                                    <p
+                                                                                                                                                        class="donut-legend-nombre">
+                                                                                                                                                        Vencidos
+                                                                                                                                                    </p>
+                                                                                                                                                    <div
+                                                                                                                                                        class="donut-legend-val">
+                                                                                                                                                        <span
+                                                                                                                                                            class="donut-legend-num">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${contratosVencidos}" />
+                                                                                                                                                        </span>
+                                                                                                                                                        <span
+                                                                                                                                                            class="donut-legend-pct">
+                                                                                                                                                            (
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${pctVencidos}" />
+                                                                                                                                                            %)
+                                                                                                                                                        </span>
+                                                                                                                                                    </div>
+                                                                                                                                                </div>
+                                                                                                                                            </div>
+                                                                                                                                            <div
+                                                                                                                                                class="donut-legend-item">
+                                                                                                                                                <div
+                                                                                                                                                    class="donut-legend-dot donut-legend-dot--cancelados">
+                                                                                                                                                </div>
+                                                                                                                                                <div
+                                                                                                                                                    class="donut-legend-info">
+                                                                                                                                                    <p
+                                                                                                                                                        class="donut-legend-nombre">
+                                                                                                                                                        Cancelados
+                                                                                                                                                    </p>
+                                                                                                                                                    <div
+                                                                                                                                                        class="donut-legend-val">
+                                                                                                                                                        <span
+                                                                                                                                                            class="donut-legend-num">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${contratosCancelados}" />
+                                                                                                                                                        </span>
+                                                                                                                                                        <span
+                                                                                                                                                            class="donut-legend-pct">
+                                                                                                                                                            (
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${pctCancelados}" />
+                                                                                                                                                            %)
+                                                                                                                                                        </span>
+                                                                                                                                                    </div>
+                                                                                                                                                </div>
+                                                                                                                                            </div>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
+
+                                                                                                                                    <%-- Barras
+                                                                                                                                        de
+                                                                                                                                        porcentaje
+                                                                                                                                        --%>
+                                                                                                                                        <div class="pct-bar-list"
+                                                                                                                                            style="border-top:1px solid var(--clr-border-light);">
+                                                                                                                                            <%-- Activos
                                                                                                                                                 --%>
                                                                                                                                                 <div
                                                                                                                                                     class="pct-bar-item">
@@ -1890,14 +2017,14 @@
                                                                                                                                                             class="pct-bar-item__label">
                                                                                                                                                             <span
                                                                                                                                                                 class="pct-bar-item__dot"
-                                                                                                                                                                style="background:var(--clr-red);"></span>
+                                                                                                                                                                style="background:var(--clr-success);"></span>
                                                                                                                                                             Contratos
-                                                                                                                                                            vencidos
+                                                                                                                                                            activos
                                                                                                                                                         </span>
                                                                                                                                                         <span
                                                                                                                                                             class="pct-bar-item__val">
                                                                                                                                                             <c:out
-                                                                                                                                                                value="${contratosVencidos}" />
+                                                                                                                                                                value="${contratosActivos}" />
                                                                                                                                                             /
                                                                                                                                                             <c:out
                                                                                                                                                                 value="${contratosTotal}" />
@@ -1906,12 +2033,12 @@
                                                                                                                                                     <div
                                                                                                                                                         class="pct-bar-bg">
                                                                                                                                                         <div class="pct-bar-fill"
-                                                                                                                                                            style="width:<c:out value='${pctVencidos}'/>%;
-                                                        background:var(--clr-red);">
+                                                                                                                                                            style="width:<c:out value='${pctActivos}'/>%;
+                                                        background:var(--clr-success);">
                                                                                                                                                         </div>
                                                                                                                                                     </div>
                                                                                                                                                 </div>
-                                                                                                                                                <%-- Cancelados
+                                                                                                                                                <%-- Vencidos
                                                                                                                                                     --%>
                                                                                                                                                     <div
                                                                                                                                                         class="pct-bar-item">
@@ -1921,13 +2048,14 @@
                                                                                                                                                                 class="pct-bar-item__label">
                                                                                                                                                                 <span
                                                                                                                                                                     class="pct-bar-item__dot"
-                                                                                                                                                                    style="background:var(--clr-text-dim);"></span>
-                                                                                                                                                                Cancelados
+                                                                                                                                                                    style="background:var(--clr-red);"></span>
+                                                                                                                                                                Contratos
+                                                                                                                                                                vencidos
                                                                                                                                                             </span>
                                                                                                                                                             <span
                                                                                                                                                                 class="pct-bar-item__val">
                                                                                                                                                                 <c:out
-                                                                                                                                                                    value="${contratosCancelados}" />
+                                                                                                                                                                    value="${contratosVencidos}" />
                                                                                                                                                                 /
                                                                                                                                                                 <c:out
                                                                                                                                                                     value="${contratosTotal}" />
@@ -1936,79 +2064,126 @@
                                                                                                                                                         <div
                                                                                                                                                             class="pct-bar-bg">
                                                                                                                                                             <div class="pct-bar-fill"
-                                                                                                                                                                style="width:<c:out value='${pctCancelados}'/>%;
-                                                        background:var(--clr-text-dim);">
+                                                                                                                                                                style="width:<c:out value='${pctVencidos}'/>%;
+                                                        background:var(--clr-red);">
                                                                                                                                                             </div>
                                                                                                                                                         </div>
                                                                                                                                                     </div>
-                                                                                                                                    </div>
+                                                                                                                                                    <%-- Cancelados
+                                                                                                                                                        --%>
+                                                                                                                                                        <div
+                                                                                                                                                            class="pct-bar-item">
+                                                                                                                                                            <div
+                                                                                                                                                                class="pct-bar-item__header">
+                                                                                                                                                                <span
+                                                                                                                                                                    class="pct-bar-item__label">
+                                                                                                                                                                    <span
+                                                                                                                                                                        class="pct-bar-item__dot"
+                                                                                                                                                                        style="background:var(--clr-text-dim);"></span>
+                                                                                                                                                                    Cancelados
+                                                                                                                                                                </span>
+                                                                                                                                                                <span
+                                                                                                                                                                    class="pct-bar-item__val">
+                                                                                                                                                                    <c:out
+                                                                                                                                                                        value="${contratosCancelados}" />
+                                                                                                                                                                    /
+                                                                                                                                                                    <c:out
+                                                                                                                                                                        value="${contratosTotal}" />
+                                                                                                                                                                </span>
+                                                                                                                                                            </div>
+                                                                                                                                                            <div
+                                                                                                                                                                class="pct-bar-bg">
+                                                                                                                                                                <div class="pct-bar-fill"
+                                                                                                                                                                    style="width:<c:out value='${pctCancelados}'/>%;
+                                                        background:var(--clr-text-dim);">
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+                                                                                                                                                        </div>
+                                                                                                                                        </div>
 
-                                                                                                                    </c:if>
+                                                                                                                        </c:if>
 
-                                                                                                                    <c:if
-                                                                                                                        test="${contratosTotal eq 0}">
-                                                                                                                        <div
-                                                                                                                            class="report-empty">
-                                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                fill="none"
-                                                                                                                                viewBox="0 0 24 24"
-                                                                                                                                stroke="currentColor"
-                                                                                                                                stroke-width="1.5">
-                                                                                                                                <path
-                                                                                                                                    stroke-linecap="round"
-                                                                                                                                    stroke-linejoin="round"
-                                                                                                                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125
+                                                                                                                        <c:if
+                                                                                                                            test="${contratosTotal eq 0}">
+                                                                                                                            <div
+                                                                                                                                class="report-empty">
+                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                    fill="none"
+                                                                                                                                    viewBox="0 0 24 24"
+                                                                                                                                    stroke="currentColor"
+                                                                                                                                    stroke-width="1.5">
+                                                                                                                                    <path
+                                                                                                                                        stroke-linecap="round"
+                                                                                                                                        stroke-linejoin="round"
+                                                                                                                                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125
                                                  1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0
                                                  0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5
                                                  2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0
                                                  .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504
                                                  1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                                                                                                            </svg>
-                                                                                                                            <p>Sin
-                                                                                                                                contratos
-                                                                                                                                registrados
-                                                                                                                                aún.
-                                                                                                                            </p>
-                                                                                                                        </div>
-                                                                                                                    </c:if>
-                                                                                                            </div>
-
-                                                                                                            <%-- Columna
-                                                                                                                derecha:
-                                                                                                                ingresos
-                                                                                                                +
-                                                                                                                próximos
-                                                                                                                vencer
-                                                                                                                --%>
-                                                                                                                <div
-                                                                                                                    style="display:flex; flex-direction:column; gap:1rem;">
-
-                                                                                                                    <%-- Ingresos
-                                                                                                                        del
-                                                                                                                        mes
-                                                                                                                        --%>
-                                                                                                                        <c:if test="${periodoSinDatos}">
-                                                                                                                            <div style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem 1rem; margin-bottom:0.75rem; border-radius:var(--radius-md); background:rgba(217,119,6,0.08); border:1px solid rgba(217,119,6,0.25); color:var(--clr-warning); font-size:0.8rem;">
-                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;flex-shrink:0;">
-                                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                                                                                                                                 </svg>
-                                                                                                                                No hay contratos registrados en <c:out value="${periodoLabel}" />.
+                                                                                                                                <p>Sin
+                                                                                                                                    contratos
+                                                                                                                                    registrados
+                                                                                                                                    aún.
+                                                                                                                                </p>
                                                                                                                             </div>
                                                                                                                         </c:if>
+                                                                                                                </div>
 
-                                                                                                                        <div
-                                                                                                                            class="ingresos-highlight">
+                                                                                                                <%-- Columna
+                                                                                                                    derecha:
+                                                                                                                    ingresos
+                                                                                                                    +
+                                                                                                                    próximos
+                                                                                                                    vencer
+                                                                                                                    --%>
+                                                                                                                    <div
+                                                                                                                        style="display:flex; flex-direction:column; gap:1rem;">
+
+                                                                                                                        <%-- Ingresos
+                                                                                                                            del
+                                                                                                                            mes
+                                                                                                                            --%>
+                                                                                                                            <c:if
+                                                                                                                                test="${periodoSinDatos}">
+                                                                                                                                <div
+                                                                                                                                    style="display:flex; align-items:center; gap:0.5rem; padding:0.75rem 1rem; margin-bottom:0.75rem; border-radius:var(--radius-md); background:rgba(217,119,6,0.08); border:1px solid rgba(217,119,6,0.25); color:var(--clr-warning); font-size:0.8rem;">
+                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                        fill="none"
+                                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                                        stroke="currentColor"
+                                                                                                                                        stroke-width="1.8"
+                                                                                                                                        style="width:16px;height:16px;flex-shrink:0;">
+                                                                                                                                        <path
+                                                                                                                                            stroke-linecap="round"
+                                                                                                                                            stroke-linejoin="round"
+                                                                                                                                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                                                                                                                    </svg>
+                                                                                                                                    No
+                                                                                                                                    hay
+                                                                                                                                    contratos
+                                                                                                                                    registrados
+                                                                                                                                    en
+                                                                                                                                    <c:out
+                                                                                                                                        value="${periodoLabel}" />
+                                                                                                                                    .
+                                                                                                                                </div>
+                                                                                                                            </c:if>
+
                                                                                                                             <div
-                                                                                                                                class="ingresos-highlight__icon">
-                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                    fill="none"
-                                                                                                                                    viewBox="0 0 24 24"
-                                                                                                                                    stroke="currentColor"
-                                                                                                                                    stroke-width="1.7">
-                                                                                                                                    <path
-                                                                                                                                        stroke-linecap="round"
-                                                                                                                                        stroke-linejoin="round"
-                                                                                                                                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198
+                                                                                                                                class="ingresos-highlight">
+                                                                                                                                <div
+                                                                                                                                    class="ingresos-highlight__icon">
+                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                        fill="none"
+                                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                                        stroke="currentColor"
+                                                                                                                                        stroke-width="1.7">
+                                                                                                                                        <path
+                                                                                                                                            stroke-linecap="round"
+                                                                                                                                            stroke-linejoin="round"
+                                                                                                                                            d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198
                                                  1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0
                                                  1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25
                                                  6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621
@@ -2016,180 +2191,231 @@
                                                  1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0
                                                  0H3.75m0 0h-.375a1.125 1.125 0 0
                                                  1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75" />
-                                                                                                                                </svg>
-                                                                                                                            </div>
-                                                                                                                            <div
-                                                                                                                                class="ingresos-highlight__info">
-                                                                                                                                <p
-                                                                                                                                    class="ingresos-highlight__label">
-                                                                                                                                    Ingresos — <c:out value="${periodoLabel}" />
-                                                                                                                                </p>
-                                                                                                                                <p
-                                                                                                                                    class="ingresos-highlight__amount">
-                                                                                                                                    <fmt:formatNumber
-                                                                                                                                        value="${ingresosMes}"
-                                                                                                                                        pattern="#,##0.00" />
-                                                                                                                                </p>
-                                                                                                                                <p
-                                                                                                                                    class="ingresos-highlight__meta">
-                                                                                                                                    Suma de <strong>monto_pagado</strong> en el periodo seleccionado
-                                                                                                                                </p>
-                                                                                                                            </div>
-                                                                                                                        </div>
-
-                                                                                                                        <%-- Nuevos / vencidos en el periodo --%>
-                                                                                                                        <div style="display:flex; gap:0.6rem; margin-bottom:1.25rem;">
-                                                                                                                            <div style="flex:1; background:var(--clr-surface); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:0.65rem 0.85rem;">
-                                                                                                                                <p style="font-size:0.68rem; color:var(--clr-text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 0.15rem;">Contratos nuevos</p>
-                                                                                                                                <p style="font-size:1.1rem; font-weight:700; color:var(--clr-success); margin:0;"><c:out value="${contratosNuevosPeriodo}" /></p>
-                                                                                                                            </div>
-                                                                                                                            <div style="flex:1; background:var(--clr-surface); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:0.65rem 0.85rem;">
-                                                                                                                                <p style="font-size:0.68rem; color:var(--clr-text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 0.15rem;">Contratos vencidos</p>
-                                                                                                                                <p style="font-size:1.1rem; font-weight:700; color:var(--clr-warning); margin:0;"><c:out value="${contratosVencidosPeriodo}" /></p>
-                                                                                                                            </div>
-                                                                                                                        </div>
-
-                                                                                                                        <%-- Próximos
-                                                                                                                            a
-                                                                                                                            vencer
-                                                                                                                            --%>
-                                                                                                                            <div
-                                                                                                                                class="report-card">
+                                                                                                                                    </svg>
+                                                                                                                                </div>
                                                                                                                                 <div
-                                                                                                                                    class="report-card__header">
+                                                                                                                                    class="ingresos-highlight__info">
+                                                                                                                                    <p
+                                                                                                                                        class="ingresos-highlight__label">
+                                                                                                                                        Ingresos
+                                                                                                                                        —
+                                                                                                                                        <c:out
+                                                                                                                                            value="${periodoLabel}" />
+                                                                                                                                    </p>
+                                                                                                                                    <p
+                                                                                                                                        class="ingresos-highlight__amount">
+                                                                                                                                        <fmt:formatNumber
+                                                                                                                                            value="${ingresosMes}"
+                                                                                                                                            pattern="#,##0.00" />
+                                                                                                                                    </p>
+                                                                                                                                    <p
+                                                                                                                                        class="ingresos-highlight__meta">
+                                                                                                                                        Suma
+                                                                                                                                        de
+                                                                                                                                        <strong>monto_pagado</strong>
+                                                                                                                                        en
+                                                                                                                                        el
+                                                                                                                                        periodo
+                                                                                                                                        seleccionado
+                                                                                                                                    </p>
+                                                                                                                                </div>
+                                                                                                                            </div>
+
+                                                                                                                            <%-- Nuevos
+                                                                                                                                /
+                                                                                                                                vencidos
+                                                                                                                                en
+                                                                                                                                el
+                                                                                                                                periodo
+                                                                                                                                --%>
+                                                                                                                                <div
+                                                                                                                                    style="display:flex; gap:0.6rem; margin-bottom:1.25rem;">
                                                                                                                                     <div
-                                                                                                                                        class="report-card__header-left">
-                                                                                                                                        <div
-                                                                                                                                            class="report-card__icon yellow-icon">
-                                                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                                fill="none"
-                                                                                                                                                viewBox="0 0 24 24"
-                                                                                                                                                stroke="currentColor"
-                                                                                                                                                stroke-width="1.8">
-                                                                                                                                                <path
-                                                                                                                                                    stroke-linecap="round"
-                                                                                                                                                    stroke-linejoin="round"
-                                                                                                                                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
-                                                         0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
-                                                         0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                                                                                                                                            </svg>
-                                                                                                                                        </div>
-                                                                                                                                        <span
-                                                                                                                                            class="report-card__title">Próximos
-                                                                                                                                            a
-                                                                                                                                            vencer</span>
-                                                                                                                                    </div>
-                                                                                                                                    <c:if
-                                                                                                                                        test="${countProximosVencer > 0}">
-                                                                                                                                        <span
-                                                                                                                                            class="stat-chip chip--yellow">
+                                                                                                                                        style="flex:1; background:var(--clr-surface); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:0.65rem 0.85rem;">
+                                                                                                                                        <p
+                                                                                                                                            style="font-size:0.68rem; color:var(--clr-text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 0.15rem;">
+                                                                                                                                            Contratos
+                                                                                                                                            nuevos
+                                                                                                                                        </p>
+                                                                                                                                        <p
+                                                                                                                                            style="font-size:1.1rem; font-weight:700; color:var(--clr-success); margin:0;">
                                                                                                                                             <c:out
-                                                                                                                                                value="${countProximosVencer}" />
-                                                                                                                                        </span>
-                                                                                                                                    </c:if>
+                                                                                                                                                value="${contratosNuevosPeriodo}" />
+                                                                                                                                        </p>
+                                                                                                                                    </div>
+                                                                                                                                    <div
+                                                                                                                                        style="flex:1; background:var(--clr-surface); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:0.65rem 0.85rem;">
+                                                                                                                                        <p
+                                                                                                                                            style="font-size:0.68rem; color:var(--clr-text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 0.15rem;">
+                                                                                                                                            Contratos
+                                                                                                                                            vencidos
+                                                                                                                                        </p>
+                                                                                                                                        <p
+                                                                                                                                            style="font-size:1.1rem; font-weight:700; color:var(--clr-warning); margin:0;">
+                                                                                                                                            <c:out
+                                                                                                                                                value="${contratosVencidosPeriodo}" />
+                                                                                                                                        </p>
+                                                                                                                                    </div>
                                                                                                                                 </div>
 
-                                                                                                                                <c:choose>
-                                                                                                                                    <c:when
-                                                                                                                                        test="${not empty proximosVencer}">
-                                                                                                                                        <c:forEach
-                                                                                                                                            var="con"
-                                                                                                                                            items="${proximosVencer}">
+                                                                                                                                <%-- Próximos
+                                                                                                                                    a
+                                                                                                                                    vencer
+                                                                                                                                    --%>
+                                                                                                                                    <div
+                                                                                                                                        class="report-card">
+                                                                                                                                        <div
+                                                                                                                                            class="report-card__header">
                                                                                                                                             <div
-                                                                                                                                                class="vence-row">
-                                                                                                                                                <div class="vence-row__avatar
-                                                     ${con.proximoAVencer(3) ? 'urgent' : ''}">
-                                                                                                                                                    <c:out
-                                                                                                                                                        value="${fn:substring(con.cliente.nombre, 0, 1)}" />
-                                                                                                                                                </div>
+                                                                                                                                                class="report-card__header-left">
                                                                                                                                                 <div
-                                                                                                                                                    class="vence-row__info">
-                                                                                                                                                    <p
-                                                                                                                                                        class="vence-row__nombre">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${con.cliente.nombreCompleto}" />
-                                                                                                                                                    </p>
-                                                                                                                                                    <p
-                                                                                                                                                        class="vence-row__membresia">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${con.membresia.nombreMembresia}" />
-                                                                                                                                                    </p>
+                                                                                                                                                    class="report-card__icon yellow-icon">
+                                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                                        fill="none"
+                                                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                                                        stroke="currentColor"
+                                                                                                                                                        stroke-width="1.8">
+                                                                                                                                                        <path
+                                                                                                                                                            stroke-linecap="round"
+                                                                                                                                                            stroke-linejoin="round"
+                                                                                                                                                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
+                                                         0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
+                                                         0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                                                                                                                                    </svg>
                                                                                                                                                 </div>
                                                                                                                                                 <span
-                                                                                                                                                    class="vence-row__fecha ${con.proximoAVencer(3) ? 'urgente' : ''}">
-                                                                                                                                                    <c:out
-                                                                                                                                                        value="${con.fechaFin}" />
-                                                                                                                                                </span>
+                                                                                                                                                    class="report-card__title">Próximos
+                                                                                                                                                    a
+                                                                                                                                                    vencer</span>
                                                                                                                                             </div>
-                                                                                                                                        </c:forEach>
-                                                                                                                                        <div style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
+                                                                                                                                            <c:if
+                                                                                                                                                test="${countProximosVencer > 0}">
+                                                                                                                                                <span
+                                                                                                                                                    class="stat-chip chip--yellow">
+                                                                                                                                                    <c:out
+                                                                                                                                                        value="${countProximosVencer}" />
+                                                                                                                                                </span>
+                                                                                                                                            </c:if>
+                                                                                                                                        </div>
+
+                                                                                                                                        <c:choose>
+                                                                                                                                            <c:when
+                                                                                                                                                test="${not empty proximosVencer}">
+                                                                                                                                                <c:forEach
+                                                                                                                                                    var="con"
+                                                                                                                                                    items="${proximosVencer}">
+                                                                                                                                                    <div
+                                                                                                                                                        class="vence-row">
+                                                                                                                                                        <div class="vence-row__avatar
+                                                     ${con.proximoAVencer(3) ? 'urgent' : ''}">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${fn:substring(con.cliente.nombre, 0, 1)}" />
+                                                                                                                                                        </div>
+                                                                                                                                                        <div
+                                                                                                                                                            class="vence-row__info">
+                                                                                                                                                            <p
+                                                                                                                                                                class="vence-row__nombre">
+                                                                                                                                                                <c:out
+                                                                                                                                                                    value="${con.cliente.nombreCompleto}" />
+                                                                                                                                                            </p>
+                                                                                                                                                            <p
+                                                                                                                                                                class="vence-row__membresia">
+                                                                                                                                                                <c:out
+                                                                                                                                                                    value="${con.membresia.nombreMembresia}" />
+                                                                                                                                                            </p>
+                                                                                                                                                        </div>
+                                                                                                                                                        <span
+                                                                                                                                                            class="vence-row__fecha ${con.proximoAVencer(3) ? 'urgente' : ''}">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${con.fechaFin}" />
+                                                                                                                                                        </span>
+                                                                                                                                                    </div>
+                                                                                                                                                </c:forEach>
+                                                                                                                                                <div style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
                                                     background:rgba(255,255,255,0.012);
                                                     font-size:0.73rem; color:var(--clr-text-dim);">
-                                                                                                                                            Contratos
-                                                                                                                                            que
-                                                                                                                                            vencen
-                                                                                                                                            en
-                                                                                                                                            los
-                                                                                                                                            próximos
-                                                                                                                                            7
-                                                                                                                                            días
-                                                                                                                                        </div>
-                                                                                                                                    </c:when>
-                                                                                                                                    <c:otherwise>
-                                                                                                                                        <div
-                                                                                                                                            class="report-empty">
-                                                                                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                                fill="none"
-                                                                                                                                                viewBox="0 0 24 24"
-                                                                                                                                                stroke="currentColor"
-                                                                                                                                                stroke-width="1.5">
-                                                                                                                                                <path
-                                                                                                                                                    stroke-linecap="round"
-                                                                                                                                                    stroke-linejoin="round"
-                                                                                                                                                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                                                                                                            </svg>
-                                                                                                                                            <p>Sin
-                                                                                                                                                contratos
-                                                                                                                                                próximos
-                                                                                                                                                a
-                                                                                                                                                vencer.<br>Todo
-                                                                                                                                                en
-                                                                                                                                                orden.
-                                                                                                                                            </p>
-                                                                                                                                        </div>
-                                                                                                                                    </c:otherwise>
-                                                                                                                                </c:choose>
+                                                                                                                                                    Contratos
+                                                                                                                                                    que
+                                                                                                                                                    vencen
+                                                                                                                                                    en
+                                                                                                                                                    los
+                                                                                                                                                    próximos
+                                                                                                                                                    7
+                                                                                                                                                    días
+                                                                                                                                                </div>
+                                                                                                                                            </c:when>
+                                                                                                                                            <c:otherwise>
+                                                                                                                                                <div
+                                                                                                                                                    class="report-empty">
+                                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                                        fill="none"
+                                                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                                                        stroke="currentColor"
+                                                                                                                                                        stroke-width="1.5">
+                                                                                                                                                        <path
+                                                                                                                                                            stroke-linecap="round"
+                                                                                                                                                            stroke-linejoin="round"
+                                                                                                                                                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                                                                                                    </svg>
+                                                                                                                                                    <p>Sin
+                                                                                                                                                        contratos
+                                                                                                                                                        próximos
+                                                                                                                                                        a
+                                                                                                                                                        vencer.<br>Todo
+                                                                                                                                                        en
+                                                                                                                                                        orden.
+                                                                                                                                                    </p>
+                                                                                                                                                </div>
+                                                                                                                                            </c:otherwise>
+                                                                                                                                        </c:choose>
+                                                                                                                                    </div>
+
+                                                                                                                    </div>
+                                                                                                                    <%-- /aside
+                                                                                                                        columna
+                                                                                                                        derecha
+                                                                                                                        --%>
+                                                                                                        </div><%--
+                                                                                                            /report-two-col
+                                                                                                            --%>
+
+                                                                                                            <%-- Ingresos
+                                                                                                                últimos
+                                                                                                                6 meses
+                                                                                                                --%>
+                                                                                                                <div class="report-card"
+                                                                                                                    style="margin-top:1rem;">
+                                                                                                                    <div
+                                                                                                                        class="report-card__header">
+                                                                                                                        <div
+                                                                                                                            class="report-card__header-left">
+                                                                                                                            <div
+                                                                                                                                class="report-card__icon">
+                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                    fill="none"
+                                                                                                                                    viewBox="0 0 24 24"
+                                                                                                                                    stroke="currentColor"
+                                                                                                                                    stroke-width="1.8">
+                                                                                                                                    <path
+                                                                                                                                        stroke-linecap="round"
+                                                                                                                                        stroke-linejoin="round"
+                                                                                                                                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                                                                                                                </svg>
                                                                                                                             </div>
-
+                                                                                                                            <span
+                                                                                                                                class="report-card__title">Tendencia
+                                                                                                                                de
+                                                                                                                                ingresos</span>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                    <div
+                                                                                                                        style="padding:1.25rem; height:260px; position:relative;">
+                                                                                                                        <canvas
+                                                                                                                            id="contratosIngresosChart"
+                                                                                                                            role="img"
+                                                                                                                            aria-label="Gráfico de barras de ingresos mensuales de los últimos 6 meses"></canvas>
+                                                                                                                    </div>
                                                                                                                 </div>
-                                                                                                                <%-- /aside
-                                                                                                                    columna
-                                                                                                                    derecha
-                                                                                                                    --%>
-                                                                                                    </div><%--
-                                                                                                        /report-two-col
-                                                                                                        --%>
-
-                                                                                        <%-- Ingresos últimos 6 meses --%>
-                                                                                        <div class="report-card" style="margin-top:1rem;">
-                                                                                            <div class="report-card__header">
-                                                                                                <div class="report-card__header-left">
-                                                                                                    <div class="report-card__icon">
-                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                                                                             stroke="currentColor" stroke-width="1.8">
-                                                                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                                                  d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-                                                                                                        </svg>
-                                                                                                    </div>
-                                                                                                    <span class="report-card__title">Tendencia de ingresos</span>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div style="padding:1.25rem; height:260px; position:relative;">
-                                                                                                <canvas id="contratosIngresosChart"
-                                                                                                        role="img"
-                                                                                                        aria-label="Gráfico de barras de ingresos mensuales de los últimos 6 meses"></canvas>
-                                                                                            </div>
-                                                                                        </div>
 
                                                                                     </c:when>
 
@@ -2243,7 +2469,8 @@
                                                                                                         <div
                                                                                                             class="report-kpi-card__header">
                                                                                                             <span
-                                                                                                                class="report-kpi-card__label">Día pico</span>
+                                                                                                                class="report-kpi-card__label">Día
+                                                                                                                pico</span>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__badge">
                                                                                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -2266,7 +2493,9 @@
                                                                                                         <div
                                                                                                             class="report-kpi-card__meta">
                                                                                                             <c:out
-                                                                                                                value="${diaPicoPromedio}" /> personas aprox.
+                                                                                                                value="${diaPicoPromedio}" />
+                                                                                                            personas
+                                                                                                            aprox.
                                                                                                         </div>
                                                                                                     </div>
 
@@ -2302,7 +2531,8 @@
                                                                                                                     <c:out
                                                                                                                         value="${asistenciasRecientes[0].horaIngresoFormateada}" />
                                                                                                                     <br>
-                                                                                                                    <span style="font-size:0.85rem; color:var(--clr-text-dim);">
+                                                                                                                    <span
+                                                                                                                        style="font-size:0.85rem; color:var(--clr-text-dim);">
                                                                                                                         <c:out
                                                                                                                             value="${asistenciasRecientes[0].contrato.cliente.nombreCompleto}" />
                                                                                                                     </span>
@@ -2322,149 +2552,16 @@
 
                                                                                                 </div>
 
-                                                                                                <%-- Gráfico de Asistencias --%>
-                                                                                                <div class="report-card" style="padding: 1.5rem;">
-                                                                                                    <div class="report-card__header">
-                                                                                                        <div class="report-card__header-left">
-                                                                                                            <div class="report-card__icon green-icon">
-                                                                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                                                                                </svg>
-                                                                                                            </div>
-                                                                                                            <span class="report-card__title">Asistencias por Día</span>
-                                                                                                        </div>
-                                                                                                        <form action="${pageContext.request.contextPath}/reports" method="GET" style="display:flex; gap:0.5rem; align-items:center;">
-                                                                                                            <input type="hidden" name="action" value="asistencia">
-                                                                                                            <select name="mes" class="form-control" style="width: auto;">
-                                                                                                                <option value="1" ${filtroMes == 1 ? 'selected' : ''}>Enero</option>
-                                                                                                                <option value="2" ${filtroMes == 2 ? 'selected' : ''}>Febrero</option>
-                                                                                                                <option value="3" ${filtroMes == 3 ? 'selected' : ''}>Marzo</option>
-                                                                                                                <option value="4" ${filtroMes == 4 ? 'selected' : ''}>Abril</option>
-                                                                                                                <option value="5" ${filtroMes == 5 ? 'selected' : ''}>Mayo</option>
-                                                                                                                <option value="6" ${filtroMes == 6 ? 'selected' : ''}>Junio</option>
-                                                                                                                <option value="7" ${filtroMes == 7 ? 'selected' : ''}>Julio</option>
-                                                                                                                <option value="8" ${filtroMes == 8 ? 'selected' : ''}>Agosto</option>
-                                                                                                                <option value="9" ${filtroMes == 9 ? 'selected' : ''}>Septiembre</option>
-                                                                                                                <option value="10" ${filtroMes == 10 ? 'selected' : ''}>Octubre</option>
-                                                                                                                <option value="11" ${filtroMes == 11 ? 'selected' : ''}>Noviembre</option>
-                                                                                                                <option value="12" ${filtroMes == 12 ? 'selected' : ''}>Diciembre</option>
-                                                                                                            </select>
-                                                                                                            <select name="semana" class="form-control" style="width: auto;">
-                                                                                                                <option value="1" ${filtroSemana == 1 ? 'selected' : ''}>Semana 1</option>
-                                                                                                                <option value="2" ${filtroSemana == 2 ? 'selected' : ''}>Semana 2</option>
-                                                                                                                <option value="3" ${filtroSemana == 3 ? 'selected' : ''}>Semana 3</option>
-                                                                                                                <option value="4" ${filtroSemana == 4 ? 'selected' : ''}>Semana 4</option>
-                                                                                                                <option value="5" ${filtroSemana == 5 ? 'selected' : ''}>Semana 5</option>
-                                                                                                            </select>
-                                                                                                            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                                                                                                        </form>
-                                                                                                    </div>
-
-                                                                                                    <div style="width: 100%; height: 400px; margin-top: 1rem;">
-                                                                                                        <canvas id="asistenciaChart"></canvas>
-                                                                                                    </div>
-                                                                                                </div>
-
-                                                                                        </c:when>
-
-                                                                                        <%-- ──────────────────────────────────────────
-                                                                                            VISTA: REPORTE DE MEMBRESÍAS
-                                                                                            ?action=membresias
-                                                                                            ──────────────────────────────────────────
-                                                                                            --%>
-                                                                                            <c:when
-                                                                                                test="${vistaActiva eq 'membresias'}">
-
-                                                                                                <%-- Filtro de fechas --%>
-                                                                                                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow-x: auto;">
-                                                                                                    
-                                                                                                    <%-- Botones rápidos en un cuadro rectangular --%>
-                                                                                                    <div style="display: flex; gap: 0.2rem; background: var(--bg-body, #f1f5f9); padding: 0.3rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=" 
-                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${(empty filtroRapido and empty desde) ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Todos</a>
-                                                                                                           
-                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=hoy" 
-                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'hoy' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Hoy</a>
-                                                                                                           
-                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=semana" 
-                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'semana' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Esta semana</a>
-                                                                                                           
-                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=mes" 
-                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'mes' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Este mes</a>
-                                                                                                    </div>
-                                                                                                    
-                                                                                                    <%-- Filtro personalizado desde/hasta --%>
-                                                                                                    <form action="${pageContext.request.contextPath}/reports" method="GET" style="display:flex; gap:0.5rem; align-items:center; margin: 0; padding-left: 1rem; flex-wrap: nowrap;">
-                                                                                                        <input type="hidden" name="action" value="membresias">
-                                                                                                        <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500; white-space: nowrap;">Rango:</span>
-                                                                                                        <input type="date" name="desde" value="${desde}" class="form-control" style="width: auto; height: 36px; padding: 0.2rem 0.5rem;" required>
-                                                                                                        <span style="color: var(--text-muted); font-size: 0.9rem;">-</span>
-                                                                                                        <input type="date" name="hasta" value="${hasta}" class="form-control" style="width: auto; height: 36px; padding: 0.2rem 0.5rem;" required>
-                                                                                                        
-                                                                                                        <button type="submit" class="btn" style="padding: 0 1rem; height: 36px; background-color: #ef4444; color: white; border: none; display: flex; align-items: center; gap: 0.4rem;">
-                                                                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                                                                                                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
-                                                                                                            </svg>
-                                                                                                            Filtrar
-                                                                                                        </button>
-                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias" class="btn" style="padding: 0 1rem; height: 36px; background-color: var(--bg-body, #f1f5f9); color: var(--text-muted); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.4rem; text-decoration: none; border-radius: 4px;">
-                                                                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                                                                                                              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                                                                                            </svg>
-                                                                                                            Limpiar
-                                                                                                        </a>
-                                                                                                    </form>
-                                                                                                </div>
-
-                                                                                                <%-- KPIs --%>
-                                                                                                    <div class="report-kpi-grid"
-                                                                                                        style="grid-template-columns: repeat(3, 1fr);">
-
+                                                                                                <%-- Gráfico de
+                                                                                                    Asistencias --%>
+                                                                                                    <div class="report-card"
+                                                                                                        style="padding: 1.5rem;">
                                                                                                         <div
-                                                                                                            class="report-kpi-card c--red">
+                                                                                                            class="report-card__header">
                                                                                                             <div
-                                                                                                                class="report-kpi-card__header">
-                                                                                                                <span
-                                                                                                                    class="report-kpi-card__label">Planes
-                                                                                                                    disponibles</span>
+                                                                                                                class="report-card__header-left">
                                                                                                                 <div
-                                                                                                                    class="report-kpi-card__badge">
-                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                        fill="none"
-                                                                                                                        viewBox="0 0 24 24"
-                                                                                                                        stroke="currentColor"
-                                                                                                                        stroke-width="1.8">
-                                                                                                                        <path
-                                                                                                                            stroke-linecap="round"
-                                                                                                                            stroke-linejoin="round"
-                                                                                                                            d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25
-                                                 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25
-                                                 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                                                                                                                    </svg>
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__value">
-                                                                                                                <c:out
-                                                                                                                    value="${totalPlanes}" />
-                                                                                                            </div>
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__meta">
-                                                                                                                Planes
-                                                                                                                en
-                                                                                                                catálogo
-                                                                                                            </div>
-                                                                                                        </div>
-
-                                                                                                        <div
-                                                                                                            class="report-kpi-card c--green">
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__header">
-                                                                                                                <span
-                                                                                                                    class="report-kpi-card__label">Contratos
-                                                                                                                    activos</span>
-                                                                                                                <div
-                                                                                                                    class="report-kpi-card__badge">
+                                                                                                                    class="report-card__icon green-icon">
                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                                                                                         fill="none"
                                                                                                                         viewBox="0 0 24 24"
@@ -2476,152 +2573,414 @@
                                                                                                                             d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                                                                                                     </svg>
                                                                                                                 </div>
+                                                                                                                <span
+                                                                                                                    class="report-card__title">Asistencias
+                                                                                                                    por
+                                                                                                                    Día</span>
                                                                                                             </div>
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__value">
-                                                                                                                <c:out
-                                                                                                                    value="${totalContratosActivos}" />
-                                                                                                            </div>
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__meta">
-                                                                                                                Membresías
-                                                                                                                vigentes
-                                                                                                                ahora
-                                                                                                            </div>
+                                                                                                            <form
+                                                                                                                action="${pageContext.request.contextPath}/reports"
+                                                                                                                method="GET"
+                                                                                                                style="display:flex; gap:0.5rem; align-items:center;">
+                                                                                                                <input
+                                                                                                                    type="hidden"
+                                                                                                                    name="action"
+                                                                                                                    value="asistencia">
+                                                                                                                <select
+                                                                                                                    name="mes"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: auto;">
+                                                                                                                    <option
+                                                                                                                        value="1"
+                                                                                                                        ${filtroMes==1
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Enero
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="2"
+                                                                                                                        ${filtroMes==2
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Febrero
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="3"
+                                                                                                                        ${filtroMes==3
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Marzo
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="4"
+                                                                                                                        ${filtroMes==4
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Abril
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="5"
+                                                                                                                        ${filtroMes==5
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Mayo
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="6"
+                                                                                                                        ${filtroMes==6
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Junio
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="7"
+                                                                                                                        ${filtroMes==7
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Julio
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="8"
+                                                                                                                        ${filtroMes==8
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Agosto
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="9"
+                                                                                                                        ${filtroMes==9
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Septiembre
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="10"
+                                                                                                                        ${filtroMes==10
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Octubre
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="11"
+                                                                                                                        ${filtroMes==11
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Noviembre
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="12"
+                                                                                                                        ${filtroMes==12
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Diciembre
+                                                                                                                    </option>
+                                                                                                                </select>
+                                                                                                                <select
+                                                                                                                    name="semana"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: auto;">
+                                                                                                                    <option
+                                                                                                                        value="1"
+                                                                                                                        ${filtroSemana==1
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Semana
+                                                                                                                        1
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="2"
+                                                                                                                        ${filtroSemana==2
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Semana
+                                                                                                                        2
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="3"
+                                                                                                                        ${filtroSemana==3
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Semana
+                                                                                                                        3
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="4"
+                                                                                                                        ${filtroSemana==4
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Semana
+                                                                                                                        4
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="5"
+                                                                                                                        ${filtroSemana==5
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Semana
+                                                                                                                        5
+                                                                                                                    </option>
+                                                                                                                </select>
+                                                                                                                <button
+                                                                                                                    type="submit"
+                                                                                                                    class="btn btn-primary btn-sm">Filtrar</button>
+                                                                                                            </form>
                                                                                                         </div>
 
                                                                                                         <div
-                                                                                                            class="report-kpi-card c--teal">
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__header">
-                                                                                                                <span
-                                                                                                                    class="report-kpi-card__label">Plan más
-                                                                                                                    vendido</span>
-                                                                                                                <div
-                                                                                                                    class="report-kpi-card__badge">
-                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                        fill="none"
-                                                                                                                        viewBox="0 0 24 24"
-                                                                                                                        stroke="currentColor"
-                                                                                                                        stroke-width="1.8">
-                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
-                                                                                                                    </svg>
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                            <div class="report-kpi-card__value"
-                                                                                                                style="font-size:1.3rem; padding-top:0.1rem;">
-                                                                                                                ${not empty planMasVendido ? planMasVendido : 'Ninguno'}
-                                                                                                            </div>
-                                                                                                            <div
-                                                                                                                class="report-kpi-card__meta">
-                                                                                                                ${planMasVendidoCantidad}
-                                                                                                                contratos
-                                                                                                                activos
-                                                                                                            </div>
+                                                                                                            style="width: 100%; height: 400px; margin-top: 1rem;">
+                                                                                                            <canvas
+                                                                                                                id="asistenciaChart"></canvas>
                                                                                                         </div>
-
                                                                                                     </div>
 
-                                                                                                    <%-- Layout: planes
-                                                                                                        + contratos
-                                                                                                        activos --%>
-                                                                                                        <div
-                                                                                                            class="report-two-col--wide report-two-col">
+                                                                                        </c:when>
 
-                                                                                                            <%-- Lista
-                                                                                                                de
-                                                                                                                planes
+                                                                                        <%-- ──────────────────────────────────────────
+                                                                                            VISTA: REPORTE DE MEMBRESÍAS
+                                                                                            ?action=membresias
+                                                                                            ──────────────────────────────────────────
+                                                                                            --%>
+                                                                                            <c:when
+                                                                                                test="${vistaActiva eq 'membresias'}">
+
+                                                                                                <%-- Filtro de fechas
+                                                                                                    --%>
+                                                                                                    <div
+                                                                                                        style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow-x: auto;">
+
+                                                                                                        <%-- Botones
+                                                                                                            rápidos en
+                                                                                                            un cuadro
+                                                                                                            rectangular
+                                                                                                            --%>
+                                                                                                            <div
+                                                                                                                style="display: flex; gap: 0.2rem; background: var(--bg-body, #f1f5f9); padding: 0.3rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                                                                                                <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido="
+                                                                                                                    style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${(empty filtroRapido and empty desde) ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Todos</a>
+
+                                                                                                                <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=hoy"
+                                                                                                                    style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'hoy' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Hoy</a>
+
+                                                                                                                <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=semana"
+                                                                                                                    style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'semana' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Esta
+                                                                                                                    semana</a>
+
+                                                                                                                <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=mes"
+                                                                                                                    style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'mes' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Este
+                                                                                                                    mes</a>
+                                                                                                            </div>
+
+                                                                                                            <%-- Filtro
+                                                                                                                personalizado
+                                                                                                                desde/hasta
                                                                                                                 --%>
+                                                                                                                <form
+                                                                                                                    action="${pageContext.request.contextPath}/reports"
+                                                                                                                    method="GET"
+                                                                                                                    style="display:flex; gap:0.5rem; align-items:center; margin: 0; padding-left: 1rem; flex-wrap: nowrap;">
+                                                                                                                    <input
+                                                                                                                        type="hidden"
+                                                                                                                        name="action"
+                                                                                                                        value="membresias">
+                                                                                                                    <span
+                                                                                                                        style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500; white-space: nowrap;">Rango:</span>
+                                                                                                                    <input
+                                                                                                                        type="date"
+                                                                                                                        name="desde"
+                                                                                                                        value="${desde}"
+                                                                                                                        class="form-control"
+                                                                                                                        style="width: auto; height: 36px; padding: 0.2rem 0.5rem;"
+                                                                                                                        required>
+                                                                                                                    <span
+                                                                                                                        style="color: var(--text-muted); font-size: 0.9rem;">-</span>
+                                                                                                                    <input
+                                                                                                                        type="date"
+                                                                                                                        name="hasta"
+                                                                                                                        value="${hasta}"
+                                                                                                                        class="form-control"
+                                                                                                                        style="width: auto; height: 36px; padding: 0.2rem 0.5rem;"
+                                                                                                                        required>
+
+                                                                                                                    <button
+                                                                                                                        type="submit"
+                                                                                                                        class="btn"
+                                                                                                                        style="padding: 0 1rem; height: 36px; background-color: #ef4444; color: white; border: none; display: flex; align-items: center; gap: 0.4rem;">
+                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                            fill="none"
+                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                            stroke="currentColor"
+                                                                                                                            stroke-width="2"
+                                                                                                                            style="width: 16px; height: 16px;">
+                                                                                                                            <path
+                                                                                                                                stroke-linecap="round"
+                                                                                                                                stroke-linejoin="round"
+                                                                                                                                d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                                                                                                                        </svg>
+                                                                                                                        Filtrar
+                                                                                                                    </button>
+                                                                                                                    <a href="${pageContext.request.contextPath}/reports?action=membresias"
+                                                                                                                        class="btn"
+                                                                                                                        style="padding: 0 1rem; height: 36px; background-color: var(--bg-body, #f1f5f9); color: var(--text-muted); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.4rem; text-decoration: none; border-radius: 4px;">
+                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                            fill="none"
+                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                            stroke="currentColor"
+                                                                                                                            stroke-width="2"
+                                                                                                                            style="width: 16px; height: 16px;">
+                                                                                                                            <path
+                                                                                                                                stroke-linecap="round"
+                                                                                                                                stroke-linejoin="round"
+                                                                                                                                d="M6 18 18 6M6 6l12 12" />
+                                                                                                                        </svg>
+                                                                                                                        Limpiar
+                                                                                                                    </a>
+                                                                                                                </form>
+                                                                                                    </div>
+
+                                                                                                    <%-- KPIs --%>
+                                                                                                        <div class="report-kpi-grid"
+                                                                                                            style="grid-template-columns: repeat(3, 1fr);">
+
+                                                                                                            <div
+                                                                                                                class="report-kpi-card c--red">
                                                                                                                 <div
-                                                                                                                    class="report-card">
+                                                                                                                    class="report-kpi-card__header">
+                                                                                                                    <span
+                                                                                                                        class="report-kpi-card__label">Planes
+                                                                                                                        disponibles</span>
                                                                                                                     <div
-                                                                                                                        class="report-card__header">
-                                                                                                                        <div
-                                                                                                                            class="report-card__header-left">
-                                                                                                                            <div
-                                                                                                                                class="report-card__icon">
-                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                    fill="none"
-                                                                                                                                    viewBox="0 0 24 24"
-                                                                                                                                    stroke="currentColor"
-                                                                                                                                    stroke-width="1.8">
-                                                                                                                                    <path
-                                                                                                                                        stroke-linecap="round"
-                                                                                                                                        stroke-linejoin="round"
-                                                                                                                                        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25
-                                                     2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0
-                                                     0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                                                                                                                                </svg>
-                                                                                                                            </div>
-                                                                                                                            <span
-                                                                                                                                class="report-card__title">Planes
-                                                                                                                                de
-                                                                                                                                membresía</span>
-                                                                                                                        </div>
-                                                                                                                        <span
-                                                                                                                            class="stat-chip">
-                                                                                                                            <c:out
-                                                                                                                                value="${totalPlanes}" />
-                                                                                                                            planes
-                                                                                                                        </span>
+                                                                                                                        class="report-kpi-card__badge">
+                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                            fill="none"
+                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                            stroke="currentColor"
+                                                                                                                            stroke-width="1.8">
+                                                                                                                            <path
+                                                                                                                                stroke-linecap="round"
+                                                                                                                                stroke-linejoin="round"
+                                                                                                                                d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25
+                                                 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25
+                                                 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                                                                                                                        </svg>
                                                                                                                     </div>
-
-                                                                                                                    <c:choose>
-                                                                                                                        <c:when
-                                                                                                                            test="${not empty membresias}">
-                                                                                                                            <div style="padding: 1.5rem; display: flex; justify-content: center; height: 300px;">
-                                                                                                                                <canvas id="membresiasChart"></canvas>
-                                                                                                                            </div>
-                                                                                                                            <div
-                                                                                                                                style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
-                                                background:rgba(255,255,255,0.012); display:flex; justify-content:flex-end;">
-                                                                                                                                <a href="${pageContext.request.contextPath}/memberships"
-                                                                                                                                    class="btn btn-ghost btn-sm">
-                                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                        fill="none"
-                                                                                                                                        viewBox="0 0 24 24"
-                                                                                                                                        stroke="currentColor"
-                                                                                                                                        stroke-width="1.8">
-                                                                                                                                        <path
-                                                                                                                                            stroke-linecap="round"
-                                                                                                                                            stroke-linejoin="round"
-                                                                                                                                            d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                                                                                                                                    </svg>
-                                                                                                                                    Gestionar
-                                                                                                                                    membresías
-                                                                                                                                </a>
-                                                                                                                            </div>
-                                                                                                                        </c:when>
-                                                                                                                        <c:otherwise>
-                                                                                                                            <div
-                                                                                                                                class="report-empty">
-                                                                                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                                                                    fill="none"
-                                                                                                                                    viewBox="0 0 24 24"
-                                                                                                                                    stroke="currentColor"
-                                                                                                                                    stroke-width="1.5">
-                                                                                                                                    <path
-                                                                                                                                        stroke-linecap="round"
-                                                                                                                                        stroke-linejoin="round"
-                                                                                                                                        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25
-                                                     2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0
-                                                     0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                                                                                                                                </svg>
-                                                                                                                                <p>No
-                                                                                                                                    hay
-                                                                                                                                    planes
-                                                                                                                                    de
-                                                                                                                                    membresía
-                                                                                                                                    registrados.
-                                                                                                                                </p>
-                                                                                                                            </div>
-                                                                                                                        </c:otherwise>
-                                                                                                                    </c:choose>
                                                                                                                 </div>
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__value">
+                                                                                                                    <c:out
+                                                                                                                        value="${totalPlanes}" />
+                                                                                                                </div>
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__meta">
+                                                                                                                    Planes
+                                                                                                                    en
+                                                                                                                    catálogo
+                                                                                                                </div>
+                                                                                                            </div>
 
-                                                                                                                <%-- Contratos
+                                                                                                            <div
+                                                                                                                class="report-kpi-card c--green">
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__header">
+                                                                                                                    <span
+                                                                                                                        class="report-kpi-card__label">Membresías
+                                                                                                                        vendidas</span>
+                                                                                                                    <div
+                                                                                                                        class="report-kpi-card__badge">
+                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                            fill="none"
+                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                            stroke="currentColor"
+                                                                                                                            stroke-width="1.8">
+                                                                                                                            <path
+                                                                                                                                stroke-linecap="round"
+                                                                                                                                stroke-linejoin="round"
+                                                                                                                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                                                                        </svg>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__value">
+                                                                                                                    <c:out
+                                                                                                                        value="${totalContratosActivos}" />
+                                                                                                                </div>
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__meta">
+                                                                                                                    Membresías
+                                                                                                                    vigentes
+                                                                                                                    ahora
+                                                                                                                </div>
+                                                                                                            </div>
+
+                                                                                                            <div
+                                                                                                                class="report-kpi-card c--teal">
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__header">
+                                                                                                                    <span
+                                                                                                                        class="report-kpi-card__label">Plan
+                                                                                                                        más
+                                                                                                                        vendido</span>
+                                                                                                                    <div
+                                                                                                                        class="report-kpi-card__badge">
+                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                            fill="none"
+                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                            stroke="currentColor"
+                                                                                                                            stroke-width="1.8">
+                                                                                                                            <path
+                                                                                                                                stroke-linecap="round"
+                                                                                                                                stroke-linejoin="round"
+                                                                                                                                d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                                                                                                                        </svg>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                                <div class="report-kpi-card__value"
+                                                                                                                    style="font-size:1.3rem; padding-top:0.1rem;">
+                                                                                                                    ${not
+                                                                                                                    empty
+                                                                                                                    planMasVendido
+                                                                                                                    ?
+                                                                                                                    planMasVendido
+                                                                                                                    :
+                                                                                                                    'Ninguno'}
+                                                                                                                </div>
+                                                                                                                <div
+                                                                                                                    class="report-kpi-card__meta">
+                                                                                                                    ${planMasVendidoCantidad}
+                                                                                                                    contratos
                                                                                                                     activos
-                                                                                                                    (resumen)
+                                                                                                                </div>
+                                                                                                            </div>
+
+                                                                                                        </div>
+
+                                                                                                        <%-- Layout:
+                                                                                                            planes +
+                                                                                                            Membresías
+                                                                                                            vendidas
+                                                                                                            --%>
+                                                                                                            <div
+                                                                                                                class="report-two-col--wide report-two-col">
+
+                                                                                                                <%-- Lista
+                                                                                                                    de
+                                                                                                                    planes
                                                                                                                     --%>
                                                                                                                     <div
                                                                                                                         class="report-card">
@@ -2630,7 +2989,7 @@
                                                                                                                             <div
                                                                                                                                 class="report-card__header-left">
                                                                                                                                 <div
-                                                                                                                                    class="report-card__icon green-icon">
+                                                                                                                                    class="report-card__icon">
                                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                                                                                                         fill="none"
                                                                                                                                         viewBox="0 0 24 24"
@@ -2639,88 +2998,51 @@
                                                                                                                                         <path
                                                                                                                                             stroke-linecap="round"
                                                                                                                                             stroke-linejoin="round"
-                                                                                                                                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                                                                                            d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25
+                                                     2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0
+                                                     0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
                                                                                                                                     </svg>
                                                                                                                                 </div>
                                                                                                                                 <span
-                                                                                                                                    class="report-card__title">Contratos
-                                                                                                                                    activos</span>
+                                                                                                                                    class="report-card__title">Planes
+                                                                                                                                    de
+                                                                                                                                    membresía</span>
                                                                                                                             </div>
                                                                                                                             <span
-                                                                                                                                class="stat-chip chip--green">
+                                                                                                                                class="stat-chip">
                                                                                                                                 <c:out
-                                                                                                                                    value="${totalContratosActivos}" />
+                                                                                                                                    value="${totalPlanes}" />
+                                                                                                                                planes
                                                                                                                             </span>
                                                                                                                         </div>
 
                                                                                                                         <c:choose>
                                                                                                                             <c:when
-                                                                                                                                test="${not empty contratosActivos}">
-                                                                                                                                <%-- Mostrar
-                                                                                                                                    máximo
-                                                                                                                                    15
-                                                                                                                                    --%>
-                                                                                                                                    <c:forEach
-                                                                                                                                        var="con"
-                                                                                                                                        items="${contratosActivos}"
-                                                                                                                                        end="14">
-                                                                                                                                        <div
-                                                                                                                                            class="contrato-compact-row">
-                                                                                                                                            <div
-                                                                                                                                                class="contrato-compact-row__avatar">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${fn:substring(con.cliente.nombre, 0, 1)}" />
-                                                                                                                                            </div>
-                                                                                                                                            <span
-                                                                                                                                                class="contrato-compact-row__nombre">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${con.cliente.nombreCompleto}" />
-                                                                                                                                            </span>
-                                                                                                                                            <span
-                                                                                                                                                class="contrato-compact-row__plan">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${con.membresia.nombreMembresia}" />
-                                                                                                                                            </span>
-                                                                                                                                            <span
-                                                                                                                                                class="contrato-compact-row__vence">
-                                                                                                                                                <c:out
-                                                                                                                                                    value="${con.fechaFin}" />
-                                                                                                                                            </span>
-                                                                                                                                        </div>
-                                                                                                                                    </c:forEach>
-
-                                                                                                                                    <div style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
-                                                background:rgba(255,255,255,0.012);
-                                                display:flex; align-items:center; justify-content:space-between;">
-                                                                                                                                        <span
-                                                                                                                                            style="font-size:0.72rem; color:var(--clr-text-dim);">
-                                                                                                                                            <c:choose>
-                                                                                                                                                <c:when
-                                                                                                                                                    test="${totalContratosActivos > 15}">
-                                                                                                                                                    Mostrando
-                                                                                                                                                    15
-                                                                                                                                                    de
-                                                                                                                                                    <strong
-                                                                                                                                                        style="color:var(--clr-text-muted);">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${totalContratosActivos}" />
-                                                                                                                                                    </strong>
-                                                                                                                                                </c:when>
-                                                                                                                                                <c:otherwise>
-                                                                                                                                                    <strong
-                                                                                                                                                        style="color:var(--clr-text-muted);">
-                                                                                                                                                        <c:out
-                                                                                                                                                            value="${totalContratosActivos}" />
-                                                                                                                                                    </strong>
-                                                                                                                                                    contratos
-                                                                                                                                                    activos
-                                                                                                                                                </c:otherwise>
-                                                                                                                                            </c:choose>
-                                                                                                                                        </span>
-                                                                                                                                        <a href="${pageContext.request.contextPath}/contracts"
-                                                                                                                                            class="btn btn-ghost btn-sm">Ver
-                                                                                                                                            todos</a>
-                                                                                                                                    </div>
+                                                                                                                                test="${not empty membresias}">
+                                                                                                                                <div
+                                                                                                                                    style="padding: 1.5rem; display: flex; justify-content: center; height: 300px;">
+                                                                                                                                    <canvas
+                                                                                                                                        id="membresiasChart"></canvas>
+                                                                                                                                </div>
+                                                                                                                                <div
+                                                                                                                                    style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
+                                                background:rgba(255,255,255,0.012); display:flex; justify-content:flex-end;">
+                                                                                                                                    <a href="${pageContext.request.contextPath}/memberships"
+                                                                                                                                        class="btn btn-ghost btn-sm">
+                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                            fill="none"
+                                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                                            stroke="currentColor"
+                                                                                                                                            stroke-width="1.8">
+                                                                                                                                            <path
+                                                                                                                                                stroke-linecap="round"
+                                                                                                                                                stroke-linejoin="round"
+                                                                                                                                                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                                                                                                                        </svg>
+                                                                                                                                        Gestionar
+                                                                                                                                        membresías
+                                                                                                                                    </a>
+                                                                                                                                </div>
                                                                                                                             </c:when>
                                                                                                                             <c:otherwise>
                                                                                                                                 <div
@@ -2733,28 +3055,158 @@
                                                                                                                                         <path
                                                                                                                                             stroke-linecap="round"
                                                                                                                                             stroke-linejoin="round"
-                                                                                                                                            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125
-                                                     1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0
-                                                     0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5
-                                                     2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0
-                                                     .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504
-                                                     1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                                                                                                            d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25
+                                                     2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0
+                                                     0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
                                                                                                                                     </svg>
-                                                                                                                                    <p>Sin
-                                                                                                                                        contratos
-                                                                                                                                        activos
-                                                                                                                                        en
-                                                                                                                                        este
-                                                                                                                                        momento.
+                                                                                                                                    <p>No
+                                                                                                                                        hay
+                                                                                                                                        planes
+                                                                                                                                        de
+                                                                                                                                        membresía
+                                                                                                                                        registrados.
                                                                                                                                     </p>
                                                                                                                                 </div>
                                                                                                                             </c:otherwise>
                                                                                                                         </c:choose>
                                                                                                                     </div>
 
-                                                                                                        </div><%--
-                                                                                                            /report-two-col
-                                                                                                            --%>
+                                                                                                                    <%-- Contratos
+                                                                                                                        activos
+                                                                                                                        (resumen)
+                                                                                                                        --%>
+                                                                                                                        <div
+                                                                                                                            class="report-card">
+                                                                                                                            <div
+                                                                                                                                class="report-card__header">
+                                                                                                                                <div
+                                                                                                                                    class="report-card__header-left">
+                                                                                                                                    <div
+                                                                                                                                        class="report-card__icon green-icon">
+                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                            fill="none"
+                                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                                            stroke="currentColor"
+                                                                                                                                            stroke-width="1.8">
+                                                                                                                                            <path
+                                                                                                                                                stroke-linecap="round"
+                                                                                                                                                stroke-linejoin="round"
+                                                                                                                                                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                                                                                        </svg>
+                                                                                                                                    </div>
+                                                                                                                                    <span
+                                                                                                                                        class="report-card__title">Membresías
+                                                                                                                                        vendidas</span>
+                                                                                                                                </div>
+                                                                                                                                <span
+                                                                                                                                    class="stat-chip chip--green">
+                                                                                                                                    <c:out
+                                                                                                                                        value="${totalContratosActivos}" />
+                                                                                                                                </span>
+                                                                                                                            </div>
+
+                                                                                                                            <c:choose>
+                                                                                                                                <c:when
+                                                                                                                                    test="${not empty contratosActivos}">
+                                                                                                                                    <%-- Mostrar
+                                                                                                                                        máximo
+                                                                                                                                        15
+                                                                                                                                        --%>
+                                                                                                                                        <c:forEach
+                                                                                                                                            var="con"
+                                                                                                                                            items="${contratosActivos}"
+                                                                                                                                            end="14">
+                                                                                                                                            <div
+                                                                                                                                                class="contrato-compact-row">
+                                                                                                                                                <div
+                                                                                                                                                    class="contrato-compact-row__avatar">
+                                                                                                                                                    <c:out
+                                                                                                                                                        value="${fn:substring(con.cliente.nombre, 0, 1)}" />
+                                                                                                                                                </div>
+                                                                                                                                                <span
+                                                                                                                                                    class="contrato-compact-row__nombre">
+                                                                                                                                                    <c:out
+                                                                                                                                                        value="${con.cliente.nombreCompleto}" />
+                                                                                                                                                </span>
+                                                                                                                                                <span
+                                                                                                                                                    class="contrato-compact-row__plan">
+                                                                                                                                                    <c:out
+                                                                                                                                                        value="${con.membresia.nombreMembresia}" />
+                                                                                                                                                </span>
+                                                                                                                                                <span
+                                                                                                                                                    class="contrato-compact-row__vence">
+                                                                                                                                                    <c:out
+                                                                                                                                                        value="${con.fechaFin}" />
+                                                                                                                                                </span>
+                                                                                                                                            </div>
+                                                                                                                                        </c:forEach>
+
+                                                                                                                                        <div style="padding:0.65rem 1.25rem; border-top:1px solid var(--clr-border-light);
+                                                background:rgba(255,255,255,0.012);
+                                                display:flex; align-items:center; justify-content:space-between;">
+                                                                                                                                            <span
+                                                                                                                                                style="font-size:0.72rem; color:var(--clr-text-dim);">
+                                                                                                                                                <c:choose>
+                                                                                                                                                    <c:when
+                                                                                                                                                        test="${totalContratosActivos > 15}">
+                                                                                                                                                        Mostrando
+                                                                                                                                                        15
+                                                                                                                                                        de
+                                                                                                                                                        <strong
+                                                                                                                                                            style="color:var(--clr-text-muted);">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${totalContratosActivos}" />
+                                                                                                                                                        </strong>
+                                                                                                                                                    </c:when>
+                                                                                                                                                    <c:otherwise>
+                                                                                                                                                        <strong
+                                                                                                                                                            style="color:var(--clr-text-muted);">
+                                                                                                                                                            <c:out
+                                                                                                                                                                value="${totalContratosActivos}" />
+                                                                                                                                                        </strong>
+                                                                                                                                                        contratos
+                                                                                                                                                        activos
+                                                                                                                                                    </c:otherwise>
+                                                                                                                                                </c:choose>
+                                                                                                                                            </span>
+                                                                                                                                            <a href="${pageContext.request.contextPath}/contracts"
+                                                                                                                                                class="btn btn-ghost btn-sm">Ver
+                                                                                                                                                todos</a>
+                                                                                                                                        </div>
+                                                                                                                                </c:when>
+                                                                                                                                <c:otherwise>
+                                                                                                                                    <div
+                                                                                                                                        class="report-empty">
+                                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                                            fill="none"
+                                                                                                                                            viewBox="0 0 24 24"
+                                                                                                                                            stroke="currentColor"
+                                                                                                                                            stroke-width="1.5">
+                                                                                                                                            <path
+                                                                                                                                                stroke-linecap="round"
+                                                                                                                                                stroke-linejoin="round"
+                                                                                                                                                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125
+                                                     1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0
+                                                     0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5
+                                                     2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0
+                                                     .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504
+                                                     1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                                                                                                                        </svg>
+                                                                                                                                        <p>Sin
+                                                                                                                                            contratos
+                                                                                                                                            activos
+                                                                                                                                            en
+                                                                                                                                            este
+                                                                                                                                            momento.
+                                                                                                                                        </p>
+                                                                                                                                    </div>
+                                                                                                                                </c:otherwise>
+                                                                                                                            </c:choose>
+                                                                                                                        </div>
+
+                                                                                                            </div><%--
+                                                                                                                /report-two-col
+                                                                                                                --%>
 
                                                                                             </c:when>
 
@@ -3436,168 +3888,173 @@
                                                     </div><%-- /app-main --%>
                                             </div><%-- /app-shell --%>
 
-                                            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                                            <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-                                            <script>
-                                                document.addEventListener("DOMContentLoaded", function() {
-                                                    if (document.getElementById('contratosIngresosChart')) {
-                                                        var ctxIng = document.getElementById('contratosIngresosChart').getContext('2d');
-                                                        var labelsIng = ${contratosIngresosLabels != null ? contratosIngresosLabels : '[]'};
-                                                        var dataIng = ${contratosIngresosData != null ? contratosIngresosData : '[]'};
+                                                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                                                <script
+                                                    src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+                                                <script>
+                                                    document.addEventListener("DOMContentLoaded", function () {
+                                                        if (document.getElementById('contratosIngresosChart')) {
+                                                            var ctxIng = document.getElementById('contratosIngresosChart').getContext('2d');
+                                                            var labelsIng = ${ contratosIngresosLabels != null ? contratosIngresosLabels : '[]'
+                                                        };
+                                                        var dataIng = ${ contratosIngresosData != null ? contratosIngresosData : '[]'
+                                                    };
 
-                                                        new Chart(ctxIng, {
-                                                            type: 'bar',
-                                                            data: {
-                                                                labels: labelsIng,
-                                                                datasets: [{
-                                                                    label: 'Ingresos (S/.)',
-                                                                    data: dataIng,
-                                                                    backgroundColor: 'rgba(230, 48, 39, 0.75)',
-                                                                    borderColor: 'rgba(230, 48, 39, 1)',
-                                                                    borderWidth: 1,
-                                                                    borderRadius: 4,
-                                                                    maxBarThickness: 40
-                                                                }]
-                                                            },
-                                                            options: {
-                                                                responsive: true,
-                                                                maintainAspectRatio: false,
-                                                                scales: {
-                                                                    y: {
-                                                                        beginAtZero: true,
-                                                                        ticks: {
-                                                                            callback: function(value) { return 'S/.' + value.toLocaleString(); }
-                                                                        },
-                                                                        grid: {
-                                                                            color: 'rgba(0,0,0,0.05)'
-                                                                        }
+                                                    new Chart(ctxIng, {
+                                                        type: 'bar',
+                                                        data: {
+                                                            labels: labelsIng,
+                                                            datasets: [{
+                                                                label: 'Ingresos (S/.)',
+                                                                data: dataIng,
+                                                                backgroundColor: 'rgba(230, 48, 39, 0.75)',
+                                                                borderColor: 'rgba(230, 48, 39, 1)',
+                                                                borderWidth: 1,
+                                                                borderRadius: 4,
+                                                                maxBarThickness: 40
+                                                            }]
+                                                        },
+                                                        options: {
+                                                            responsive: true,
+                                                            maintainAspectRatio: false,
+                                                            scales: {
+                                                                y: {
+                                                                    beginAtZero: true,
+                                                                    ticks: {
+                                                                        callback: function (value) { return 'S/.' + value.toLocaleString(); }
                                                                     },
-                                                                    x: {
-                                                                        grid: {
-                                                                            display: false
-                                                                        }
+                                                                    grid: {
+                                                                        color: 'rgba(0,0,0,0.05)'
                                                                     }
                                                                 },
-                                                                plugins: {
-                                                                    legend: {
+                                                                x: {
+                                                                    grid: {
                                                                         display: false
                                                                     }
                                                                 }
+                                                            },
+                                                            plugins: {
+                                                                legend: {
+                                                                    display: false
+                                                                }
                                                             }
-                                                        });
+                                                        }
+                                                    });
                                                     }
 
                                                     if (document.getElementById('asistenciaChart')) {
                                                         var ctx = document.getElementById('asistenciaChart').getContext('2d');
-                                                        var labels = ${chartLabels != null ? chartLabels : '[]'};
-                                                        var data = ${chartData != null ? chartData : '[]'};
-                                                        
-                                                        new Chart(ctx, {
-                                                            type: 'bar',
-                                                            data: {
-                                                                labels: labels,
-                                                                datasets: [{
-                                                                    label: 'Personas Asistieron',
-                                                                    data: data,
-                                                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                                                                    borderColor: 'rgba(54, 162, 235, 1)',
-                                                                    borderWidth: 1,
-                                                                    borderRadius: 4
-                                                                }]
-                                                            },
-                                                            options: {
-                                                                responsive: true,
-                                                                maintainAspectRatio: false,
-                                                                scales: {
-                                                                    y: {
-                                                                        beginAtZero: true,
-                                                                        ticks: {
-                                                                            precision: 0
-                                                                        },
-                                                                        grid: {
-                                                                            color: 'rgba(0,0,0,0.05)'
-                                                                        }
+                                                        var labels = ${ chartLabels != null ? chartLabels : '[]'
+                                                    };
+                                                    var data = ${ chartData != null ? chartData : '[]'};
+
+                                                    new Chart(ctx, {
+                                                        type: 'bar',
+                                                        data: {
+                                                            labels: labels,
+                                                            datasets: [{
+                                                                label: 'Personas Asistieron',
+                                                                data: data,
+                                                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                                                borderColor: 'rgba(54, 162, 235, 1)',
+                                                                borderWidth: 1,
+                                                                borderRadius: 4
+                                                            }]
+                                                        },
+                                                        options: {
+                                                            responsive: true,
+                                                            maintainAspectRatio: false,
+                                                            scales: {
+                                                                y: {
+                                                                    beginAtZero: true,
+                                                                    ticks: {
+                                                                        precision: 0
                                                                     },
-                                                                    x: {
-                                                                        grid: {
-                                                                            display: false
-                                                                        }
+                                                                    grid: {
+                                                                        color: 'rgba(0,0,0,0.05)'
                                                                     }
                                                                 },
-                                                                plugins: {
-                                                                    legend: {
-                                                                        display: true,
-                                                                        position: 'top'
+                                                                x: {
+                                                                    grid: {
+                                                                        display: false
                                                                     }
                                                                 }
+                                                            },
+                                                            plugins: {
+                                                                legend: {
+                                                                    display: true,
+                                                                    position: 'top'
+                                                                }
                                                             }
-                                                        });
+                                                        }
+                                                    });
                                                     }
 
                                                     if (document.getElementById('membresiasChart')) {
                                                         var ctxMem = document.getElementById('membresiasChart').getContext('2d');
-                                                        var labelsMem = ${membresiasChartLabels != null ? membresiasChartLabels : '[]'};
-                                                        var dataMem = ${membresiasChartData != null ? membresiasChartData : '[]'};
-                                                        
-                                                        Chart.register(ChartDataLabels);
-                                                        new Chart(ctxMem, {
-                                                            type: 'doughnut',
-                                                            data: {
-                                                                labels: labelsMem,
-                                                                datasets: [{
-                                                                    data: dataMem,
-                                                                    backgroundColor: [
-                                                                        'rgba(255, 99, 132, 0.8)',
-                                                                        'rgba(54, 162, 235, 0.8)',
-                                                                        'rgba(255, 206, 86, 0.8)',
-                                                                        'rgba(75, 192, 192, 0.8)',
-                                                                        'rgba(153, 102, 255, 0.8)',
-                                                                        'rgba(255, 159, 64, 0.8)'
-                                                                    ],
-                                                                    borderColor: 'rgba(255, 255, 255, 1)',
-                                                                    borderWidth: 2
-                                                                }]
-                                                            },
-                                                            options: {
-                                                                responsive: true,
-                                                                maintainAspectRatio: false,
-                                                                plugins: {
-                                                                    legend: {
-                                                                        position: 'right'
+                                                        var labelsMem = ${ membresiasChartLabels != null ? membresiasChartLabels : '[]'
+                                                    };
+                                                    var dataMem = ${ membresiasChartData != null ? membresiasChartData : '[]'};
+
+                                                    Chart.register(ChartDataLabels);
+                                                    new Chart(ctxMem, {
+                                                        type: 'doughnut',
+                                                        data: {
+                                                            labels: labelsMem,
+                                                            datasets: [{
+                                                                data: dataMem,
+                                                                backgroundColor: [
+                                                                    'rgba(255, 99, 132, 0.8)',
+                                                                    'rgba(54, 162, 235, 0.8)',
+                                                                    'rgba(255, 206, 86, 0.8)',
+                                                                    'rgba(75, 192, 192, 0.8)',
+                                                                    'rgba(153, 102, 255, 0.8)',
+                                                                    'rgba(255, 159, 64, 0.8)'
+                                                                ],
+                                                                borderColor: 'rgba(255, 255, 255, 1)',
+                                                                borderWidth: 2
+                                                            }]
+                                                        },
+                                                        options: {
+                                                            responsive: true,
+                                                            maintainAspectRatio: false,
+                                                            plugins: {
+                                                                legend: {
+                                                                    position: 'right'
+                                                                },
+                                                                datalabels: {
+                                                                    color: '#fff',
+                                                                    font: {
+                                                                        weight: 'bold',
+                                                                        size: 14
                                                                     },
-                                                                    datalabels: {
-                                                                        color: '#fff',
-                                                                        font: {
-                                                                            weight: 'bold',
-                                                                            size: 14
-                                                                        },
-                                                                        formatter: function(value, context) {
-                                                                            var total = context.chart._metasets[context.datasetIndex].total;
-                                                                            if (total === 0) return null;
-                                                                            var percentage = +(value / total * 100).toFixed(1) + '%';
-                                                                            return percentage;
-                                                                        }
-                                                                    },
-                                                                    tooltip: {
-                                                                        callbacks: {
-                                                                            label: function(context) {
-                                                                                var label = context.label || '';
-                                                                                if (label) {
-                                                                                    label += ': ';
-                                                                                }
-                                                                                var value = context.parsed;
-                                                                                var total = context.chart._metasets[context.datasetIndex].total;
-                                                                                var percentage = +(value / total * 100).toFixed(1) + '%';
-                                                                                return label + value + ' (' + percentage + ')';
+                                                                    formatter: function (value, context) {
+                                                                        var total = context.chart._metasets[context.datasetIndex].total;
+                                                                        if (total === 0) return null;
+                                                                        var percentage = +(value / total * 100).toFixed(1) + '%';
+                                                                        return percentage;
+                                                                    }
+                                                                },
+                                                                tooltip: {
+                                                                    callbacks: {
+                                                                        label: function (context) {
+                                                                            var label = context.label || '';
+                                                                            if (label) {
+                                                                                label += ': ';
                                                                             }
+                                                                            var value = context.parsed;
+                                                                            var total = context.chart._metasets[context.datasetIndex].total;
+                                                                            var percentage = +(value / total * 100).toFixed(1) + '%';
+                                                                            return label + value + ' (' + percentage + ')';
                                                                         }
                                                                     }
                                                                 }
                                                             }
-                                                        });
+                                                        }
+                                                    });
                                                     }
                                                 });
-                                            </script>
+                                                </script>
 
                                         </body>
 
