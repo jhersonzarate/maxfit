@@ -2143,35 +2143,250 @@
                                                                                                             </div>
                                                                                                             <span class="report-card__title">Asistencias por Día</span>
                                                                                                         </div>
-                                                                                                        <form action="${pageContext.request.contextPath}/reports" method="GET" style="display:flex; gap:0.5rem; align-items:center;">
-                                                                                                            <input type="hidden" name="action" value="asistencia">
-                                                                                                            <select name="mes" class="form-control" style="width: auto;">
-                                                                                                                <option value="1" ${filtroMes == 1 ? 'selected' : ''}>Enero</option>
-                                                                                                                <option value="2" ${filtroMes == 2 ? 'selected' : ''}>Febrero</option>
-                                                                                                                <option value="3" ${filtroMes == 3 ? 'selected' : ''}>Marzo</option>
-                                                                                                                <option value="4" ${filtroMes == 4 ? 'selected' : ''}>Abril</option>
-                                                                                                                <option value="5" ${filtroMes == 5 ? 'selected' : ''}>Mayo</option>
-                                                                                                                <option value="6" ${filtroMes == 6 ? 'selected' : ''}>Junio</option>
-                                                                                                                <option value="7" ${filtroMes == 7 ? 'selected' : ''}>Julio</option>
-                                                                                                                <option value="8" ${filtroMes == 8 ? 'selected' : ''}>Agosto</option>
-                                                                                                                <option value="9" ${filtroMes == 9 ? 'selected' : ''}>Septiembre</option>
-                                                                                                                <option value="10" ${filtroMes == 10 ? 'selected' : ''}>Octubre</option>
-                                                                                                                <option value="11" ${filtroMes == 11 ? 'selected' : ''}>Noviembre</option>
-                                                                                                                <option value="12" ${filtroMes == 12 ? 'selected' : ''}>Diciembre</option>
+                                                                                                        <form
+                                                                                                            id="filtroAsistenciaForm"
+                                                                                                            action="${pageContext.request.contextPath}/reports"
+                                                                                                            method="GET"
+                                                                                                            style="display:flex; gap:0.5rem; align-items:center;">
+                                                                                                            <input
+                                                                                                                type="hidden"
+                                                                                                                name="action"
+                                                                                                                value="asistencia">
+                                                                                                            <select
+                                                                                                                name="filtroTiempo"
+                                                                                                                class="form-control"
+                                                                                                                style="width: auto;"
+                                                                                                                onchange="
+                                                                                                            if(this.value === 'personalizado'){
+                                                                                                                document.getElementById('filtrosPersonalizados').style.display = 'flex';
+                                                                                                                this.form.submit();
+                                                                                                            } else {
+                                                                                                                document.getElementById('filtrosPersonalizados').style.display = 'none';
+                                                                                                                this.form.submit();
+                                                                                                            }
+                                                                                                        ">
+                                                                                                                <option
+                                                                                                                    value="ultimos_7_dias"
+                                                                                                                    ${filtroTiempo=='ultimos_7_dias'
+                                                                                                                    ? 'selected'
+                                                                                                                    : ''
+                                                                                                                    }>
+                                                                                                                    Últimos
+                                                                                                                    7
+                                                                                                                    días
+                                                                                                                </option>
+                                                                                                                <option
+                                                                                                                    value="ultimo_mes"
+                                                                                                                    ${filtroTiempo=='ultimo_mes'
+                                                                                                                    ? 'selected'
+                                                                                                                    : ''
+                                                                                                                    }>
+                                                                                                                    Último
+                                                                                                                    mes
+                                                                                                                </option>
+                                                                                                                <option
+                                                                                                                    value="personalizado"
+                                                                                                                    ${filtroTiempo=='personalizado'
+                                                                                                                    ? 'selected'
+                                                                                                                    : ''
+                                                                                                                    }>
+                                                                                                                    Personalizado
+                                                                                                                </option>
                                                                                                             </select>
-                                                                                                            <select name="semana" class="form-control" style="width: auto;">
-                                                                                                                <option value="1" ${filtroSemana == 1 ? 'selected' : ''}>Semana 1</option>
-                                                                                                                <option value="2" ${filtroSemana == 2 ? 'selected' : ''}>Semana 2</option>
-                                                                                                                <option value="3" ${filtroSemana == 3 ? 'selected' : ''}>Semana 3</option>
-                                                                                                                <option value="4" ${filtroSemana == 4 ? 'selected' : ''}>Semana 4</option>
-                                                                                                                <option value="5" ${filtroSemana == 5 ? 'selected' : ''}>Semana 5</option>
-                                                                                                            </select>
-                                                                                                            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+
+                                                                                                            <div id="filtrosPersonalizados"
+                                                                                                                style="display: ${filtroTiempo == 'personalizado' ? 'flex' : 'none'}; gap: 0.5rem; align-items: center;">
+                                                                                                                <select
+                                                                                                                    name="dia"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: auto;"
+                                                                                                                    onchange="this.form.submit()"
+                                                                                                                    ${empty
+                                                                                                                    mes
+                                                                                                                    ? 'disabled'
+                                                                                                                    : ''
+                                                                                                                    }>
+                                                                                                                    <option
+                                                                                                                        value="">
+                                                                                                                        Día
+                                                                                                                        (Todos)
+                                                                                                                    </option>
+                                                                                                                    <c:forEach
+                                                                                                                        var="d"
+                                                                                                                        begin="1"
+                                                                                                                        end="31">
+                                                                                                                        <option
+                                                                                                                            value="${d}"
+                                                                                                                            ${dia==d
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            ${d}
+                                                                                                                        </option>
+                                                                                                                    </c:forEach>
+                                                                                                                </select>
+                                                                                                                <select
+                                                                                                                    name="mes"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: auto;"
+                                                                                                                    onchange="this.form.submit()">
+                                                                                                                    <option
+                                                                                                                        value="">
+                                                                                                                        Mes
+                                                                                                                        (Todos)
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="1"
+                                                                                                                        ${mes=='1'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Enero
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="2"
+                                                                                                                        ${mes=='2'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Febrero
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="3"
+                                                                                                                        ${mes=='3'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Marzo
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="4"
+                                                                                                                        ${mes=='4'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Abril
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="5"
+                                                                                                                        ${mes=='5'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Mayo
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="6"
+                                                                                                                        ${mes=='6'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Junio
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="7"
+                                                                                                                        ${mes=='7'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Julio
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="8"
+                                                                                                                        ${mes=='8'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Agosto
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="9"
+                                                                                                                        ${mes=='9'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Septiembre
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="10"
+                                                                                                                        ${mes=='10'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Octubre
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="11"
+                                                                                                                        ${mes=='11'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Noviembre
+                                                                                                                    </option>
+                                                                                                                    <option
+                                                                                                                        value="12"
+                                                                                                                        ${mes=='12'
+                                                                                                                        ? 'selected'
+                                                                                                                        : ''
+                                                                                                                        }>
+                                                                                                                        Diciembre
+                                                                                                                    </option>
+                                                                                                                </select>
+                                                                                                                <input
+                                                                                                                    type="number"
+                                                                                                                    name="anio"
+                                                                                                                    value="${not empty anio ? anio : currentYear}"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: 100px;"
+                                                                                                                    placeholder="Año"
+                                                                                                                    min="2000"
+                                                                                                                    onchange="this.form.submit()">
+                                                                                                            </div>
                                                                                                         </form>
                                                                                                     </div>
 
                                                                                                     <div style="width: 100%; height: 400px; margin-top: 1rem;">
                                                                                                         <canvas id="asistenciaChart"></canvas>
+                                                                                                    </div>
+                                                                                                </div>
+
+                                                                                        <%-- Tabla de Detalle de Asistencias --%>
+                                                                                                <div class="report-card" style="margin-top: 1.5rem;">
+                                                                                                    <div class="report-card__header">
+                                                                                                        <span class="report-card__title">Detalle de Asistencias</span>
+                                                                                                    </div>
+                                                                                                    <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                                                                                                        <table class="table table-striped table-hover" style="width: 100%;">
+                                                                                                            <thead>
+                                                                                                                <tr>
+                                                                                                                    <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">Cliente</th>
+                                                                                                                    <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">Documento</th>
+                                                                                                                    <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">Membresía</th>
+                                                                                                                    <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">Fecha</th>
+                                                                                                                    <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">Hora Ingreso</th>
+                                                                                                                </tr>
+                                                                                                            </thead>
+                                                                                                            <tbody>
+                                                                                                                <c:choose>
+                                                                                                                    <c:when test="${not empty historialAsistencia}">
+                                                                                                                        <c:forEach var="asist" items="${historialAsistencia}">
+                                                                                                                            <tr>
+                                                                                                                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);"><c:out value="${asist.contrato.cliente.nombreCompleto}" /></td>
+                                                                                                                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);"><c:out value="${asist.contrato.cliente.numeroDocumento}" /></td>
+                                                                                                                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);"><c:out value="${asist.contrato.membresia.nombreMembresia}" /></td>
+                                                                                                                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);"><c:out value="${asist.fecha}" /></td>
+                                                                                                                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);"><c:out value="${asist.horaIngresoFormateada}" /></td>
+                                                                                                                            </tr>
+                                                                                                                        </c:forEach>
+                                                                                                                    </c:when>
+                                                                                                                    <c:otherwise>
+                                                                                                                        <tr>
+                                                                                                                            <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--clr-text-muted);">No hay registros de asistencia en el periodo seleccionado.</td>
+                                                                                                                        </tr>
+                                                                                                                    </c:otherwise>
+                                                                                                                </c:choose>
+                                                                                                            </tbody>
+                                                                                                        </table>
                                                                                                     </div>
                                                                                                 </div>
 
@@ -2184,6 +2399,100 @@
                                                                                             --%>
                                                                                             <c:when
                                                                                                 test="${vistaActiva eq 'membresias'}">
+
+                                                                                            <%-- Filtro de fechas
+                                                                                                --%>
+                                                                                                <div
+                                                                                                    style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow-x: auto;">
+
+                                                                                                    <%-- Botones
+                                                                                                        rápidos en
+                                                                                                        un cuadro
+                                                                                                        rectangular
+                                                                                                        --%>
+                                                                                                        <div
+                                                                                                            style="display: flex; gap: 0.2rem; background: var(--bg-body, #f1f5f9); padding: 0.3rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                                                                                            <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido="
+                                                                                                                style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${(empty filtroRapido and empty desde) ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Todos</a>
+
+                                                                                                            <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=hoy"
+                                                                                                                style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'hoy' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Hoy</a>
+
+                                                                                                            <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=semana"
+                                                                                                                style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'semana' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Esta
+                                                                                                                semana</a>
+
+                                                                                                            <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=mes"
+                                                                                                                style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'mes' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Este
+                                                                                                                mes</a>
+                                                                                                        </div>
+
+                                                                                                        <%-- Filtro
+                                                                                                            personalizado
+                                                                                                            desde/hasta
+                                                                                                            --%>
+                                                                                                            <form
+                                                                                                                action="${pageContext.request.contextPath}/reports"
+                                                                                                                method="GET"
+                                                                                                                style="display:flex; gap:0.5rem; align-items:center; margin: 0; padding-left: 1rem; flex-wrap: nowrap;">
+                                                                                                                <input
+                                                                                                                    type="hidden"
+                                                                                                                    name="action"
+                                                                                                                    value="membresias">
+                                                                                                                <span
+                                                                                                                    style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500; white-space: nowrap;">Rango:</span>
+                                                                                                                <input
+                                                                                                                    type="date"
+                                                                                                                    name="desde"
+                                                                                                                    value="${desde}"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: auto; height: 36px; padding: 0.2rem 0.5rem;"
+                                                                                                                    required>
+                                                                                                                <span
+                                                                                                                    style="color: var(--text-muted); font-size: 0.9rem;">-</span>
+                                                                                                                <input
+                                                                                                                    type="date"
+                                                                                                                    name="hasta"
+                                                                                                                    value="${hasta}"
+                                                                                                                    class="form-control"
+                                                                                                                    style="width: auto; height: 36px; padding: 0.2rem 0.5rem;"
+                                                                                                                    required>
+
+                                                                                                                <button
+                                                                                                                    type="submit"
+                                                                                                                    class="btn"
+                                                                                                                    style="padding: 0 1rem; height: 36px; background-color: #ef4444; color: white; border: none; display: flex; align-items: center; gap: 0.4rem;">
+                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                        fill="none"
+                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                        stroke="currentColor"
+                                                                                                                        stroke-width="2"
+                                                                                                                        style="width: 16px; height: 16px;">
+                                                                                                                        <path
+                                                                                                                            stroke-linecap="round"
+                                                                                                                            stroke-linejoin="round"
+                                                                                                                            d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                                                                                                                    </svg>
+                                                                                                                    Filtrar
+                                                                                                                </button>
+                                                                                                                <a href="${pageContext.request.contextPath}/reports?action=membresias"
+                                                                                                                    class="btn"
+                                                                                                                    style="padding: 0 1rem; height: 36px; background-color: var(--bg-body, #f1f5f9); color: var(--text-muted); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.4rem; text-decoration: none; border-radius: 4px;">
+                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                        fill="none"
+                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                        stroke="currentColor"
+                                                                                                                        stroke-width="2"
+                                                                                                                        style="width: 16px; height: 16px;">
+                                                                                                                        <path
+                                                                                                                            stroke-linecap="round"
+                                                                                                                            stroke-linejoin="round"
+                                                                                                                            d="M6 18 18 6M6 6l12 12" />
+                                                                                                                    </svg>
+                                                                                                                    Limpiar
+                                                                                                                </a>
+                                                                                                            </form>
+                                                                                                </div>
 
                                                                                                 <%-- KPIs --%>
                                                                                                     <div class="report-kpi-grid"
@@ -2230,8 +2539,8 @@
                                                                                                             <div
                                                                                                                 class="report-kpi-card__header">
                                                                                                                 <span
-                                                                                                                    class="report-kpi-card__label">Contratos
-                                                                                                                    activos</span>
+                                                                                                                    class="report-kpi-card__label">Membresías
+                                                                                                                    vendidas</span>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__badge">
                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -2264,9 +2573,9 @@
                                                                                                             <div
                                                                                                                 class="report-kpi-card__header">
                                                                                                                 <span
-                                                                                                                    class="report-kpi-card__label">Promedio
-                                                                                                                    por
-                                                                                                                    plan</span>
+                                                                                                                    class="report-kpi-card__label">Plan
+                                                                                                                    más
+                                                                                                                    vendido</span>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__badge">
                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -2277,31 +2586,19 @@
                                                                                                                         <path
                                                                                                                             stroke-linecap="round"
                                                                                                                             stroke-linejoin="round"
-                                                                                                                            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
-                                                 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125
-                                                 1.125 0 0 1 3 19.875v-6.75Z" />
+                                                                                                                            d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                                                                                                                     </svg>
                                                                                                                 </div>
                                                                                                             </div>
                                                                                                             <div class="report-kpi-card__value"
                                                                                                                 style="font-size:1.3rem; padding-top:0.1rem;">
-                                                                                                                <c:choose>
-                                                                                                                    <c:when
-                                                                                                                        test="${totalPlanes > 0}">
-                                                                                                                        <fmt:formatNumber
-                                                                                                                            value="${totalContratosActivos / totalPlanes}"
-                                                                                                                            pattern="#.0" />
-                                                                                                                    </c:when>
-                                                                                                                    <c:otherwise>
-                                                                                                                        0
-                                                                                                                    </c:otherwise>
-                                                                                                                </c:choose>
+                                                                                                                ${not empty planMasVendido ? planMasVendido : 'Ninguno'}
                                                                                                             </div>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__meta">
-                                                                                                                Contratos
-                                                                                                                / plan
-                                                                                                                (promedio)
+                                                                                                                ${planMasVendidoCantidad}
+                                                                                                                contratos
+                                                                                                                activos
                                                                                                             </div>
                                                                                                         </div>
 
@@ -2428,8 +2725,8 @@
                                                                                                                                     </svg>
                                                                                                                                 </div>
                                                                                                                                 <span
-                                                                                                                                    class="report-card__title">Contratos
-                                                                                                                                    activos</span>
+                                                                                                                                    class="report-card__title">Membresías
+                                                                                                                                    Activas</span>
                                                                                                                             </div>
                                                                                                                             <span
                                                                                                                                 class="stat-chip chip--green">
