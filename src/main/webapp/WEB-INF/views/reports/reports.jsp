@@ -2552,6 +2552,7 @@
 
                                                                                                 </div>
 
+
                                                                                                 <%-- Gráfico de
                                                                                                     Asistencias --%>
                                                                                                     <div class="report-card"
@@ -2579,6 +2580,7 @@
                                                                                                                     Día</span>
                                                                                                             </div>
                                                                                                             <form
+                                                                                                                id="filtroAsistenciaForm"
                                                                                                                 action="${pageContext.request.contextPath}/reports"
                                                                                                                 method="GET"
                                                                                                                 style="display:flex; gap:0.5rem; align-items:center;">
@@ -2587,170 +2589,338 @@
                                                                                                                     name="action"
                                                                                                                     value="asistencia">
                                                                                                                 <select
-                                                                                                                    name="mes"
+                                                                                                                    name="filtroTiempo"
                                                                                                                     class="form-control"
-                                                                                                                    style="width: auto;">
+                                                                                                                    style="width: auto;"
+                                                                                                                    onchange="
+                                                                                                                if(this.value === 'personalizado'){
+                                                                                                                    document.getElementById('filtrosPersonalizados').style.display = 'flex';
+                                                                                                                    this.form.submit();
+                                                                                                                } else {
+                                                                                                                    document.getElementById('filtrosPersonalizados').style.display = 'none';
+                                                                                                                    this.form.submit();
+                                                                                                                }
+                                                                                                            ">
                                                                                                                     <option
-                                                                                                                        value="1"
-                                                                                                                        ${filtroMes==1
+                                                                                                                        value="ultimos_7_dias"
+                                                                                                                        ${filtroTiempo=='ultimos_7_dias'
                                                                                                                         ? 'selected'
                                                                                                                         : ''
                                                                                                                         }>
-                                                                                                                        Enero
+                                                                                                                        Últimos
+                                                                                                                        7
+                                                                                                                        días
                                                                                                                     </option>
                                                                                                                     <option
-                                                                                                                        value="2"
-                                                                                                                        ${filtroMes==2
+                                                                                                                        value="ultimo_mes"
+                                                                                                                        ${filtroTiempo=='ultimo_mes'
                                                                                                                         ? 'selected'
                                                                                                                         : ''
                                                                                                                         }>
-                                                                                                                        Febrero
+                                                                                                                        Último
+                                                                                                                        mes
                                                                                                                     </option>
                                                                                                                     <option
-                                                                                                                        value="3"
-                                                                                                                        ${filtroMes==3
+                                                                                                                        value="personalizado"
+                                                                                                                        ${filtroTiempo=='personalizado'
                                                                                                                         ? 'selected'
                                                                                                                         : ''
                                                                                                                         }>
-                                                                                                                        Marzo
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="4"
-                                                                                                                        ${filtroMes==4
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Abril
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="5"
-                                                                                                                        ${filtroMes==5
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Mayo
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="6"
-                                                                                                                        ${filtroMes==6
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Junio
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="7"
-                                                                                                                        ${filtroMes==7
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Julio
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="8"
-                                                                                                                        ${filtroMes==8
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Agosto
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="9"
-                                                                                                                        ${filtroMes==9
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Septiembre
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="10"
-                                                                                                                        ${filtroMes==10
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Octubre
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="11"
-                                                                                                                        ${filtroMes==11
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Noviembre
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="12"
-                                                                                                                        ${filtroMes==12
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Diciembre
+                                                                                                                        Personalizado
                                                                                                                     </option>
                                                                                                                 </select>
-                                                                                                                <select
-                                                                                                                    name="semana"
-                                                                                                                    class="form-control"
-                                                                                                                    style="width: auto;">
-                                                                                                                    <option
-                                                                                                                        value="1"
-                                                                                                                        ${filtroSemana==1
-                                                                                                                        ? 'selected'
+
+                                                                                                                <div id="filtrosPersonalizados"
+                                                                                                                    style="display: ${filtroTiempo == 'personalizado' ? 'flex' : 'none'}; gap: 0.5rem; align-items: center;">
+                                                                                                                    <select
+                                                                                                                        name="dia"
+                                                                                                                        class="form-control"
+                                                                                                                        style="width: auto;"
+                                                                                                                        onchange="this.form.submit()"
+                                                                                                                        ${empty
+                                                                                                                        mes
+                                                                                                                        ? 'disabled'
                                                                                                                         : ''
                                                                                                                         }>
-                                                                                                                        Semana
-                                                                                                                        1
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="2"
-                                                                                                                        ${filtroSemana==2
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Semana
-                                                                                                                        2
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="3"
-                                                                                                                        ${filtroSemana==3
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Semana
-                                                                                                                        3
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="4"
-                                                                                                                        ${filtroSemana==4
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Semana
-                                                                                                                        4
-                                                                                                                    </option>
-                                                                                                                    <option
-                                                                                                                        value="5"
-                                                                                                                        ${filtroSemana==5
-                                                                                                                        ? 'selected'
-                                                                                                                        : ''
-                                                                                                                        }>
-                                                                                                                        Semana
-                                                                                                                        5
-                                                                                                                    </option>
-                                                                                                                </select>
-                                                                                                                <button
-                                                                                                                    type="submit"
-                                                                                                                    class="btn btn-primary btn-sm">Filtrar</button>
+                                                                                                                        <option
+                                                                                                                            value="">
+                                                                                                                            Día
+                                                                                                                            (Todos)
+                                                                                                                        </option>
+                                                                                                                        <c:forEach
+                                                                                                                            var="d"
+                                                                                                                            begin="1"
+                                                                                                                            end="31">
+                                                                                                                            <option
+                                                                                                                                value="${d}"
+                                                                                                                                ${dia==d
+                                                                                                                                ? 'selected'
+                                                                                                                                : ''
+                                                                                                                                }>
+                                                                                                                                ${d}
+                                                                                                                            </option>
+                                                                                                                        </c:forEach>
+                                                                                                                    </select>
+                                                                                                                    <select
+                                                                                                                        name="mes"
+                                                                                                                        class="form-control"
+                                                                                                                        style="width: auto;"
+                                                                                                                        onchange="this.form.submit()">
+                                                                                                                        <option
+                                                                                                                            value="">
+                                                                                                                            Mes
+                                                                                                                            (Todos)
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="1"
+                                                                                                                            ${mes=='1'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Enero
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="2"
+                                                                                                                            ${mes=='2'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Febrero
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="3"
+                                                                                                                            ${mes=='3'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Marzo
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="4"
+                                                                                                                            ${mes=='4'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Abril
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="5"
+                                                                                                                            ${mes=='5'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Mayo
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="6"
+                                                                                                                            ${mes=='6'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Junio
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="7"
+                                                                                                                            ${mes=='7'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Julio
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="8"
+                                                                                                                            ${mes=='8'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Agosto
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="9"
+                                                                                                                            ${mes=='9'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Septiembre
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="10"
+                                                                                                                            ${mes=='10'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Octubre
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="11"
+                                                                                                                            ${mes=='11'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Noviembre
+                                                                                                                        </option>
+                                                                                                                        <option
+                                                                                                                            value="12"
+                                                                                                                            ${mes=='12'
+                                                                                                                            ? 'selected'
+                                                                                                                            : ''
+                                                                                                                            }>
+                                                                                                                            Diciembre
+                                                                                                                        </option>
+                                                                                                                    </select>
+                                                                                                                    <input
+                                                                                                                        type="number"
+                                                                                                                        name="anio"
+                                                                                                                        value="${not empty anio ? anio : currentYear}"
+                                                                                                                        class="form-control"
+                                                                                                                        style="width: 100px;"
+                                                                                                                        placeholder="Año"
+                                                                                                                        min="2000"
+                                                                                                                        onchange="this.form.submit()">
+                                                                                                                </div>
                                                                                                             </form>
                                                                                                         </div>
 
-                                                                                                        <div
-                                                                                                            style="width: 100%; height: 400px; margin-top: 1rem;">
-                                                                                                            <canvas
-                                                                                                                id="asistenciaChart"></canvas>
-                                                                                                        </div>
+                                                                                                        <c:choose>
+                                                                                                            <c:when
+                                                                                                                test="${empty historialAsistencia}">
+                                                                                                                <div
+                                                                                                                    style="width: 100%; height: 300px; margin-top: 1rem; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--text-muted, #64748b);">
+                                                                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                                                        fill="none"
+                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                        stroke="currentColor"
+                                                                                                                        stroke-width="1.5"
+                                                                                                                        style="width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5;">
+                                                                                                                        <path
+                                                                                                                            stroke-linecap="round"
+                                                                                                                            stroke-linejoin="round"
+                                                                                                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                                                                                    </svg>
+                                                                                                                    <p
+                                                                                                                        style="font-size: 1.1rem; font-weight: 500;">
+                                                                                                                        No
+                                                                                                                        hay
+                                                                                                                        asistencias
+                                                                                                                        registradas
+                                                                                                                        en
+                                                                                                                        este
+                                                                                                                        periodo
+                                                                                                                    </p>
+                                                                                                                </div>
+                                                                                                            </c:when>
+                                                                                                            <c:otherwise>
+                                                                                                                <div
+                                                                                                                    style="width: 100%; height: 400px; margin-top: 1rem;">
+                                                                                                                    <canvas
+                                                                                                                        id="asistenciaChart"></canvas>
+                                                                                                                </div>
+                                                                                                            </c:otherwise>
+                                                                                                        </c:choose>
                                                                                                     </div>
 
+                                                                                                    <%-- Tabla de
+                                                                                                        Detalles de
+                                                                                                        Asistencia --%>
+                                                                                                        <div class="report-card"
+                                                                                                            style="margin-top: 1.5rem;">
+                                                                                                            <div
+                                                                                                                class="report-card__header">
+                                                                                                                <span
+                                                                                                                    class="report-card__title">Detalle
+                                                                                                                    de
+                                                                                                                    Asistencias</span>
+                                                                                                            </div>
+                                                                                                            <div class="table-responsive"
+                                                                                                                style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                                                                                                                <table
+                                                                                                                    class="table table-striped table-hover"
+                                                                                                                    style="width: 100%;">
+                                                                                                                    <thead>
+                                                                                                                        <tr>
+                                                                                                                            <th
+                                                                                                                                style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">
+                                                                                                                                Cliente
+                                                                                                                            </th>
+                                                                                                                            <th
+                                                                                                                                style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">
+                                                                                                                                Documento
+                                                                                                                            </th>
+                                                                                                                            <th
+                                                                                                                                style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">
+                                                                                                                                Membresía
+                                                                                                                            </th>
+                                                                                                                            <th
+                                                                                                                                style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">
+                                                                                                                                Fecha
+                                                                                                                            </th>
+                                                                                                                            <th
+                                                                                                                                style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--clr-border);">
+                                                                                                                                Hora
+                                                                                                                                Ingreso
+                                                                                                                            </th>
+                                                                                                                        </tr>
+                                                                                                                    </thead>
+                                                                                                                    <tbody>
+                                                                                                                        <c:choose>
+                                                                                                                            <c:when
+                                                                                                                                test="${not empty historialAsistencia}">
+                                                                                                                                <c:forEach
+                                                                                                                                    var="asist"
+                                                                                                                                    items="${historialAsistencia}">
+                                                                                                                                    <tr>
+                                                                                                                                        <td
+                                                                                                                                            style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);">
+                                                                                                                                            <c:out
+                                                                                                                                                value="${asist.contrato.cliente.nombreCompleto}" />
+                                                                                                                                        </td>
+                                                                                                                                        <td
+                                                                                                                                            style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);">
+                                                                                                                                            <c:out
+                                                                                                                                                value="${asist.contrato.cliente.numeroDocumento}" />
+                                                                                                                                        </td>
+                                                                                                                                        <td
+                                                                                                                                            style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);">
+                                                                                                                                            <c:out
+                                                                                                                                                value="${asist.contrato.membresia.nombreMembresia}" />
+                                                                                                                                        </td>
+                                                                                                                                        <td
+                                                                                                                                            style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);">
+                                                                                                                                            <c:out
+                                                                                                                                                value="${asist.fecha}" />
+                                                                                                                                        </td>
+                                                                                                                                        <td
+                                                                                                                                            style="padding: 0.5rem; border-bottom: 1px solid var(--clr-border-light);">
+                                                                                                                                            <c:out
+                                                                                                                                                value="${asist.horaIngresoFormateada}" />
+                                                                                                                                        </td>
+                                                                                                                                    </tr>
+                                                                                                                                </c:forEach>
+                                                                                                                            </c:when>
+                                                                                                                            <c:otherwise>
+                                                                                                                                <tr>
+                                                                                                                                    <td colspan="5"
+                                                                                                                                        style="padding: 1.5rem; text-align: center; color: var(--clr-text-muted);">
+                                                                                                                                        No
+                                                                                                                                        hay
+                                                                                                                                        registros
+                                                                                                                                        de
+                                                                                                                                        asistencia
+                                                                                                                                        en
+                                                                                                                                        el
+                                                                                                                                        periodo
+                                                                                                                                        seleccionado.
+                                                                                                                                    </td>
+                                                                                                                                </tr>
+                                                                                                                            </c:otherwise>
+                                                                                                                        </c:choose>
+                                                                                                                    </tbody>
+                                                                                                                </table>
+                                                                                                            </div>
+                                                                                                        </div>
+
                                                                                         </c:when>
+
 
                                                                                         <%-- ──────────────────────────────────────────
                                                                                             VISTA: REPORTE DE MEMBRESÍAS
@@ -3164,7 +3334,7 @@
                                                                                                                                                             <c:out
                                                                                                                                                                 value="${totalContratosActivos}" />
                                                                                                                                                         </strong>
-                                                                                                                                                        contratos
+                                                                                                                                                        Membresias
                                                                                                                                                         activos
                                                                                                                                                     </c:otherwise>
                                                                                                                                                 </c:choose>

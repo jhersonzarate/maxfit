@@ -74,6 +74,11 @@ public class AsistenciaDAO {
         "WHERE fecha >= ? AND fecha <= ? AND estado = 'asistio' " +
         "GROUP BY fecha ORDER BY fecha ASC";
 
+    private static final String SQL_FIND_POR_RANGO =
+        SQL_SELECT_BASE +
+        "WHERE a.fecha >= ? AND a.fecha <= ? " +
+        "ORDER BY a.fecha DESC, a.hora_ingreso DESC";
+
     // ─── métodos públicos ──────────────────────────────────────
 
     public List<Asistencia> findAll() throws SQLException {
@@ -99,6 +104,19 @@ public class AsistenciaDAO {
             }
         }
         return conteo;
+    }
+
+    public List<Asistencia> buscarAsistenciasPorRango(LocalDate inicio, LocalDate fin) throws SQLException {
+        List<Asistencia> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL_FIND_POR_RANGO)) {
+            ps.setDate(1, java.sql.Date.valueOf(inicio));
+            ps.setDate(2, java.sql.Date.valueOf(fin));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
     }
 
     public String[] getDiaPicoAsistencia() throws SQLException {

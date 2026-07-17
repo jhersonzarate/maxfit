@@ -306,65 +306,148 @@ public class ReportsController extends AbstractController {
             );
         }
 
-        // Filtros para el gráfico
-        int year = LocalDate.now().getYear();
-        int currentMonth = LocalDate.now().getMonthValue();
+        // Filtros de tiempo
+        String filtroTiempo = req.getParameter("filtroTiempo");
+        if (filtroTiempo == null || filtroTiempo.isEmpty()) {
+            filtroTiempo = "ultimos_7_dias";
+        }
         
-        String mesParam = req.getParameter("mes");
-        String semanaParam = req.getParameter("semana");
+        LocalDate today = LocalDate.now();
+        int currentYear = today.getYear();
+        req.setAttribute("currentYear", currentYear);
         
-        int month = (mesParam != null && !mesParam.isEmpty()) ? Integer.parseInt(mesParam) : currentMonth;
-        int week = (semanaParam != null && !semanaParam.isEmpty()) ? Integer.parseInt(semanaParam) : 1;
-
-        YearMonth ym = YearMonth.of(year, month);
-        LocalDate startOfMonth = ym.atDay(1);
-        LocalDate startOfWeek = startOfMonth.plusDays((week - 1) * 7);
-        LocalDate endOfWeek = startOfWeek.plusDays(6);
-
-        if (startOfWeek.getMonthValue() != month) {
-            startOfWeek = startOfMonth;
-            endOfWeek = ym.atEndOfMonth();
-        } else if (endOfWeek.getMonthValue() != month) {
-            endOfWeek = ym.atEndOfMonth();
+        LocalDate start = today;
+        LocalDate end = today;
+        LocalDate startChart = today;
+        LocalDate endChart = today;
+        
+        switch (filtroTiempo) {
+            case "ultimos_7_dias":
+                start = today.minusDays(6);
+                end = today;
+                startChart = start;
+                endChart = end;
+                break;
+            case "ultimo_mes":
+                start = today.minusDays(29);
+                end = today;
+                startChart = start;
+                endChart = end;
+                break;
+            case "personalizado":
+                int year = req.getParameter("anio") != null && !req.getParameter("anio").isEmpty() 
+                           ? Integer.parseInt(req.getParameter("anio")) 
+                           : currentYear;
+                
+                String pMes = req.getParameter("mes");
+                String pDia = req.getParameter("dia");
+                
+                if (pMes != null && !pMes.isEmpty()) {
+                    int m = Integer.parseInt(pMes);
+                    if (pDia != null && !pDia.isEmpty()) {
+                        int d = Integer.parseInt(pDia);
+                        try {
+                            start = LocalDate.of(year, m, d);
+                            end = start;
+                            startChart = start.minusDays(1);
+                            endChart = end.plusDays(1);
+                        } catch (Exception e) {
+                            start = LocalDate.of(year, m, 1);
+                            end = start.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth());
+                            startChart = start;
+                            endChart = end;
+                        }
+                    } else {
+                        start = LocalDate.of(year, m, 1);
+                        end = start.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth());
+                        startChart = start;
+                        endChart = end;
+                    }
+                } else {
+                    start = LocalDate.of(year, 1, 1);
+                    end = LocalDate.of(year, 12, 31);
+                    startChart = start;
+                    endChart = end;
+                }
+                
+                req.setAttribute("dia", pDia);
+                req.setAttribute("mes", pMes);
+                req.setAttribute("anio", req.getParameter("anio") != null && !req.getParameter("anio").isEmpty() ? req.getParameter("anio") : String.valueOf(currentYear));
+                break;
+            default:
+                start = today.minusDays(6);
+                end = today;
+                startChart = start;
+                endChart = end;
+                break;
         }
 
         try {
-            Map<LocalDate, Integer> conteo = asistenciaDAO.getConteoAsistenciaPorRango(startOfWeek, endOfWeek);
-
-            // Determinar el Lunes de la semana para que el gráfico sea siempre de Lunes a Domingo
-            LocalDate mondayOfWeek = startOfWeek;
-            while (mondayOfWeek.getDayOfWeek() != java.time.DayOfWeek.MONDAY) {
-                mondayOfWeek = mondayOfWeek.minusDays(1);
-            }
+            Map<LocalDate, Integer> conteo = asistenciaDAO.getConteoAsistenciaPorRango(startChart, endChart);
+            List<Asistencia> historial = asistenciaDAO.buscarAsistenciasPorRango(start, end);
 
             StringBuilder labelsJson = new StringBuilder("[");
             StringBuilder dataJson = new StringBuilder("[");
 
-            LocalDate current = mondayOfWeek;
-            for (int i = 0; i < 7; i++) {
-                if (i > 0) {
-                    labelsJson.append(",");
-                    dataJson.append(",");
+            long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(startChart, endChart);
+            if (daysBetween == 0) {
+                labelsJson.append("\"").append(start.toString()).append("\"");
+                dataJson.append(conteo.getOrDefault(start, 0));
+            } else if (daysBetween > 60) {
+                // Rango grande (ej. todo el año): agrupar por mes
+                Map<java.time.Month, Integer> monthlyCount = new java.util.EnumMap<>(java.time.Month.class);
+                for (java.time.Month m : java.time.Month.values()) {
+                    monthlyCount.put(m, 0);
                 }
-                String dayName = current.getDayOfWeek().getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
-                dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
-                labelsJson.append("\"").append(dayName).append("\"");
-                
-                if (!current.isBefore(startOfWeek) && !current.isAfter(endOfWeek)) {
-                    dataJson.append(conteo.getOrDefault(current, 0));
-                } else {
-                    dataJson.append(0);
+                for (Map.Entry<LocalDate, Integer> entry : conteo.entrySet()) {
+                    java.time.Month m = entry.getKey().getMonth();
+                    monthlyCount.put(m, monthlyCount.get(m) + entry.getValue());
                 }
                 
-                current = current.plusDays(1);
+                boolean first = true;
+                for (java.time.Month m : java.time.Month.values()) {
+                    if (!first) {
+                        labelsJson.append(",");
+                        dataJson.append(",");
+                    }
+                    String monthName = m.getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es", "ES"));
+                    monthName = monthName.substring(0, 1).toUpperCase() + monthName.substring(1);
+                    labelsJson.append("\"").append(monthName).append("\"");
+                    dataJson.append(monthlyCount.get(m));
+                    first = false;
+                }
+            } else {
+                LocalDate current = startChart;
+                boolean first = true;
+                while (!current.isAfter(endChart)) {
+                    if (!first) {
+                        labelsJson.append(",");
+                        dataJson.append(",");
+                    }
+                    if (daysBetween <= 7) {
+                        String dayName = current.getDayOfWeek().getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es", "ES"));
+                        dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
+                        labelsJson.append("\"").append(dayName).append("\"");
+                    } else {
+                        labelsJson.append("\"").append(current.getDayOfMonth()).append(" ").append(current.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, new java.util.Locale("es", "ES"))).append("\"");
+                    }
+                    int val = conteo.getOrDefault(current, 0);
+                    if (start.equals(end) && !current.equals(start)) {
+                        val = 0;
+                    }
+                    dataJson.append(val);
+                    current = current.plusDays(1);
+                    first = false;
+                }
             }
             labelsJson.append("]");
             dataJson.append("]");
 
             req.setAttribute("chartLabels", labelsJson.toString());
             req.setAttribute("chartData", dataJson.toString());
-            req.setAttribute("filtroMes", month);
-            req.setAttribute("filtroSemana", week);
+            req.setAttribute("filtroTiempo", filtroTiempo);
+            req.setAttribute("esUnSoloDia", daysBetween == 0);
+            req.setAttribute("historialAsistencia", historial);
             
             String[] diaPico = asistenciaDAO.getDiaPicoAsistencia();
             req.setAttribute("diaPicoNombre", diaPico[0]);
@@ -379,6 +462,7 @@ public class ReportsController extends AbstractController {
             req.setAttribute("chartData", "[]");
             req.setAttribute("diaPicoNombre", "Ninguno");
             req.setAttribute("diaPicoPromedio", "0");
+            req.setAttribute("historialAsistencia", java.util.Collections.emptyList());
         }
 
         req.setAttribute("vistaActiva", "asistencia");
