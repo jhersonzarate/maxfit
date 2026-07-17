@@ -440,8 +440,41 @@ public class ReportsController extends AbstractController {
         // contratos activos actuales
         try {
 
-            List<Contrato> contratosActivos =
-                    contratoDAO.findAllActivos();
+            String filtroRapido = req.getParameter("filtroRapido");
+            String desdeStr = req.getParameter("desde");
+            String hastaStr = req.getParameter("hasta");
+            
+            LocalDate desde = null;
+            LocalDate hasta = null;
+            LocalDate hoy = LocalDate.now();
+
+            if ("hoy".equals(filtroRapido)) {
+                desde = hoy;
+                hasta = hoy;
+            } else if ("semana".equals(filtroRapido)) {
+                desde = hoy.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+                hasta = hoy.with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SUNDAY));
+            } else if ("mes".equals(filtroRapido)) {
+                desde = hoy.withDayOfMonth(1);
+                hasta = hoy.withDayOfMonth(hoy.lengthOfMonth());
+            } else if (desdeStr != null && !desdeStr.isEmpty() && hastaStr != null && !hastaStr.isEmpty()) {
+                try {
+                    desde = LocalDate.parse(desdeStr);
+                    hasta = LocalDate.parse(hastaStr);
+                } catch (Exception e) {
+                    LOGGER.warning("Error parsing dates for membresias filter");
+                }
+            }
+
+            List<Contrato> contratosActivos;
+            if (desde != null && hasta != null) {
+                contratosActivos = contratoDAO.findActivosByRango(desde, hasta);
+                req.setAttribute("filtroRapido", filtroRapido);
+                req.setAttribute("desde", desde.toString());
+                req.setAttribute("hasta", hasta.toString());
+            } else {
+                contratosActivos = contratoDAO.findAllActivos();
+            }
 
             req.setAttribute(
                     "contratosActivos",
@@ -464,7 +497,15 @@ public class ReportsController extends AbstractController {
             StringBuilder labelsJson = new StringBuilder("[");
             StringBuilder dataJson = new StringBuilder("[");
             boolean first = true;
+            
+            String planMasVendido = "Ninguno";
+            int maxVentas = 0;
+
             for (java.util.Map.Entry<String, Integer> entry : conteoPorPlan.entrySet()) {
+                if (entry.getValue() > maxVentas) {
+                    maxVentas = entry.getValue();
+                    planMasVendido = entry.getKey();
+                }
                 if (!first) {
                     labelsJson.append(",");
                     dataJson.append(",");
@@ -478,6 +519,8 @@ public class ReportsController extends AbstractController {
 
             req.setAttribute("membresiasChartLabels", labelsJson.toString());
             req.setAttribute("membresiasChartData", dataJson.toString());
+            req.setAttribute("planMasVendido", planMasVendido);
+            req.setAttribute("planMasVendidoCantidad", maxVentas);
 
         } catch (SQLException e) {
 

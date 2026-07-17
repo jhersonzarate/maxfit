@@ -2375,6 +2375,41 @@
                                                                                             <c:when
                                                                                                 test="${vistaActiva eq 'membresias'}">
 
+                                                                                                <%-- Filtro de fechas --%>
+                                                                                                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow-x: auto;">
+                                                                                                    
+                                                                                                    <%-- Botones rápidos en un cuadro rectangular --%>
+                                                                                                    <div style="display: flex; gap: 0.2rem; background: var(--bg-body, #f1f5f9); padding: 0.3rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=" 
+                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${(empty filtroRapido and empty desde) ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Todos</a>
+                                                                                                           
+                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=hoy" 
+                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'hoy' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Hoy</a>
+                                                                                                           
+                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=semana" 
+                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'semana' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Esta semana</a>
+                                                                                                           
+                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias&filtroRapido=mes" 
+                                                                                                           style="padding: 0.4rem 1.2rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: all 0.2s; font-size: 0.9rem; ${filtroRapido eq 'mes' ? 'background-color: #ef4444; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'color: var(--text-muted);'}">Este mes</a>
+                                                                                                    </div>
+                                                                                                    
+                                                                                                    <%-- Filtro personalizado desde/hasta --%>
+                                                                                                    <form action="${pageContext.request.contextPath}/reports" method="GET" style="display:flex; gap:0.5rem; align-items:center; margin: 0; padding-left: 1rem; flex-wrap: nowrap;">
+                                                                                                        <input type="hidden" name="action" value="membresias">
+                                                                                                        <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500; white-space: nowrap;">Rango:</span>
+                                                                                                        <input type="date" name="desde" value="${desde}" class="form-control" style="width: auto; height: 36px; padding: 0.2rem 0.5rem;" required>
+                                                                                                        <span style="color: var(--text-muted); font-size: 0.9rem;">-</span>
+                                                                                                        <input type="date" name="hasta" value="${hasta}" class="form-control" style="width: auto; height: 36px; padding: 0.2rem 0.5rem;" required>
+                                                                                                        
+                                                                                                        <button type="submit" class="btn" style="padding: 0 1rem; height: 36px; background-color: #ef4444; color: white; border: none; display: flex; align-items: center; gap: 0.4rem;">
+                                                                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                                                                                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                                                                                                            </svg>
+                                                                                                            Filtrar
+                                                                                                        </button>
+                                                                                                    </form>
+                                                                                                </div>
+
                                                                                                 <%-- KPIs --%>
                                                                                                     <div class="report-kpi-grid"
                                                                                                         style="grid-template-columns: repeat(3, 1fr);">
@@ -2454,9 +2489,8 @@
                                                                                                             <div
                                                                                                                 class="report-kpi-card__header">
                                                                                                                 <span
-                                                                                                                    class="report-kpi-card__label">Promedio
-                                                                                                                    por
-                                                                                                                    plan</span>
+                                                                                                                    class="report-kpi-card__label">Plan más
+                                                                                                                    vendido</span>
                                                                                                                 <div
                                                                                                                     class="report-kpi-card__badge">
                                                                                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -2464,34 +2498,19 @@
                                                                                                                         viewBox="0 0 24 24"
                                                                                                                         stroke="currentColor"
                                                                                                                         stroke-width="1.8">
-                                                                                                                        <path
-                                                                                                                            stroke-linecap="round"
-                                                                                                                            stroke-linejoin="round"
-                                                                                                                            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
-                                                 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125
-                                                 1.125 0 0 1 3 19.875v-6.75Z" />
+                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                                                                                                                     </svg>
                                                                                                                 </div>
                                                                                                             </div>
                                                                                                             <div class="report-kpi-card__value"
                                                                                                                 style="font-size:1.3rem; padding-top:0.1rem;">
-                                                                                                                <c:choose>
-                                                                                                                    <c:when
-                                                                                                                        test="${totalPlanes > 0}">
-                                                                                                                        <fmt:formatNumber
-                                                                                                                            value="${totalContratosActivos / totalPlanes}"
-                                                                                                                            pattern="#.0" />
-                                                                                                                    </c:when>
-                                                                                                                    <c:otherwise>
-                                                                                                                        0
-                                                                                                                    </c:otherwise>
-                                                                                                                </c:choose>
+                                                                                                                ${not empty planMasVendido ? planMasVendido : 'Ninguno'}
                                                                                                             </div>
                                                                                                             <div
                                                                                                                 class="report-kpi-card__meta">
-                                                                                                                Contratos
-                                                                                                                / plan
-                                                                                                                (promedio)
+                                                                                                                ${planMasVendidoCantidad}
+                                                                                                                contratos
+                                                                                                                activos
                                                                                                             </div>
                                                                                                         </div>
 
