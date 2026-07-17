@@ -199,6 +199,42 @@ public class ContratoDAO {
         return lista;
     }
 
+    public List<Contrato> buscarContratos(String query, String estado) throws SQLException {
+        StringBuilder sql = new StringBuilder(SQL_SELECT_BASE);
+        sql.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (query != null && !query.trim().isEmpty()) {
+            sql.append("AND (cli.nombre LIKE ? OR cli.apellido LIKE ? OR cli.numero_documento LIKE ?) ");
+            String likeQuery = "%" + query.trim() + "%";
+            params.add(likeQuery);
+            params.add(likeQuery);
+            params.add(likeQuery);
+        }
+        
+        if (estado != null && !estado.trim().isEmpty()) {
+            sql.append("AND con.estado = ? ");
+            params.add(estado.trim());
+        }
+        
+        sql.append("ORDER BY con.fecha_inicio DESC");
+        
+        List<Contrato> lista = new ArrayList<>();
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+             
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
     // contratos filtrados por estado (activo/vencido/cancelado), más recientes
     // primero por fecha_fin — usado en el PDF de reportes (listado de vencidos)
     public List<Contrato> findByEstado(String estado) throws SQLException {

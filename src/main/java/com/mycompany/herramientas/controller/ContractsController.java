@@ -153,13 +153,15 @@ public class ContractsController extends AbstractController {
             throws ServletException, IOException {
 
         String clienteId = param(req, "clienteId");
+        String query = param(req, "q");
+        String estado = param(req, "estado");
 
         try {
 
             List<Contrato> contratos;
 
             // filtro por cliente si viene el parámetro
-            if (clienteId != null) {
+            if (clienteId != null && !clienteId.isBlank()) {
 
                 contratos = contratoDAO.findByClienteId(clienteId);
 
@@ -168,8 +170,10 @@ public class ContractsController extends AbstractController {
                 req.setAttribute("clienteFiltro", cliente);
 
             } else {
-
-                contratos = contratoDAO.findAll();
+                
+                contratos = contratoDAO.buscarContratos(query, estado);
+                req.setAttribute("query", query);
+                req.setAttribute("estadoFiltro", estado);
             }
 
             req.setAttribute("contratos", contratos);

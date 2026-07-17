@@ -1208,28 +1208,53 @@
                         </div>
                     </div>
 
-                    <%-- KPI Strip --%>
-                    <div class="contratos-kpi-strip">
-                        <div class="contratos-kpi-strip__item">
-                            <span class="contratos-kpi-strip__num green">
-                                <c:out value="${countActivos}"/>
-                            </span>
-                            <span class="contratos-kpi-strip__label">Activos</span>
+                    <%-- ── Barra de búsqueda y filtros ────── --%>
+                    <form action="${pageContext.request.contextPath}/contracts"
+                          method="get"
+                          class="toolbar">
+
+                        <div class="toolbar-search">
+                            <svg class="toolbar-search__icon"
+                                 xmlns="http://www.w3.org/2000/svg" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196
+                                         5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                            </svg>
+                            <input type="text"
+                                   name="q"
+                                   placeholder="Buscar por cliente o DNI…"
+                                   value="<c:out value='${query}'/>">
+                            <button type="submit" class="toolbar-search__btn">Buscar</button>
                         </div>
-                        <div class="contratos-kpi-strip__item">
-                            <span class="contratos-kpi-strip__num">
-                                <c:out value="${totalContratos}"/>
-                            </span>
-                            <span class="contratos-kpi-strip__label">Total</span>
+                        
+                        <div class="toolbar-filter">
+                            <select name="estado" class="form-control" onchange="this.form.submit()">
+                                <option value="" ${empty estadoFiltro ? 'selected' : ''}>Todos los estados</option>
+                                <option value="activo" ${estadoFiltro eq 'activo' ? 'selected' : ''}>Activo</option>
+                                <option value="vencido" ${estadoFiltro eq 'vencido' ? 'selected' : ''}>Vencido</option>
+                                <option value="cancelado" ${estadoFiltro eq 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                            </select>
                         </div>
-                        <div class="contratos-kpi-strip__item">
-                            <c:set var="noActivos" value="${totalContratos - countActivos}"/>
-                            <span class="contratos-kpi-strip__num yellow">
-                                <c:out value="${noActivos}"/>
-                            </span>
-                            <span class="contratos-kpi-strip__label">Vencidos / Cancelados</span>
-                        </div>
-                    </div>
+
+                        <%-- Limpiar búsqueda --%>
+                        <c:if test="${not empty query or not empty estadoFiltro}">
+                            <a href="${pageContext.request.contextPath}/contracts"
+                               class="btn btn-ghost btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M6 18 18 6M6 6l12 12"/>
+                                </svg>
+                                Limpiar
+                            </a>
+                        </c:if>
+
+                        <span class="toolbar-count">
+                            <strong><c:out value="${totalContratos}"/></strong> contratos
+                        </span>
+
+                    </form>
 
                     <%-- Tabla de contratos --%>
                     <div class="module-table-wrapper">
