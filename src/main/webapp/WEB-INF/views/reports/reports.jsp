@@ -2407,6 +2407,12 @@
                                                                                                             </svg>
                                                                                                             Filtrar
                                                                                                         </button>
+                                                                                                        <a href="${pageContext.request.contextPath}/reports?action=membresias" class="btn" style="padding: 0 1rem; height: 36px; background-color: var(--bg-body, #f1f5f9); color: var(--text-muted); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.4rem; text-decoration: none; border-radius: 4px;">
+                                                                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                                                                                              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                                                                                            </svg>
+                                                                                                            Limpiar
+                                                                                                        </a>
                                                                                                     </form>
                                                                                                 </div>
 
